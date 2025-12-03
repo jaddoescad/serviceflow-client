@@ -3,6 +3,7 @@
 import { Link } from "react-router-dom";
 import { useCompanyContext } from "@/contexts/AuthContext";
 import { SidebarNav } from "./sidebar-nav";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -67,6 +68,10 @@ export function Sidebar({ isOpen, onClose, organizationSwitcher }: SidebarProps)
           ) : null}
 
           <SidebarNav role={memberRole} onNavigate={onClose} />
+
+          <div className="mt-auto pt-4 border-t border-slate-200">
+            <SignOutButton />
+          </div>
         </div>
       </aside>
     </>
