@@ -44,14 +44,14 @@ export function Sidebar({ isOpen, onClose, organizationSwitcher }: SidebarProps)
       {/* Sidebar */}
       <aside
         className={`
-          fixed inset-y-0 left-0 z-50 w-72 transform bg-white shadow-xl transition-transform duration-300 ease-in-out lg:static lg:z-auto lg:w-56 lg:transform-none lg:shadow-none
+          fixed inset-y-0 left-0 z-50 w-72 flex flex-col transform bg-white shadow-xl transition-transform duration-300 ease-in-out lg:static lg:z-auto lg:w-56 lg:transform-none lg:shadow-none
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          lg:sticky lg:top-14 lg:flex lg:h-[calc(100vh-3.5rem)] lg:flex-col lg:gap-4 lg:overflow-y-auto lg:border-r lg:border-slate-200
+          lg:sticky lg:top-14 lg:h-[calc(100vh-3.5rem)] lg:gap-4 lg:border-r lg:border-slate-200
         `}
         aria-label="Sidebar navigation"
       >
         {/* Mobile Header in Sidebar */}
-        <div className="flex items-center justify-between border-b border-slate-200 p-4 lg:hidden">
+        <div className="flex-shrink-0 flex items-center justify-between border-b border-slate-200 p-4 lg:hidden">
           <p className="text-sm font-semibold text-slate-900">Menu</p>
           <button
             type="button"
@@ -65,7 +65,7 @@ export function Sidebar({ isOpen, onClose, organizationSwitcher }: SidebarProps)
           </button>
         </div>
 
-        <div className="flex flex-col gap-4 overflow-y-auto p-4 lg:p-3">
+        <div className="flex flex-1 flex-col gap-4 overflow-y-auto overscroll-contain p-4 lg:p-3">
           {/* Organization Switcher */}
           {organizationSwitcher}
 
