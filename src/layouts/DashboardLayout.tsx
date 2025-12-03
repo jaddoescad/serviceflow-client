@@ -1,7 +1,7 @@
-import { useEffect } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { SiteHeader } from "@/components/layout/site-header";
-import { Sidebar } from "@/components/layout/sidebar";
+import { Sidebar, MobileMenuButton } from "@/components/layout/sidebar";
 import { DashboardLayoutClient } from "@/components/layout/dashboard-layout-client";
 import { OrganizationSwitcher } from "@/components/layout/organization-switcher";
 import { DashboardLayoutSkeleton } from "@/components/ui/skeleton";
@@ -9,9 +9,16 @@ import { useSessionContext, useCompanyContext, useOrganizationsContext } from "@
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isLoading, isAuthenticated } = useSessionContext();
   const { company } = useCompanyContext();
   const { organizations } = useOrganizationsContext();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -35,10 +42,20 @@ export default function DashboardLayout() {
     />
   );
 
+  const mobileMenuButton = (
+    <MobileMenuButton onClick={() => setIsMobileMenuOpen(true)} />
+  );
+
   return (
     <DashboardLayoutClient
-      header={<SiteHeader organizationSwitcher={organizationSwitcher} />}
-      sidebar={<Sidebar />}
+      header={<SiteHeader mobileMenuButton={mobileMenuButton} />}
+      sidebar={
+        <Sidebar
+          isOpen={isMobileMenuOpen}
+          onClose={() => setIsMobileMenuOpen(false)}
+          organizationSwitcher={organizationSwitcher}
+        />
+      }
     >
       <Outlet />
     </DashboardLayoutClient>

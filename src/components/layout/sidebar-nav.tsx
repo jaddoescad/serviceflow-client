@@ -31,11 +31,11 @@ const baseManagementItems: NavItem[] = [
 ];
 
 const linkBaseClasses =
-  "flex items-center justify-between rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition";
+  "flex items-center justify-between rounded-lg px-3 py-3 text-sm font-semibold transition lg:px-2.5 lg:py-1.5 lg:text-[11px]";
 
 const disabledClasses = "text-slate-400 opacity-60 pointer-events-none";
 
-const inactiveClasses = "text-slate-500 hover:bg-slate-100";
+const inactiveClasses = "text-slate-600 hover:bg-slate-100 active:bg-slate-200 lg:text-slate-500";
 
 const activeClasses = "border border-blue-100 bg-blue-50 text-blue-600";
 
@@ -67,9 +67,10 @@ function renderItems(items: NavItem[], pathname: string, onNavigate: (event: Mou
 
 type SidebarNavProps = {
   role: CompanyMemberRole | "admin";
+  onNavigate?: () => void;
 };
 
-export function SidebarNav({ role }: SidebarNavProps) {
+export function SidebarNav({ role, onNavigate }: SidebarNavProps) {
   const location = useLocation();
   const pathname = location.pathname;
   const [isHydrated, setIsHydrated] = useState(false);
@@ -105,10 +106,12 @@ export function SidebarNav({ role }: SidebarNavProps) {
     }
 
     if (isActive) {
+      onNavigate?.();
       return;
     }
 
     showLoader();
+    onNavigate?.();
   };
 
   return (
