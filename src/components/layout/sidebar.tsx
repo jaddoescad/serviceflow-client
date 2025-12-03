@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useCompanyContext } from "@/contexts/AuthContext";
 import { SidebarNav } from "./sidebar-nav";
@@ -13,6 +14,18 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose, organizationSwitcher }: SidebarProps) {
   const { member } = useCompanyContext();
+
+  // Prevent body scroll when sidebar is open on mobile
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
   const memberRole = member?.role ?? "admin";
   const canManageCompany = memberRole === "admin";
