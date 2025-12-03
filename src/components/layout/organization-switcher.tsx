@@ -66,9 +66,6 @@ export function OrganizationSwitcher({
         disabled={isSwitching}
         className="flex w-full items-center gap-3 rounded-lg bg-slate-100 px-3 py-3 transition hover:bg-slate-200 disabled:opacity-60"
       >
-        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent to-purple-600 text-sm font-bold text-white shadow-[0_4px_12px_rgba(37,99,235,0.2)]">
-          {currentOrg?.companyName?.charAt(0).toUpperCase() || "?"}
-        </div>
         <div className="flex flex-1 flex-col text-left">
           <p className="text-sm font-semibold text-slate-900">{currentOrg?.companyName || "Unknown"}</p>
           <p className="text-xs font-medium text-slate-500 capitalize">{currentOrg?.role || ""}</p>
