@@ -1,0 +1,15 @@
+export const SMS_MESSAGE_FIELDS = [
+  "id",
+  "company_id",
+  "contact_id",
+  "deal_id",
+  "from_number",
+  "to_number",
+  "body",
+  "direction",
+  "status",
+  "sent_by_user_id",
+  "has_media",
+  "created_at",
+  "updated_at",
+].join(", ");

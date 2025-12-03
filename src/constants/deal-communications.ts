@@ -1,0 +1,1 @@
+export const DEAL_CHAT_MESSAGE_PAGE_SIZE = 10;
