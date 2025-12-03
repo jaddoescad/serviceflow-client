@@ -32,6 +32,7 @@ export function KanbanBoard({
   title,
   initialDripSequences,
   showNewActions = true,
+  hideHeader = false,
   useInvoiceTotals = false,
 }: KanbanBoardProps) {
   const supabase = useSupabaseBrowserClient();
@@ -303,21 +304,23 @@ export function KanbanBoard({
         </div>
       ) : null}
       <div className="flex w-full h-full flex-col gap-2 md:gap-3">
-        <header className="flex flex-wrap items-center justify-between gap-2 pb-1 flex-shrink-0 md:pb-2 md:gap-3">
-          <h2 className="text-sm font-semibold text-slate-900 md:text-base">{title ?? "Deal Pipeline"}</h2>
-          {canManageDeals && showNewActions ? (
-            <NewActionMenu
-              companyId={companyId}
-              companyName={companyName}
-              stages={stages}
-              companyMembers={companyMembers}
-              onDealCreated={handleDealCreated}
-              onDealScheduled={handleDealScheduled}
-              onProposalCreated={handleProposalCreated}
-              onContactCreated={handleContactCreated}
-            />
-          ) : null}
-        </header>
+        {!hideHeader && (
+          <header className="flex flex-wrap items-center justify-between gap-2 pb-1 flex-shrink-0 md:pb-2 md:gap-3">
+            <h2 className="text-sm font-semibold text-slate-900 md:text-base">{title ?? "Deal Pipeline"}</h2>
+            {canManageDeals && showNewActions ? (
+              <NewActionMenu
+                companyId={companyId}
+                companyName={companyName}
+                stages={stages}
+                companyMembers={companyMembers}
+                onDealCreated={handleDealCreated}
+                onDealScheduled={handleDealScheduled}
+                onProposalCreated={handleProposalCreated}
+                onContactCreated={handleContactCreated}
+              />
+            ) : null}
+          </header>
+        )}
 
         {/* Mobile Stage Selector */}
         <div className="md:hidden relative">

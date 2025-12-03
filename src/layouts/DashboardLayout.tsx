@@ -6,13 +6,15 @@ import { DashboardLayoutClient } from "@/components/layout/dashboard-layout-clie
 import { OrganizationSwitcher } from "@/components/layout/organization-switcher";
 import { DashboardLayoutSkeleton } from "@/components/ui/skeleton";
 import { useSessionContext, useCompanyContext, useOrganizationsContext } from "@/contexts/AuthContext";
+import { PageHeaderProvider, usePageHeader } from "@/contexts/PageHeaderContext";
 
-export default function DashboardLayout() {
+function DashboardLayoutInner() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isLoading, isAuthenticated } = useSessionContext();
   const { company } = useCompanyContext();
   const { organizations } = useOrganizationsContext();
+  const { title, actions } = usePageHeader();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Close mobile menu on route change
@@ -48,7 +50,7 @@ export default function DashboardLayout() {
 
   return (
     <DashboardLayoutClient
-      header={<SiteHeader mobileMenuButton={mobileMenuButton} />}
+      header={<SiteHeader mobileMenuButton={mobileMenuButton} title={title} actions={actions} />}
       sidebar={
         <Sidebar
           isOpen={isMobileMenuOpen}
@@ -59,5 +61,13 @@ export default function DashboardLayout() {
     >
       <Outlet />
     </DashboardLayoutClient>
+  );
+}
+
+export default function DashboardLayout() {
+  return (
+    <PageHeaderProvider>
+      <DashboardLayoutInner />
+    </PageHeaderProvider>
   );
 }

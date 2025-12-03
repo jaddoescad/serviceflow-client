@@ -1,17 +1,22 @@
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSessionContext, useCompanyContext, useMembersContext } from "@/contexts/AuthContext";
+import { usePageHeader } from "@/contexts/PageHeaderContext";
 import { useDashboardData } from "@/hooks";
 import { filterDealsForMember } from "@/lib/company-members";
 import { KanbanBoardClient } from "@/components/pipeline/kanban-board.client";
+import { NewActionMenu } from "@/components/pipeline/new-action-menu";
 import { SALES_DEAL_STAGE_OPTIONS } from "@/features/deals";
 import { KanbanBoardSkeleton } from "@/components/ui/skeleton";
+import type { DealRecord } from "@/features/deals";
+import type { ContactRecord } from "@/features/contacts";
 
 export default function Home() {
   const navigate = useNavigate();
   const { isLoading: authLoading } = useSessionContext();
   const { company, member } = useCompanyContext();
   const { companyMembers } = useMembersContext();
+  const { setPageHeader } = usePageHeader();
 
   const { data, isLoading: dashboardLoading } = useDashboardData(company?.id, "sales");
   const deals = data?.deals ?? [];
@@ -38,6 +43,33 @@ export default function Home() {
       dripSequences
     };
   }, [deals, proposalSummaries, dripSequences, member]);
+
+  // Handlers for NewActionMenu - these are no-ops since KanbanBoard handles its own state
+  const handleDealCreated = (_deal: DealRecord) => {};
+  const handleDealScheduled = (_deal: DealRecord) => {};
+  const handleProposalCreated = (_deal: DealRecord) => {};
+  const handleContactCreated = (_contact: ContactRecord) => {};
+
+  // Set page header
+  useEffect(() => {
+    if (company && canManageDeals) {
+      setPageHeader(
+        "Sales Pipeline",
+        <NewActionMenu
+          companyId={company.id}
+          companyName={companyDisplayName}
+          stages={SALES_DEAL_STAGE_OPTIONS}
+          companyMembers={companyMembers}
+          onDealCreated={handleDealCreated}
+          onDealScheduled={handleDealScheduled}
+          onProposalCreated={handleProposalCreated}
+          onContactCreated={handleContactCreated}
+        />
+      );
+    } else {
+      setPageHeader("Sales Pipeline");
+    }
+  }, [company, canManageDeals, companyDisplayName, companyMembers, setPageHeader]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -66,6 +98,7 @@ export default function Home() {
         initialProposalSummaries={pageData.proposalSummaries}
         stages={SALES_DEAL_STAGE_OPTIONS}
         title="Sales Pipeline"
+        hideHeader={true}
         initialDripSequences={pageData.dripSequences}
       />
     </div>

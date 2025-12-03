@@ -44,6 +44,7 @@ export type KanbanBoardProps = {
   stages: DealStageOption[];
   title?: string;
   showNewActions?: boolean;
+  hideHeader?: boolean;
   initialDripSequences: DripSequenceRecord[];
   useInvoiceTotals?: boolean;
 };
