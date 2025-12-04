@@ -324,9 +324,23 @@ export function useNewDealForm({
     }
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const validateForm = (): boolean => {
+    const trimmedFirst = form.firstName.trim();
 
+    if (!trimmedFirst) {
+      setError("First name is required.");
+      return false;
+    }
+
+    setError(null);
+    return true;
+  };
+
+  const resetStep = () => {
+    setError(null);
+  };
+
+  const submitDeal = async (disableDrips: boolean) => {
     const trimmedFirst = form.firstName.trim();
     const trimmedLast = form.lastName.trim();
     const normalizedLast = trimmedLast || null;
@@ -445,7 +459,7 @@ export function useNewDealForm({
           salesperson: trimmedSalesperson || null,
           project_manager: normalizedProjectManager || null,
           crew_id: deal.crew_id ?? null,
-          disable_drips: form.disableDrips,
+          disable_drips: disableDrips,
         };
 
         if (form.stage !== deal.stage) {
@@ -515,7 +529,7 @@ export function useNewDealForm({
           event_color: null,
           send_email: false,
           send_sms: false,
-          disable_drips: form.disableDrips,
+          disable_drips: disableDrips,
         };
 
         const newDeal = await createDeal(payload);
@@ -548,6 +562,11 @@ export function useNewDealForm({
     }
   };
 
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    await submitDeal(form.disableDrips);
+  };
+
   return {
     form,
     addressForm,
@@ -570,5 +589,8 @@ export function useNewDealForm({
     handleAddressBlur,
     handleAddressSuggestionSelect,
     handleSubmit,
+    validateForm,
+    submitDeal,
+    resetStep,
   };
 }

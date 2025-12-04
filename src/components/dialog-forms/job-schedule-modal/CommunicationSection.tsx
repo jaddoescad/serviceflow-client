@@ -16,7 +16,6 @@ export function CommunicationSection({
 }: CommunicationSectionProps) {
   return (
     <section className="space-y-2">
-      <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Communication</h3>
       <div className="flex items-center gap-4 text-[11px] text-slate-600">
         <label className="flex items-center gap-2">
           <input

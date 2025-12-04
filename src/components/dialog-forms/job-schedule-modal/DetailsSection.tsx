@@ -5,7 +5,6 @@ type DetailsSectionProps = {
 export function DetailsSection({ dealTitle }: DetailsSectionProps) {
   return (
     <section className="space-y-2">
-      <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Details</h3>
       <label className="flex flex-col gap-1 text-[10px] font-medium text-slate-600">
         <span>Title</span>
         <input

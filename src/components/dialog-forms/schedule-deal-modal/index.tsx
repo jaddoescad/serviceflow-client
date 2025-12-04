@@ -33,10 +33,12 @@ import {
   DealDetailsSection,
   ServiceAddressSection,
   TeamAssignmentSection,
-  SendConfirmationSection,
+  CommunicationStep,
 } from "./sections";
 
 export type { ScheduleDealModalProps } from "./types";
+
+type Step = "details" | "communication";
 
 export function ScheduleDealModal({
   open,
@@ -54,6 +56,9 @@ export function ScheduleDealModal({
 }: ScheduleDealModalProps) {
   const supabase = useSupabaseBrowserClient();
   const { invalidateDashboard, invalidateCompanyDeals } = useDealInvalidation();
+
+  // Step state
+  const [step, setStep] = useState<Step>("details");
 
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -175,9 +180,10 @@ export function ScheduleDealModal({
     };
   }, [open, companyId, supabase]);
 
-  // Reset error when modal closes
+  // Reset state when modal closes
   useEffect(() => {
     if (!open) {
+      setStep("details");
       setError(null);
       setShowDeleteConfirm(false);
       setIsSubmitting(false);
@@ -189,6 +195,57 @@ export function ScheduleDealModal({
     selectedAddressId === "new"
       ? null
       : savedContactAddresses.find((address) => address.id === selectedAddressId) ?? null;
+
+  // Handle close with step reset
+  const handleClose = () => {
+    setStep("details");
+    onClose();
+  };
+
+  // Handle back button
+  const handleBack = () => {
+    setStep("details");
+    setError(null);
+  };
+
+  // Validate step 1 and go to step 2
+  const validateAndProceed = (): boolean => {
+    if (!form) return false;
+
+    const trimmedFirst = form.firstName.trim();
+
+    if (!trimmedFirst) {
+      setError("First name is required.");
+      return false;
+    }
+
+    if (!form.scheduledDate || !form.startTime || !form.endTime) {
+      setError("Please provide complete scheduling details.");
+      return false;
+    }
+
+    if (form.startTime === form.endTime) {
+      setError("End time must be after the start time.");
+      return false;
+    }
+
+    const startDate = buildDateTime(form.scheduledDate, form.startTime);
+    const endDate = buildDateTime(form.scheduledDate, form.endTime);
+
+    if (!startDate || !endDate) {
+      setError("Please provide valid scheduling details.");
+      return false;
+    }
+
+    setError(null);
+    return true;
+  };
+
+  const handleNext = () => {
+    if (validateAndProceed()) {
+      setStep("communication");
+    }
+  };
 
   const handleInputChange = useCallback(
     (event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -277,8 +334,8 @@ export function ScheduleDealModal({
     [setForm]
   );
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSubmit = async (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
     if (!form) return;
 
     const trimmedFirst = form.firstName.trim();
@@ -322,7 +379,7 @@ export function ScheduleDealModal({
 
     const trimmedEmail = form.email.trim();
     const trimmedPhone = form.phone.trim();
-    const assignedToId = resolveMemberUserId(form.assignedTo.trim(), companyMembers);
+    const assignedToId = resolveMemberUserId(form.assignedTo.trim(), companyMembers ?? []);
 
     const trimmedAddressForm: AddressFormState = {
       addressLine1: addressForm.addressLine1.trim(),
@@ -345,6 +402,11 @@ export function ScheduleDealModal({
     const renderedEmailSubject = populateAppointmentTemplate(emailSubject.trim(), templateVars);
     const renderedEmailBody = populateAppointmentTemplate(emailBody.trim(), templateVars);
     const renderedSmsBody = populateAppointmentTemplate(smsBody.trim(), templateVars);
+
+    // Determine if we should actually send based on step 2 choices
+    const shouldSendConfirmation = form.sendConfirmation && form.communicationMethod !== "none";
+    const shouldSendEmail = shouldSendConfirmation && (form.communicationMethod === "email" || form.communicationMethod === "both");
+    const shouldSendSms = shouldSendConfirmation && (form.communicationMethod === "sms" || form.communicationMethod === "both");
 
     try {
       let contactRecord: ContactRecord | null = deal?.contact ?? null;
@@ -409,8 +471,8 @@ export function ScheduleDealModal({
         assigned_to: assignedToId,
         crew_id: deal?.crew_id ?? null,
         event_color: form.eventColor,
-        send_email: form.communicationMethod === "email" || form.communicationMethod === "both",
-        send_sms: form.communicationMethod === "sms" || form.communicationMethod === "both",
+        send_email: shouldSendEmail,
+        send_sms: shouldSendSms,
         disable_drips: form.disableDrips,
       };
 
@@ -460,10 +522,10 @@ export function ScheduleDealModal({
         }
 
         const communications: UpdateDealAppointmentInput["communications"] = {};
-        if (appointmentPayload.send_email && trimmedEmail) {
+        if (shouldSendEmail && trimmedEmail) {
           communications.email = { to: trimmedEmail, subject: renderedEmailSubject, body: renderedEmailBody };
         }
-        if (appointmentPayload.send_sms && trimmedPhone) {
+        if (shouldSendSms && trimmedPhone) {
           communications.sms = { to: trimmedPhone, body: renderedSmsBody };
         }
 
@@ -472,6 +534,9 @@ export function ScheduleDealModal({
           appointment: appointmentPayload,
           deal: dealPayload,
           communications: Object.keys(communications).length > 0 ? communications : undefined,
+          // Pass reminder settings to backend
+          sendReminder: form.sendReminder && form.communicationMethod !== "none",
+          reminderChannel: form.communicationMethod,
         });
 
         // Invalidate React Query cache
@@ -481,15 +546,15 @@ export function ScheduleDealModal({
 
         void syncAppointmentToGoogle(updated, updated.latest_appointment, companyName);
         onScheduled(updated);
-        onClose();
+        handleClose();
         return;
       }
 
       const communications: ScheduleDealInput["communications"] = {};
-      if (appointmentPayload.send_email && trimmedEmail) {
+      if (shouldSendEmail && trimmedEmail) {
         communications.email = { to: trimmedEmail, subject: renderedEmailSubject, body: renderedEmailBody };
       }
-      if (appointmentPayload.send_sms && trimmedPhone) {
+      if (shouldSendSms && trimmedPhone) {
         communications.sms = { to: trimmedPhone, body: renderedSmsBody };
       }
 
@@ -498,6 +563,9 @@ export function ScheduleDealModal({
         appointment: appointmentPayload,
         deal: dealPayload,
         communications: Object.keys(communications).length > 0 ? communications : undefined,
+        // Pass reminder settings to backend
+        sendReminder: form.sendReminder && form.communicationMethod !== "none",
+        reminderChannel: form.communicationMethod,
       };
 
       const updated = await scheduleDeal(currentDeal.id, payload);
@@ -509,7 +577,7 @@ export function ScheduleDealModal({
 
       void syncAppointmentToGoogle(updated, updated.latest_appointment, companyName);
       onScheduled(updated);
-      onClose();
+      handleClose();
     } catch (err) {
       console.error("Failed to schedule deal", err);
       setError(err instanceof Error ? err.message : "Could not schedule deal.");
@@ -537,7 +605,7 @@ export function ScheduleDealModal({
 
       onScheduled({ ...deal, latest_appointment: null });
       setShowDeleteConfirm(false);
-      onClose();
+      handleClose();
     } catch (err) {
       console.error("Failed to delete appointment", err);
       setError(err instanceof Error ? err.message : "Failed to delete appointment");
@@ -549,7 +617,7 @@ export function ScheduleDealModal({
   if (!open || !form) return null;
 
   const contactName = formatFullName({ first_name: form.firstName, last_name: form.lastName });
-  const modalTitle = contactName || (deal ? `Deal #${deal.id.slice(0, 6)}` : "New Appointment");
+  const modalTitle = contactName || (deal ? `Deal #${deal.id.slice(0, 6)}` : "");
   const headerLabel = isEditMode ? modalCopy.editHeader : modalCopy.createHeader;
   const primaryActionLabel = isEditMode ? modalCopy.editAction : modalCopy.createAction;
   const primaryActionPendingLabel = isEditMode ? modalCopy.editPendingAction : modalCopy.createPendingAction;
@@ -557,7 +625,7 @@ export function ScheduleDealModal({
   return (
     <Modal
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       labelledBy="schedule-deal-modal-title"
       ariaLabel="Schedule appointment"
       size="xl"
@@ -565,15 +633,29 @@ export function ScheduleDealModal({
     >
       <div className="relative flex max-h-[88vh] w-full max-w-xl flex-col overflow-hidden rounded-lg bg-white shadow-xl">
         <header className="flex items-center justify-between rounded-t-lg border-b border-slate-200 px-3.5 py-2">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.08em] text-slate-400">{headerLabel}</p>
-            <h2 id="schedule-deal-modal-title" className="text-sm font-semibold text-slate-900">
-              {modalTitle}
-            </h2>
+          <div className="flex items-center gap-2">
+            {step === "communication" && (
+              <button
+                type="button"
+                onClick={handleBack}
+                className="flex h-6 w-6 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none"
+                aria-label="Go back"
+              >
+                ←
+              </button>
+            )}
+            <div>
+              <h2 id="schedule-deal-modal-title" className="text-sm font-semibold text-slate-900">
+                {step === "communication" ? "Notifications" : headerLabel}
+              </h2>
+              {modalTitle ? (
+                <p className="text-[11px] text-slate-500">{modalTitle}</p>
+              ) : null}
+            </div>
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="flex h-6 w-6 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none"
             aria-label="Close"
           >
@@ -581,110 +663,127 @@ export function ScheduleDealModal({
           </button>
         </header>
 
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-1 flex-col gap-4 overflow-y-auto bg-slate-50 px-3.5 py-4 text-[12px]"
-        >
-          <AppointmentSchedulingSection
-            form={form}
-            assignmentOptions={assignmentOptions}
-            onInputChange={handleInputChange}
-          />
-
-          <ContactInformationSection
-            form={form}
-            onInputChange={handleInputChange}
-          />
-
-          <DealDetailsSection
-            form={form}
-            dealSources={dealSources}
-            isLoadingDealSources={isLoadingDealSources}
-            onInputChange={handleInputChange}
-          />
-
-          <ServiceAddressSection
-            addressForm={addressForm}
-            selectedAddressId={selectedAddressId}
-            contactAddresses={savedContactAddresses}
-            selectedContactAddress={selectedContactAddress}
-            suggestions={addressSuggestions}
-            showSuggestions={showAddressSuggestions}
-            isFetchingAddress={isFetchingAddress}
-            onAddressFieldChange={handleAddressFieldChange}
-            onAddressBlur={handleAddressBlur}
-            onAddressFocus={handleAddressFocus}
-            onSelectSavedAddress={handleSelectSavedAddress}
-            onUseNewAddress={handleUseNewAddress}
-            onClearAddress={handleClearAddress}
-            onSuggestionSelect={handleSuggestionSelect}
-          />
-
-          <TeamAssignmentSection
-            form={form}
-            salespersonOptions={salespersonOptions}
-            projectManagerOptions={projectManagerOptions}
-            onInputChange={handleInputChange}
-          />
-
-          <SendConfirmationSection
-            form={form}
-            emailSubject={emailSubject}
-            emailBody={emailBody}
-            smsBody={smsBody}
-            onCommunicationMethodChange={handleCommunicationMethodChange}
-            onEmailSubjectChange={(value) => {
-              setEmailSubjectEdited(true);
-              setEmailSubject(value);
+        {step === "details" ? (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleNext();
             }}
-            onEmailBodyChange={(value) => {
-              setEmailBodyEdited(true);
-              setEmailBody(value);
-            }}
-            onSmsBodyChange={(value) => {
-              setSmsBodyEdited(true);
-              setSmsBody(value);
-            }}
-          />
+            className="flex flex-1 flex-col gap-4 overflow-y-auto bg-slate-50 px-3.5 py-4 text-[12px]"
+          >
+            <AppointmentSchedulingSection
+              form={form}
+              assignmentOptions={assignmentOptions}
+              onInputChange={handleInputChange}
+            />
 
-          {error ? (
-            <p className="rounded border border-red-200 bg-red-100 px-3 py-2 text-[12px] font-medium text-red-600">
-              {error}
-            </p>
-          ) : null}
+            <ContactInformationSection
+              form={form}
+              onInputChange={handleInputChange}
+            />
 
-          <footer className="mt-auto flex justify-between gap-2 border-t border-slate-200 pt-3">
-            <div>
-              {isEditMode && activeAppointment && !showDeleteConfirm ? (
-                <button
-                  type="button"
-                  onClick={handleDeleteClick}
-                  className="inline-flex items-center justify-center rounded border border-red-200 px-3 py-1.5 text-[12px] font-semibold text-red-600 transition hover:bg-red-50 focus:outline-none"
-                  disabled={isSubmitting || isDeleting}
-                >
-                  Delete
-                </button>
-              ) : null}
-            </div>
-            <div className="flex gap-2">
+            <DealDetailsSection
+              form={form}
+              dealSources={dealSources}
+              isLoadingDealSources={isLoadingDealSources}
+              onInputChange={handleInputChange}
+            />
+
+            <ServiceAddressSection
+              addressForm={addressForm}
+              selectedAddressId={selectedAddressId}
+              contactAddresses={savedContactAddresses}
+              selectedContactAddress={selectedContactAddress}
+              suggestions={addressSuggestions}
+              showSuggestions={showAddressSuggestions}
+              isFetchingAddress={isFetchingAddress}
+              onAddressFieldChange={handleAddressFieldChange}
+              onAddressBlur={handleAddressBlur}
+              onAddressFocus={handleAddressFocus}
+              onSelectSavedAddress={handleSelectSavedAddress}
+              onUseNewAddress={handleUseNewAddress}
+              onClearAddress={handleClearAddress}
+              onSuggestionSelect={handleSuggestionSelect}
+            />
+
+            <TeamAssignmentSection
+              form={form}
+              salespersonOptions={salespersonOptions}
+              projectManagerOptions={projectManagerOptions}
+              onInputChange={handleInputChange}
+            />
+
+            {error ? (
+              <p className="rounded border border-red-200 bg-red-100 px-3 py-2 text-[12px] font-medium text-red-600">
+                {error}
+              </p>
+            ) : null}
+
+            <footer className="mt-auto flex justify-end gap-2 border-t border-slate-200 pt-3">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={handleClose}
                 className="inline-flex items-center justify-center rounded border border-slate-200 px-3 py-1.5 text-[12px] font-semibold text-slate-600 transition hover:bg-slate-100 focus:outline-none"
-                disabled={isSubmitting || isDeleting}
+                disabled={isSubmitting}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="inline-flex items-center justify-center rounded bg-accent px-3 py-1.5 text-[12px] font-semibold text-white transition hover:bg-blue-600 focus:outline-none disabled:opacity-60"
-                disabled={isSubmitting || isDeleting}
+                className="inline-flex items-center justify-center rounded bg-accent px-3 py-1.5 text-[12px] font-semibold text-white transition hover:bg-blue-600 focus:outline-none"
               >
-                {isSubmitting ? primaryActionPendingLabel : primaryActionLabel}
+                Next
               </button>
-            </div>
-          </footer>
-        </form>
+            </footer>
+          </form>
+        ) : (
+          <div className="flex flex-1 flex-col gap-4 overflow-y-auto bg-slate-50 px-3.5 py-4 text-[12px]">
+            <CommunicationStep
+              form={form}
+              onCheckboxChange={handleInputChange}
+              onCommunicationMethodChange={handleCommunicationMethodChange}
+            />
+
+            {error ? (
+              <p className="rounded border border-red-200 bg-red-100 px-3 py-2 text-[12px] font-medium text-red-600">
+                {error}
+              </p>
+            ) : null}
+
+            <footer className="mt-auto flex justify-between gap-2 border-t border-slate-200 pt-3">
+              <div>
+                {isEditMode && activeAppointment && !showDeleteConfirm ? (
+                  <button
+                    type="button"
+                    onClick={handleDeleteClick}
+                    className="inline-flex items-center justify-center rounded border border-red-200 px-3 py-1.5 text-[12px] font-semibold text-red-600 transition hover:bg-red-50 focus:outline-none"
+                    disabled={isSubmitting || isDeleting}
+                  >
+                    Delete
+                  </button>
+                ) : null}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="inline-flex items-center justify-center rounded border border-slate-200 px-3 py-1.5 text-[12px] font-semibold text-slate-600 transition hover:bg-slate-100 focus:outline-none"
+                  disabled={isSubmitting || isDeleting}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSubmit()}
+                  className="inline-flex items-center justify-center rounded bg-accent px-3 py-1.5 text-[12px] font-semibold text-white transition hover:bg-blue-600 focus:outline-none disabled:opacity-60"
+                  disabled={isSubmitting || isDeleting}
+                >
+                  {isSubmitting ? primaryActionPendingLabel : primaryActionLabel}
+                </button>
+              </div>
+            </footer>
+          </div>
+        )}
 
         {showDeleteConfirm ? (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-950/60 p-4">

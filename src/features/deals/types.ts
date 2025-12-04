@@ -116,6 +116,8 @@ export type UpdateDealInput = {
 
 export type ScheduleDealStageId = "estimate_scheduled" | "project_scheduled";
 
+export type ReminderChannel = "both" | "email" | "sms" | "none";
+
 export type ScheduleDealInput = {
   stage: ScheduleDealStageId;
   appointment: NewAppointmentPayload;
@@ -131,6 +133,9 @@ export type ScheduleDealInput = {
       body: string;
     };
   };
+  // Reminder settings
+  sendReminder?: boolean;
+  reminderChannel?: ReminderChannel;
 };
 
 export type UpdateDealAppointmentInput = {
@@ -148,6 +153,9 @@ export type UpdateDealAppointmentInput = {
       body: string;
     };
   };
+  // Reminder settings
+  sendReminder?: boolean;
+  reminderChannel?: ReminderChannel;
 };
 
 export type UpdateDealDetailsInput = {

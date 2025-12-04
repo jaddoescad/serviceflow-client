@@ -30,6 +30,9 @@ export type FormState = {
   endTime: string;
   communicationMethod: CommunicationMethod;
   notes: string;
+  // Step 2: Communication options
+  sendConfirmation: boolean;
+  sendReminder: boolean;
 };
 
 export type AddressFormState = {

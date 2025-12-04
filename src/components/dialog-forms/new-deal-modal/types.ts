@@ -88,6 +88,9 @@ export type UseNewDealFormReturn = {
   handleAddressBlur: () => void;
   handleAddressSuggestionSelect: (suggestion: PlaceSuggestion) => Promise<void>;
   handleSubmit: (event: React.FormEvent<HTMLFormElement>) => Promise<void>;
+  validateForm: () => boolean;
+  submitDeal: (disableDrips: boolean) => Promise<void>;
+  resetStep: () => void;
 };
 
 export function createInitialFormState(defaultStage: DealStageId): FormState {

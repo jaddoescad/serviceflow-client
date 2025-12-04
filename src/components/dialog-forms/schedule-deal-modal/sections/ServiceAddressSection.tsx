@@ -46,12 +46,9 @@ export function ServiceAddressSection({
 
   return (
     <section className="space-y-2.5">
-      <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-        Service Address
-      </h3>
       {contactAddresses.length ? (
-        <div className="space-y-1.5 rounded border border-slate-200 bg-white p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+        <div className="space-y-1.5">
+          <p className="text-[10px] font-medium text-slate-500">
             Saved addresses
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -88,22 +85,7 @@ export function ServiceAddressSection({
       ) : null}
 
       {selectedAddressId === "new" ? (
-        <div className="space-y-2.5 rounded border border-slate-200 bg-white p-3">
-          <div className="flex items-center justify-between">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-              New address
-            </p>
-            {contactAddresses.length ? (
-              <button
-                type="button"
-                onClick={onClearAddress}
-                className="text-[11px] font-semibold text-slate-600 underline-offset-2 transition hover:underline"
-              >
-                Clear
-              </button>
-            ) : null}
-          </div>
-
+        <div className="space-y-2.5">
           <div className="flex flex-col gap-1 text-[10px] font-medium text-slate-600">
             <span>Address line 1</span>
             <div className="relative">
@@ -170,36 +152,6 @@ export function ServiceAddressSection({
             </label>
           </div>
 
-          <label className="flex flex-col gap-1 text-[10px] font-medium text-slate-600">
-            <span>Country</span>
-            <input
-              type="text"
-              value={addressForm.country}
-              onChange={onAddressFieldChange("country")}
-              placeholder="Country"
-              className="w-full rounded border border-slate-200 px-2.5 py-1.5 text-[12px] shadow-sm focus:border-accent focus:outline-none"
-            />
-          </label>
-        </div>
-      ) : selectedContactAddress ? (
-        <div className="space-y-1.5 rounded border border-slate-200 bg-white p-3">
-          <div className="flex items-center justify-between">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-              Selected address
-            </p>
-            <button
-              type="button"
-              onClick={onUseNewAddress}
-              className="text-[11px] font-semibold text-slate-600 underline-offset-2 transition hover:underline"
-            >
-              Use new address
-            </button>
-          </div>
-          <div className="space-y-0.5 text-[11px] text-slate-600">
-            <p className="font-medium text-slate-700">
-              {formatAddressSummary(selectedContactAddress)}
-            </p>
-          </div>
         </div>
       ) : null}
     </section>

@@ -57,7 +57,7 @@ export function AddressSection({
         </label>
       ) : null}
 
-      <div className="space-y-2.5 rounded border border-slate-200 bg-white p-3">
+      <div className="space-y-2.5">
         <label className="flex flex-col gap-1 text-[10px] font-medium text-slate-600">
           <span>Address line 1</span>
           <input

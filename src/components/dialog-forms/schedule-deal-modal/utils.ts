@@ -209,6 +209,9 @@ export const createInitialFormState = (
       latestAppointment?.send_sms ?? deal?.send_sms ?? false
     ),
     notes: latestAppointment?.appointment_notes ?? "",
+    // Step 2: Communication options - default to enabled
+    sendConfirmation: true,
+    sendReminder: true,
   };
 };
 

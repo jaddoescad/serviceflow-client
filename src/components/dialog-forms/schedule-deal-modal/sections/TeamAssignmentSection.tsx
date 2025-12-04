@@ -16,9 +16,6 @@ export function TeamAssignmentSection({
 }: TeamAssignmentSectionProps) {
   return (
     <section className="space-y-2.5">
-      <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-        Team & Assignment
-      </h3>
       <div className="grid gap-2.5 md:grid-cols-2">
         <label className="flex flex-col gap-1 text-[10px] font-medium text-slate-600">
           <span>Salesperson</span>
@@ -54,16 +51,6 @@ export function TeamAssignmentSection({
           </select>
         </label>
       </div>
-      <label className="flex items-center gap-2 text-xs font-medium text-slate-600">
-        <input
-          type="checkbox"
-          name="disableDrips"
-          checked={form.disableDrips}
-          onChange={onInputChange}
-          className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent"
-        />
-        Disable drips for this deal
-      </label>
     </section>
   );
 }
