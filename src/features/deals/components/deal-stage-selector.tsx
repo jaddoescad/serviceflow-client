@@ -125,19 +125,24 @@ export function DealStageSelector({
 
   return (
     <div className={`flex flex-col ${className ?? ""}`}>
-      <select
-        aria-label="Deal stage"
-        value={value}
-        onChange={handleChange}
-        disabled={disabled || isUpdating}
-        className={`${selectWidthClass} rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-600 outline-none transition focus:border-slate-400 focus:ring-1 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-60`.trim()}
-      >
-        {options.map((option) => (
-          <option key={option.id} value={option.id}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      <div className="relative inline-flex items-center">
+        <select
+          aria-label="Deal stage"
+          value={value}
+          onChange={handleChange}
+          disabled={disabled || isUpdating}
+          className={`${selectWidthClass} rounded-md border-0 sm:border border-slate-200 bg-transparent sm:bg-white pl-0 pr-5 sm:px-2.5 py-1 text-[17px] sm:text-[11px] font-normal sm:font-medium text-sky-600 sm:text-slate-600 outline-none transition focus:border-slate-400 focus:ring-0 sm:focus:ring-1 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-60 appearance-none sm:appearance-auto`.trim()}
+        >
+          {options.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <svg className="pointer-events-none absolute right-0 h-4 w-4 text-sky-600 sm:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </div>
 
       {/* Drip Prompt Dialog */}
       <StageDripPromptDialog

@@ -147,142 +147,148 @@ export function DealSummaryCard({
           </p>
         </div>
       )}
-      <header className="space-y-4">
-        <div className="flex flex-col gap-2">
-          <div className="space-y-1">
-            <div className="flex items-center justify-between w-full">
-              <h2 className="text-[20px] sm:text-[22px] font-semibold leading-6 text-slate-900">
-                {formatFullName({ first_name: snapshot.deal.first_name, last_name: snapshot.deal.last_name })}
-              </h2>
-              <div className="flex items-center gap-2">
+      <header className="space-y-4 pt-2 pb-2">
+        {/* Name Header - compact */}
+        <div className="flex items-start justify-between">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-[22px] sm:text-[22px] font-semibold leading-tight text-slate-900 truncate">
+              {formatFullName({ first_name: snapshot.deal.first_name, last_name: snapshot.deal.last_name })}
+            </h2>
+            <p className="text-[13px] sm:text-[11px] text-slate-400 mt-0.5">#{snapshot.deal.id.slice(0, 8)}</p>
+          </div>
+          <div className="relative ml-2" ref={dropdownRef}>
+            <button
+              type="button"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition"
+              aria-label="More actions"
+              aria-expanded={isDropdownOpen}
+              aria-haspopup="true"
+            >
+              <IconMoreVertical />
+            </button>
+            {isDropdownOpen && (
+              <div className="absolute right-0 top-full z-10 mt-1 w-44 sm:w-36 rounded-xl sm:rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
                 {!isArchived && (
                   <button
                     type="button"
-                    onClick={onEdit}
-                    className="inline-flex h-10 w-10 sm:h-7 sm:w-7 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition hover:border-slate-300 hover:text-slate-700 disabled:opacity-60"
-                    aria-label="Edit deal information"
-                    disabled={!onEdit}
+                    onClick={() => { setIsDropdownOpen(false); onEdit?.(); }}
+                    className="flex w-full items-center gap-3 px-4 py-3 sm:py-2 text-left text-[15px] sm:text-sm text-slate-700 hover:bg-slate-50"
                   >
                     <IconEdit />
+                    Edit
                   </button>
                 )}
-                <div className="relative" ref={dropdownRef}>
+                <div className="my-1 border-t border-slate-100" />
+                {isArchived ? (
                   <button
                     type="button"
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="inline-flex h-10 w-10 sm:h-7 sm:w-7 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
-                    aria-label="More actions"
-                    aria-expanded={isDropdownOpen}
-                    aria-haspopup="true"
+                    onClick={handleUnarchiveClick}
+                    className="flex w-full items-center gap-3 px-4 py-3 sm:py-2 text-left text-[15px] sm:text-sm text-slate-700 hover:bg-slate-50"
                   >
-                    <IconMoreVertical />
+                    <IconUnarchive />
+                    Unarchive
                   </button>
-                {isDropdownOpen && (
-                  <div className="absolute right-0 top-full z-10 mt-1 w-40 sm:w-36 rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
-                    {isArchived ? (
-                      <button
-                        type="button"
-                        onClick={handleUnarchiveClick}
-                        className="flex w-full items-center gap-2 px-3 py-3 sm:py-2 text-left text-[15px] sm:text-sm text-slate-700 hover:bg-slate-50"
-                      >
-                        <IconUnarchive />
-                        Unarchive
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleArchiveClick}
-                        className="flex w-full items-center gap-2 px-3 py-3 sm:py-2 text-left text-[15px] sm:text-sm text-slate-700 hover:bg-slate-50"
-                      >
-                        <IconArchive />
-                        Archive
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={handleDeleteClick}
-                      className="flex w-full items-center gap-2 px-3 py-3 sm:py-2 text-left text-[15px] sm:text-sm text-rose-600 hover:bg-rose-50"
-                    >
-                      <IconTrash />
-                      Delete
-                    </button>
-                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleArchiveClick}
+                    className="flex w-full items-center gap-3 px-4 py-3 sm:py-2 text-left text-[15px] sm:text-sm text-slate-700 hover:bg-slate-50"
+                  >
+                    <IconArchive />
+                    Archive
+                  </button>
                 )}
-                </div>
-              </div>
-            </div>
-            <ConfirmDialog
-              open={confirmAction === "archive"}
-              onClose={handleCloseConfirm}
-              onConfirm={handleConfirm}
-              title="Archive Deal"
-              description="Are you sure you want to archive this deal? It will be removed from the pipeline but can be restored later."
-              confirmLabel="Archive"
-              cancelLabel="Cancel"
-              variant="warning"
-              loading={isArchiving}
-            />
-            <ConfirmDialog
-              open={confirmAction === "unarchive"}
-              onClose={handleCloseConfirm}
-              onConfirm={handleConfirm}
-              title="Unarchive Deal"
-              description="Are you sure you want to restore this deal? It will be added back to the pipeline."
-              confirmLabel="Unarchive"
-              cancelLabel="Cancel"
-              variant="info"
-              loading={isUnarchiving}
-            />
-            <ConfirmDialog
-              open={confirmAction === "delete"}
-              onClose={handleCloseConfirm}
-              onConfirm={handleConfirm}
-              title="Delete Deal"
-              description="Are you sure you want to permanently delete this deal? This action cannot be undone."
-              confirmLabel="Delete"
-              cancelLabel="Cancel"
-              variant="danger"
-              loading={isDeleting}
-            />
-            <p className="text-[13px] sm:text-[11px] font-medium uppercase tracking-wide text-slate-400">ID {snapshot.deal.id.slice(0, 8)}</p>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <span className="text-[11px] sm:text-[10px] font-semibold uppercase tracking-wide text-slate-500">Drip</span>
-          <div className="flex items-center gap-3 sm:gap-2">
-            <DealStageSelector
-              value={snapshot.deal.stage}
-              pipelineId={DEAL_STAGE_PIPELINE_MAP[snapshot.deal.stage]}
-              selectClassName="w-auto"
-              disabled={isArchived}
-              appointmentCount={snapshot.appointments?.length ?? 0}
-              proposalCount={snapshot.proposals?.length ?? 0}
-              dealLabel={formatFullName({ first_name: snapshot.deal.first_name, last_name: snapshot.deal.last_name })}
-              defaultDripsEnabled={!snapshot.deal.disable_drips}
-              dripSequencesByStage={dripSequencesByStage}
-              onStageChange={onStageChange}
-              isUpdating={isUpdatingStage}
-              stageChangeError={stageChangeError}
-            />
-            {!isArchived && (
-              <button
-                type="button"
-                onClick={() => onToggleDrips?.(!dripsActive)}
-                disabled={!onToggleDrips || isTogglingDrips}
-                className="inline-flex items-center disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <span
-                  className={`relative inline-flex h-6 w-11 sm:h-5 sm:w-9 items-center rounded-full transition-colors ${dripsActive ? "bg-emerald-500" : "bg-slate-300"}`}
+                <button
+                  type="button"
+                  onClick={handleDeleteClick}
+                  className="flex w-full items-center gap-3 px-4 py-3 sm:py-2 text-left text-[15px] sm:text-sm text-rose-600 hover:bg-rose-50"
                 >
-                  <span
-                    className={`inline-block h-5 w-5 sm:h-4 sm:w-4 transform rounded-full bg-white shadow transition-transform ${dripsActive ? "translate-x-5 sm:translate-x-4" : "translate-x-0.5"}`}
-                  />
-                </span>
-              </button>
+                  <IconTrash />
+                  Delete
+                </button>
+              </div>
             )}
           </div>
         </div>
+
+        <ConfirmDialog
+          open={confirmAction === "archive"}
+          onClose={handleCloseConfirm}
+          onConfirm={handleConfirm}
+          title="Archive Deal"
+          description="Are you sure you want to archive this deal? It will be removed from the pipeline but can be restored later."
+          confirmLabel="Archive"
+          cancelLabel="Cancel"
+          variant="warning"
+          loading={isArchiving}
+        />
+        <ConfirmDialog
+          open={confirmAction === "unarchive"}
+          onClose={handleCloseConfirm}
+          onConfirm={handleConfirm}
+          title="Unarchive Deal"
+          description="Are you sure you want to restore this deal? It will be added back to the pipeline."
+          confirmLabel="Unarchive"
+          cancelLabel="Cancel"
+          variant="info"
+          loading={isUnarchiving}
+        />
+        <ConfirmDialog
+          open={confirmAction === "delete"}
+          onClose={handleCloseConfirm}
+          onConfirm={handleConfirm}
+          title="Delete Deal"
+          description="Are you sure you want to permanently delete this deal? This action cannot be undone."
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
+          variant="danger"
+          loading={isDeleting}
+        />
+
+        {/* Stage & Drip Card - iOS style */}
+        <section className="rounded-xl sm:rounded-none bg-white sm:bg-transparent border border-slate-200 sm:border-0 overflow-hidden">
+          <div className="divide-y divide-slate-100 sm:divide-y-0 sm:space-y-1">
+            {/* Stage Row */}
+            <div className="flex items-center justify-between px-4 py-3 sm:px-0 sm:py-1">
+              <span className="text-[15px] sm:text-[11px] font-medium text-slate-500">Stage</span>
+              <DealStageSelector
+                value={snapshot.deal.stage}
+                pipelineId={DEAL_STAGE_PIPELINE_MAP[snapshot.deal.stage]}
+                selectClassName="w-auto text-[17px] sm:text-[11px]"
+                disabled={isArchived}
+                appointmentCount={snapshot.appointments?.length ?? 0}
+                proposalCount={snapshot.proposals?.length ?? 0}
+                dealLabel={formatFullName({ first_name: snapshot.deal.first_name, last_name: snapshot.deal.last_name })}
+                defaultDripsEnabled={!snapshot.deal.disable_drips}
+                dripSequencesByStage={dripSequencesByStage}
+                onStageChange={onStageChange}
+                isUpdating={isUpdatingStage}
+                stageChangeError={stageChangeError}
+              />
+            </div>
+            {/* Drip Toggle Row */}
+            {!isArchived && (
+              <div className="flex items-center justify-between px-4 py-3 sm:px-0 sm:py-1">
+                <span className="text-[15px] sm:text-[11px] font-medium text-slate-500">Drip Campaign</span>
+                <button
+                  type="button"
+                  onClick={() => onToggleDrips?.(!dripsActive)}
+                  disabled={!onToggleDrips || isTogglingDrips}
+                  className="inline-flex items-center disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <span
+                    className={`relative inline-flex h-8 w-14 sm:h-5 sm:w-9 items-center rounded-full transition-colors ${dripsActive ? "bg-emerald-500" : "bg-slate-300"}`}
+                  >
+                    <span
+                      className={`inline-block h-7 w-7 sm:h-4 sm:w-4 transform rounded-full bg-white shadow transition-transform ${dripsActive ? "translate-x-6 sm:translate-x-4" : "translate-x-0.5"}`}
+                    />
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
       </header>
 
       {/* Contact Card - iOS style */}
