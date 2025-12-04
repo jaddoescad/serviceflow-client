@@ -135,7 +135,7 @@ export function Modal({
   const paddingClass = PADDING_CLASSES[align] ?? PADDING_CLASSES.center;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 h-[100dvh] supports-[height:100dvh]:h-[100dvh]">
+    <div className="fixed inset-0 z-50 h-[100dvh] supports-[height:100dvh]:h-[100dvh] overflow-hidden">
       <div
         className={classNames(
           "absolute inset-0 bg-slate-950/60 transition-opacity",
@@ -145,7 +145,7 @@ export function Modal({
       />
       <div
         className={classNames(
-          "relative flex h-full w-full justify-center px-3 sm:px-4 pb-[env(safe-area-inset-bottom)]",
+          "relative flex h-full w-full justify-center overflow-x-hidden px-3 sm:px-4 pb-[env(safe-area-inset-bottom)]",
           alignClass,
           paddingClass
         )}

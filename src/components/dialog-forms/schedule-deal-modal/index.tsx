@@ -657,7 +657,7 @@ export function ScheduleDealModal({
           }}
           className="flex flex-1 flex-col overflow-hidden"
         >
-          <ModalBody className="flex flex-col gap-4 bg-slate-50 text-[13px] sm:text-[12px]">
+          <ModalBody className="flex flex-col gap-4 overflow-x-hidden bg-slate-50 text-[13px] sm:text-[12px]">
             <AppointmentSchedulingSection
               form={form}
               assignmentOptions={assignmentOptions}
@@ -718,7 +718,7 @@ export function ScheduleDealModal({
         </form>
       ) : (
         <>
-          <ModalBody className="flex flex-col gap-4 bg-slate-50 text-[13px] sm:text-[12px]">
+          <ModalBody className="flex flex-col gap-4 overflow-x-hidden bg-slate-50 text-[13px] sm:text-[12px]">
             <CommunicationStep
               form={form}
               onCheckboxChange={handleInputChange}
