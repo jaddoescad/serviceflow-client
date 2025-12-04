@@ -18,6 +18,11 @@ export function useSaveQuote(dealId: string) {
       queryClient.invalidateQueries({ queryKey: quoteKeys.list(dealId) });
       queryClient.invalidateQueries({ queryKey: dealKeys.detail(dealId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.dealDetail.detail(dealId) });
+      // Invalidate all proposalData queries for this deal (with any quoteId)
+      queryClient.invalidateQueries({
+        queryKey: ['dealDetail', 'proposalData', dealId],
+        exact: false
+      });
       queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
       toast.success('Quote saved', 'The quote has been saved successfully.');
     },
@@ -37,6 +42,11 @@ export function useCreateQuote(dealId: string) {
       queryClient.invalidateQueries({ queryKey: quoteKeys.list(dealId) });
       queryClient.invalidateQueries({ queryKey: dealKeys.detail(dealId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.dealDetail.detail(dealId) });
+      // Invalidate all proposalData queries for this deal (with any quoteId)
+      queryClient.invalidateQueries({
+        queryKey: ['dealDetail', 'proposalData', dealId],
+        exact: false
+      });
       queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
     },
     onError: (error) => {
@@ -55,6 +65,11 @@ export function useDeleteQuote(dealId: string) {
       queryClient.invalidateQueries({ queryKey: quoteKeys.list(dealId) });
       queryClient.invalidateQueries({ queryKey: dealKeys.detail(dealId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.dealDetail.detail(dealId) });
+      // Invalidate all proposalData queries for this deal (with any quoteId)
+      queryClient.invalidateQueries({
+        queryKey: ['dealDetail', 'proposalData', dealId],
+        exact: false
+      });
       queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
       toast.success('Quote deleted', 'The quote has been deleted.');
     },

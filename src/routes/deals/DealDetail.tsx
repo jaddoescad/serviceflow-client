@@ -5,6 +5,7 @@ import { useSessionContext, useCompanyContext } from "@/contexts/AuthContext";
 import { useDealDetail } from "@/hooks";
 import { DealDetailPageSkeleton } from "@/components/ui/skeleton";
 import { formatByteSize } from "@/lib/attachments";
+import { formatQuoteId } from "@/lib/form-utils";
 import type {
   DealAttachmentRecord,
   DealDetailSnapshot,
@@ -124,12 +125,13 @@ function mapQuoteToDealProposal(quote: QuoteRecord, _invoices: InvoiceRecord[]):
   const sentAt = quote.status === "draft" ? null : quote.updated_at;
   const signedAt = quote.status === "accepted" ? quote.updated_at : null;
 
-  const name = quote.title.trim() !== "" ? quote.title : quote.quote_number;
+  const displayId = formatQuoteId(quote.id);
+  const name = quote.title.trim() !== "" ? quote.title : displayId;
 
   return {
     id: quote.id,
     name,
-    version: quote.quote_number,
+    version: displayId,
     total,
     status,
     public_share_id: quote.public_share_id,

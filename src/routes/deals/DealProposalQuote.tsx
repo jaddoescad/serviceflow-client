@@ -77,8 +77,8 @@ export default function QuoteBuilderPage() {
     if (deal.service_address?.postal_code) addressParts.push(deal.service_address.postal_code);
     const propertyAddress = addressParts.join(", ") || "No address set";
 
-    const defaultQuoteNumber =
-      quote?.quote_number ?? `Q-${String(quoteCount + (quote ? 0 : 1)).padStart(3, "0")}`;
+    // For existing quotes, use their quote_number; for new quotes, it will be generated on save
+    const defaultQuoteNumber = quote?.quote_number ?? "New Quote";
 
     const taxRate = companySettings?.tax_rate ?? null;
     const initialInvoiceUrl =
@@ -118,8 +118,8 @@ export default function QuoteBuilderPage() {
       {
         company_id: company.id,
         deal_id: pageData.deal.id,
-        quote_number: `Q-${String(pageData.quoteCount + 1).padStart(3, "0")}`,
-        title: `Q-${String(pageData.quoteCount + 1).padStart(3, "0")}`,
+        quote_number: "", // Will be generated from UUID on server
+        title: "",
         client_message: QUOTE_DEFAULT_CLIENT_MESSAGE,
         disclaimer: QUOTE_DEFAULT_DISCLAIMER,
         status: "draft",

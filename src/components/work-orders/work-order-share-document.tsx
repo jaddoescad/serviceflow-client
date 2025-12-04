@@ -1,4 +1,5 @@
 import type { QuoteShareSnapshot } from "@/types/quote-shares";
+import { formatQuoteId } from "@/lib/form-utils";
 
 export type WorkOrderShareVariant = "standard" | "secret";
 
@@ -25,7 +26,7 @@ export function WorkOrderShareDocument({ snapshot, variant }: WorkOrderShareDocu
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Work Order #{quote.quote_number}
+                    Work Order #{formatQuoteId(quote.id)}
                   </p>
                   <h1 className="mt-1 text-2xl font-semibold text-slate-900">{workOrderTitle}</h1>
                   {showCustomerDetails ? (

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { formatCurrency } from "@/lib/currency";
+import { formatQuoteId } from "@/lib/form-utils";
 import { loadQuoteShareSnapshot } from "@/lib/quote-share-loader.server";
 import { ProposalAcceptance } from "@/components/proposals/proposal-acceptance";
 import { DEFAULT_PROPOSAL_TERMS_TEMPLATE_CONTENT } from "@/constants/proposal-terms";
@@ -117,7 +118,7 @@ export default function CustomerProposalView() {
             <div className="grid gap-6 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Proposal #{quote.quote_number}
+                  Proposal #{formatQuoteId(quote.id)}
                 </p>
                 <h1 className="mt-1 text-2xl font-semibold text-slate-900">Proposal Overview</h1>
                 <p className="mt-2 text-sm text-slate-600">Prepared for {customer.name}</p>

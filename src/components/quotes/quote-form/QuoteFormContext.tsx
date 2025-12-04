@@ -12,6 +12,7 @@ import {
   type ChangeEvent,
 } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import type {
   EditableQuoteLineItem,
   QuoteRecord,
@@ -27,7 +28,7 @@ import type { ProposalAttachmentAsset } from "@/types/proposal-attachments";
 import type { WorkOrderDeliveryMethod, WorkOrderDeliveryRequestPayload } from "@/types/work-order-delivery";
 import { QUOTE_DEFAULT_CLIENT_MESSAGE, QUOTE_DEFAULT_DISCLAIMER, createQuote, deleteQuote, sendQuoteDelivery, acceptQuoteWithoutSignature } from "@/features/quotes";
 import { getInvoiceByQuoteId } from "@/features/invoices";
-import { parseUnitPrice, createClientId } from "@/lib/form-utils";
+import { parseUnitPrice, createClientId, formatQuoteId } from "@/lib/form-utils";
 import { renderCommunicationTemplate } from "@/features/communications";
 import { getBrowserProposalShareUrl, getEmployeeProposalPreviewUrl } from "@/lib/proposal-share";
 import {
@@ -232,6 +233,7 @@ export function QuoteFormProvider({
   isArchived = false,
 }: QuoteFormProviderProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // Repositories
   const attachmentsRepository = useMemo(() => createProposalAttachmentsRepository(), []);
@@ -356,7 +358,8 @@ export function QuoteFormProvider({
     [publicShareId, origin]
   );
   const shareDisabledReason = publicShareId ? null : "Save the quote to access share links.";
-  const displayQuoteNumber = quoteNumber.trim() || defaultQuoteNumber;
+  // Use quote ID for display (formatted as Q-XXXXXXXX)
+  const displayQuoteNumber = quoteId ? formatQuoteId(quoteId) : "New Quote";
   const lastSavedLabel = lastSavedAt ? formatDateTime(lastSavedAt) : "Not yet saved";
 
   const workOrderShareUrl = useMemo(
@@ -373,21 +376,21 @@ export function QuoteFormProvider({
     return buildWorkOrderTemplateDefaults(workOrderTemplate, {
       companyName,
       clientName,
-      quoteNumber: quoteNumber || defaultQuoteNumber,
+      quoteNumber: displayQuoteNumber,
       workOrderUrl: workOrderShareUrl ?? "",
       workOrderAddress: propertyAddress,
     });
-  }, [workOrderTemplate, companyName, clientName, quoteNumber, defaultQuoteNumber, workOrderShareUrl, propertyAddress]);
+  }, [workOrderTemplate, companyName, clientName, displayQuoteNumber, workOrderShareUrl, propertyAddress]);
 
   const workOrderSecretDefaults = useMemo(() => {
     return buildWorkOrderTemplateDefaults(workOrderTemplate, {
       companyName,
       clientName,
-      quoteNumber: quoteNumber || defaultQuoteNumber,
+      quoteNumber: displayQuoteNumber,
       workOrderUrl: secretWorkOrderShareUrl ?? "",
       workOrderAddress: propertyAddress,
     });
-  }, [workOrderTemplate, companyName, clientName, quoteNumber, defaultQuoteNumber, secretWorkOrderShareUrl, propertyAddress]);
+  }, [workOrderTemplate, companyName, clientName, displayQuoteNumber, secretWorkOrderShareUrl, propertyAddress]);
 
   const currentWorkOrderDefaults = workOrderDialogState?.variant === "secret"
     ? workOrderSecretDefaults
@@ -665,6 +668,12 @@ export function QuoteFormProvider({
         lastSavedSnapshotRef.current = committedSnapshot;
         setHasPendingChanges(false);
 
+        // Invalidate proposal data cache so quote count is updated
+        queryClient.invalidateQueries({
+          queryKey: ['dealDetail', 'proposalData', dealId],
+          exact: false
+        });
+
         return saved;
       } catch (error) {
         console.error("Failed to save quote", error);
@@ -674,7 +683,7 @@ export function QuoteFormProvider({
         setIsSaving(false);
       }
     },
-    [clientMessage, companyId, dealId, deletedLineItemIds, disclaimer, defaultQuoteNumber, lineItems, quoteId, quoteNumber, status]
+    [clientMessage, companyId, dealId, deletedLineItemIds, disclaimer, defaultQuoteNumber, lineItems, quoteId, quoteNumber, status, queryClient]
   );
 
   const handleDeleteQuote = useCallback(async () => {
@@ -690,13 +699,18 @@ export function QuoteFormProvider({
 
     try {
       await deleteQuote(dealId, quoteId);
+      // Invalidate proposal data cache so quote count is updated
+      queryClient.invalidateQueries({
+        queryKey: ['dealDetail', 'proposalData', dealId],
+        exact: false
+      });
       navigate(`/deals/${dealId}`);
     } catch (error) {
       console.error("Failed to delete quote", error);
       setSaveError("We couldn't delete this quote. Please try again.");
       setIsDeleting(false);
     }
-  }, [dealId, isDeleting, quoteId, navigate]);
+  }, [dealId, isDeleting, quoteId, navigate, queryClient]);
 
   // ============================================================================
   // Attachment Handlers

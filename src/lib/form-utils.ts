@@ -64,3 +64,14 @@ export const generateTimeOptions = (
 
   return items;
 };
+
+/**
+ * Formats a quote ID into a display-friendly format.
+ * Uses first 8 characters of the UUID, uppercase.
+ * Example: "a1b2c3d4-..." -> "Q-A1B2C3D4"
+ */
+export const formatQuoteId = (id: string): string => {
+  if (!id) return "";
+  const shortId = id.replace(/-/g, "").slice(0, 8).toUpperCase();
+  return `Q-${shortId}`;
+};

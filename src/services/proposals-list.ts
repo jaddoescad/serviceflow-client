@@ -2,6 +2,7 @@ import { apiClient } from "@/services/api";
 import type { ProposalListRow, ProposalListSummary } from "@/types/proposals-list";
 import type { QuoteRecord } from "@/types/quotes";
 import type { DealRecord } from "@/features/deals";
+import { formatQuoteId } from "@/lib/form-utils";
 
 const summarizeLineItems = (quote: QuoteRecord): number => {
   const items = Array.isArray(quote.line_items) ? quote.line_items : [];
@@ -63,14 +64,15 @@ export const fetchProposalListData = async (
     const jobAddress = formatAddress(deal);
     const amount = summarizeLineItems(quote);
 
+    const displayId = formatQuoteId(quote.id);
     return {
       id: quote.id,
       dealId: quote.deal_id,
       status: quote.status,
       customerName,
       dealName,
-      title: quote.title || quote.quote_number,
-      quoteNumber: quote.quote_number,
+      title: quote.title || displayId,
+      quoteNumber: displayId,
       jobAddress,
       amount,
       createdAt: quote.created_at,
