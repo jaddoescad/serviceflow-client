@@ -34,7 +34,7 @@ const labelSizeClasses: Record<InputSize, string> = {
 };
 
 const baseInputClasses =
-  "w-full min-w-0 max-w-full rounded-md border border-slate-300 text-slate-700 shadow-sm transition placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500 min-h-[44px] sm:min-h-0";
+  "w-full min-w-0 max-w-full box-border rounded-md border border-slate-300 text-slate-700 shadow-sm transition placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500 min-h-[44px] sm:min-h-0 [&[type=date]]:appearance-none";
 
 const errorInputClasses =
   "border-red-300 focus:border-red-500 focus:ring-red-500";
