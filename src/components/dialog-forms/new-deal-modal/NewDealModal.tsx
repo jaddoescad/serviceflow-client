@@ -93,7 +93,7 @@ export function NewDealModal(props: NewDealModalProps) {
               </button>
             ) : null}
             <h2 id="new-deal-modal-title" className="text-sm font-semibold text-slate-900">
-              {step === "drips" ? "Automations" : modalTitle}
+              {step === "drips" ? "Enable Drips" : modalTitle}
             </h2>
           </div>
           <button
@@ -172,9 +172,6 @@ export function NewDealModal(props: NewDealModalProps) {
         ) : (
           <div className="flex flex-1 flex-col gap-4 overflow-y-auto bg-slate-50 px-4 py-5">
             <div className="space-y-3 text-[12px]">
-              <p className="text-slate-600">
-                Would you like to enable automated drip emails and texts for this deal?
-              </p>
               <p className="text-slate-500">
                 Drips automatically send scheduled messages based on the deal&apos;s pipeline stage.
               </p>

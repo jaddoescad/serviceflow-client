@@ -45,7 +45,7 @@ export function StageDripPromptDialog({
   return (
     <Modal open={open} onClose={onClose} ariaLabel={`Enable drips for ${stageLabel}`} size="sm">
       <ModalHeader title={`Enable drips for ${stageLabel}?`} onClose={onClose} className="pb-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Automations</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Enable Drips</p>
       </ModalHeader>
 
       <ModalBody className="space-y-2 text-[12px]">
