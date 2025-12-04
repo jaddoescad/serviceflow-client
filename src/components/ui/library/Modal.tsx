@@ -135,7 +135,7 @@ export function Modal({
   const paddingClass = PADDING_CLASSES[align] ?? PADDING_CLASSES.center;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 h-[100dvh]">
+    <div className="fixed inset-0 z-50 h-[100dvh] supports-[height:100dvh]:h-[100dvh]">
       <div
         className={classNames(
           "absolute inset-0 bg-slate-950/60 transition-opacity",
@@ -145,7 +145,7 @@ export function Modal({
       />
       <div
         className={classNames(
-          "relative flex h-full w-full justify-center px-3 sm:px-4",
+          "relative flex h-full w-full justify-center px-3 sm:px-4 pb-[env(safe-area-inset-bottom)]",
           alignClass,
           paddingClass
         )}
@@ -161,7 +161,8 @@ export function Modal({
           aria-label={labelledBy ? undefined : ariaLabel ?? "Dialog"}
           data-testid={dataTestId}
           className={classNames(
-            "relative flex max-h-[calc(100dvh-2rem)] sm:max-h-[90vh] w-full flex-col overflow-hidden rounded-xl sm:rounded-2xl border border-slate-200 bg-white shadow-2xl outline-none",
+            "relative flex w-full flex-col overflow-hidden rounded-xl sm:rounded-2xl border border-slate-200 bg-white shadow-2xl outline-none",
+            "max-h-[75dvh] sm:max-h-[85vh]",
             sizeClass,
             contentClassName,
             className
@@ -231,7 +232,7 @@ export const ModalBody = forwardRef<HTMLDivElement, ModalSectionProps>(
 ModalBody.displayName = "ModalBody";
 
 export const ModalFooter = forwardRef<HTMLDivElement, ModalSectionProps>(
-  ({ children, className, ...props }, ref) => {
+  ({ children, className, style, ...props }, ref) => {
     return (
       <div
         ref={ref}
@@ -239,6 +240,10 @@ export const ModalFooter = forwardRef<HTMLDivElement, ModalSectionProps>(
           "flex shrink-0 flex-wrap justify-end gap-2 border-t border-slate-200 px-5 py-4",
           className
         )}
+        style={{
+          paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
+          ...style,
+        }}
         {...props}
       >
         {children}
