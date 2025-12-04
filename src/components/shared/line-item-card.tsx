@@ -18,6 +18,7 @@ export type LineItemData = {
 type ProductTemplate = {
   id: string;
   name: string;
+  description?: string | null;
 };
 
 type LineItemCardProps = {
@@ -105,9 +106,12 @@ function InlineEditForm({
   };
 
   const handleTemplateChange = (templateId: string) => {
-    if (templateId && onApplyTemplate) {
-      onApplyTemplate(templateId);
-    }
+    if (!templateId || !productTemplates) return;
+    const template = productTemplates.find((t) => t.id === templateId);
+    if (!template) return;
+    // Update local form state only - parent state is updated on Save
+    setName(template.name);
+    setDescription(template.description ?? "");
   };
 
   const buttonColorClass =

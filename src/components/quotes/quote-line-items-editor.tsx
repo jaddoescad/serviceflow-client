@@ -29,6 +29,7 @@ type QuoteLineItemsEditorProps = {
     onAddDiscount: () => void;
     onDeleteLineItem: (clientId: string) => void;
     onToggleEdit: (clientId: string) => void;
+    onCancelEdit: (clientId: string) => void;
     onApplyTemplate: (clientId: string, templateId: string) => void;
     onSave: () => void;
     onSendProposal?: () => void;
@@ -51,6 +52,7 @@ export function QuoteLineItemsEditor({
     onAddDiscount,
     onDeleteLineItem,
     onToggleEdit,
+    onCancelEdit,
     onApplyTemplate,
     onSave,
     companyId,
@@ -222,7 +224,7 @@ export function QuoteLineItemsEditor({
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => onToggleEdit(item.client_id)}
+                                            onClick={() => onCancelEdit(item.client_id)}
                                             className="cursor-pointer rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                                         >
                                             Cancel
