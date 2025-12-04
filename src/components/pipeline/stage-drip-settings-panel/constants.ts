@@ -11,6 +11,9 @@ export const DRIP_TEMPLATE_HINTS = [
   "{deal_name}",
   "{deal_address}",
   "{sales_person}",
+  "{appointment_date}",
+  "{appointment_time}",
+  "{appointment_location}",
   "{review_button}",
 ] as const;
 
