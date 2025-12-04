@@ -27,10 +27,10 @@ const variantClasses: Record<ButtonVariant, string> = {
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  xs: "px-2 py-1 text-[11px]",
-  sm: "px-3 py-1.5 text-[12px]",
-  md: "px-4 py-2 text-[13px]",
-  lg: "px-5 py-2.5 text-sm",
+  xs: "px-2.5 py-1.5 text-[12px] sm:px-2 sm:py-1 sm:text-[11px]",
+  sm: "px-4 py-2.5 text-[14px] sm:px-3 sm:py-1.5 sm:text-[12px]",
+  md: "px-5 py-3 text-[15px] sm:px-4 sm:py-2 sm:text-[13px]",
+  lg: "px-6 py-3.5 text-base sm:px-5 sm:py-2.5 sm:text-sm",
 };
 
 const iconSizeClasses: Record<ButtonSize, string> = {
@@ -69,6 +69,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           "inline-flex items-center justify-center gap-1.5 rounded-md font-semibold transition",
           "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2",
           "disabled:cursor-not-allowed disabled:opacity-70",
+          "min-h-[44px] sm:min-h-0",
           variantClasses[variant],
           sizeClasses[size],
           fullWidth ? "w-full" : "",
