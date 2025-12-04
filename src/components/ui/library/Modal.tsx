@@ -64,8 +64,8 @@ const ALIGN_CLASSES: Record<ModalAlign, string> = {
 };
 
 const PADDING_CLASSES: Record<ModalAlign, string> = {
-  center: "py-6",
-  top: "py-10",
+  center: "py-4 sm:py-6",
+  top: "pt-4 pb-4 sm:py-10",
 };
 
 const classNames = (...values: Array<string | false | null | undefined>) =>
@@ -135,7 +135,7 @@ export function Modal({
   const paddingClass = PADDING_CLASSES[align] ?? PADDING_CLASSES.center;
 
   return createPortal(
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-50 h-[100dvh]">
       <div
         className={classNames(
           "absolute inset-0 bg-slate-950/60 transition-opacity",
@@ -145,7 +145,7 @@ export function Modal({
       />
       <div
         className={classNames(
-          "relative flex h-full w-full justify-center px-4",
+          "relative flex h-full w-full justify-center px-3 sm:px-4",
           alignClass,
           paddingClass
         )}
@@ -161,7 +161,7 @@ export function Modal({
           aria-label={labelledBy ? undefined : ariaLabel ?? "Dialog"}
           data-testid={dataTestId}
           className={classNames(
-            "relative flex max-h-[85vh] sm:max-h-[90vh] w-full flex-col overflow-hidden rounded-xl sm:rounded-2xl border border-slate-200 bg-white shadow-2xl outline-none",
+            "relative flex max-h-[calc(100dvh-2rem)] sm:max-h-[90vh] w-full flex-col overflow-hidden rounded-xl sm:rounded-2xl border border-slate-200 bg-white shadow-2xl outline-none",
             sizeClass,
             contentClassName,
             className
