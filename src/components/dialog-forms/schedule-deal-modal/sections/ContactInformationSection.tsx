@@ -12,9 +12,6 @@ export function ContactInformationSection({
 }: ContactInformationSectionProps) {
   return (
     <section className="space-y-2.5">
-      <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-        Contact Information
-      </h3>
       <div className="grid gap-2.5 md:grid-cols-2">
         <label className="flex flex-col gap-1 text-[10px] font-medium text-slate-600">
           <span>First name</span>

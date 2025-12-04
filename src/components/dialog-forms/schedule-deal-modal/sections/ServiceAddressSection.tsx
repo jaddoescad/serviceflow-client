@@ -46,9 +46,6 @@ export function ServiceAddressSection({
 
   return (
     <section className="space-y-2.5">
-      <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-        Service Address
-      </h3>
       {contactAddresses.length ? (
         <div className="space-y-1.5 rounded border border-slate-200 bg-white p-3">
           <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
