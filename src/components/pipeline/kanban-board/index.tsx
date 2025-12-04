@@ -781,7 +781,7 @@ export function KanbanBoard({
               const stageHeaderTheme = DEAL_STAGE_HEADER_THEMES[stageOption.id];
 
               return (
-                <Droppable droppableId={stageOption.id} key={`mobile-${stageOption.id}`}>
+                <Droppable droppableId={`mobile-${stageOption.id}`} key={`mobile-${stageOption.id}`}>
                   {(provided) => (
                     <div
                       className="flex h-full min-h-0 w-full max-h-full flex-col rounded-lg border border-slate-200 bg-slate-50"
