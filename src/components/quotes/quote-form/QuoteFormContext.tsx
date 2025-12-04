@@ -38,6 +38,7 @@ import {
 import { createProposalAttachmentsRepository } from "@/services/proposal-attachments";
 import { createWorkOrderDeliveryRepository } from "@/services/work-order-delivery";
 import { createImageThumbnail, isImageContentType } from "@/lib/attachments";
+import { useDealDetailHeaderAction } from "@/layouts/DealDetailLayout";
 
 import type { QuoteFormProps, WorkOrderDialogContext } from "./types";
 import { mapRecordToEditable, createEmptyLineItem, buildProposalTemplateDefaults, buildWorkOrderTemplateDefaults, formatDateTime, getStatusLabel } from "./utils";
@@ -234,6 +235,7 @@ export function QuoteFormProvider({
 }: QuoteFormProviderProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { setHeaderAction, setBackAction } = useDealDetailHeaderAction();
 
   // Repositories
   const attachmentsRepository = useMemo(() => createProposalAttachmentsRepository(), []);
@@ -361,6 +363,44 @@ export function QuoteFormProvider({
   // Use quote ID for display (formatted as Q-XXXXXXXX)
   const displayQuoteNumber = quoteId ? formatQuoteId(quoteId) : "New Quote";
   const lastSavedLabel = lastSavedAt ? formatDateTime(lastSavedAt) : "Not yet saved";
+
+  // Set header action for customer view preview
+  useEffect(() => {
+    setHeaderAction({
+      label: "Preview",
+      icon: (
+        <svg className="h-3 w-3 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      ),
+      onClick: () => {
+        if (customerViewUrl) {
+          window.open(customerViewUrl, "_blank", "noopener,noreferrer");
+        }
+      },
+      disabled: !customerViewUrl,
+    });
+
+    // Clear header action when unmounting
+    return () => setHeaderAction(null);
+  }, [customerViewUrl, setHeaderAction]);
+
+  // Set back action to go back to deal
+  useEffect(() => {
+    setBackAction({
+      label: "Back to Deal",
+      onClick: () => {
+        if (!isNavigatingBack) {
+          setIsNavigatingBack(true);
+          navigate(`/deals/${dealId}`);
+        }
+      },
+      isLoading: isNavigatingBack,
+    });
+
+    return () => setBackAction(null);
+  }, [dealId, isNavigatingBack, navigate, setBackAction]);
 
   const workOrderShareUrl = useMemo(
     () => getBrowserWorkOrderShareUrl(publicShareId, origin),

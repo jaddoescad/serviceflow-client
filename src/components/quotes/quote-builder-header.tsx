@@ -12,136 +12,41 @@ type QuoteWorkOrderMenuProps = {
 
 type QuoteBuilderHeaderProps = {
   clientName: string;
-  propertyAddress: string;
+  quoteNumber: string;
+  createdAt: Date | null;
   statusClass: string;
   statusLabel: string;
-  onBack: () => void;
-  isNavigatingBack: boolean;
   workOrderUrl: string | null;
   secretWorkOrderUrl: string | null;
-  customerViewUrl: string | null;
   invoiceUrl?: string | null;
   shareDisabledReason?: string | null;
   isArchived?: boolean;
   onRequestSend: (options: { method: WorkOrderDeliveryMethod; variant: "standard" | "secret" }) => void;
-  quoteStatus?: string;
-  onAcceptWithoutSignature?: () => void;
-  isAcceptingWithoutSignature?: boolean;
-  acceptWithoutSignatureError?: string | null;
 };
 
-type CustomerViewButtonProps = {
-  url: string | null;
-  disabledReason?: string | null;
-};
+const formatDateTime = (value: Date) =>
+  value.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 
 export function QuoteBuilderHeader({
   clientName,
-  propertyAddress,
+  quoteNumber,
+  createdAt,
   statusClass,
   statusLabel,
-  onBack,
-  isNavigatingBack,
   workOrderUrl,
   secretWorkOrderUrl,
-  customerViewUrl,
   invoiceUrl = null,
   shareDisabledReason,
   isArchived = false,
   onRequestSend,
-  quoteStatus,
-  onAcceptWithoutSignature,
-  isAcceptingWithoutSignature = false,
-  acceptWithoutSignatureError,
 }: QuoteBuilderHeaderProps) {
-  const addressDisplay = propertyAddress.trim() !== "" ? propertyAddress : "No address set";
-  const [showAcceptConfirm, setShowAcceptConfirm] = useState(false);
+  const createdAtLabel = createdAt ? formatDateTime(createdAt) : null;
 
   return (
     <header className="mb-4 rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm sm:px-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div className="flex flex-col gap-3">
-          <button
-            type="button"
-            onClick={onBack}
-            className="inline-flex w-fit items-center gap-2 rounded-md px-2.5 py-1.5 text-[12px] font-semibold uppercase tracking-wide text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 disabled:cursor-wait disabled:opacity-70"
-            disabled={isNavigatingBack}
-          >
-            <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M7.5 2.5L4 6l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Back to Deal
-            {isNavigatingBack ? (
-              <svg className="h-3 w-3 animate-spin text-slate-600" viewBox="0 0 24 24" aria-hidden>
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v2a6 6 0 00-6 6H4z" />
-              </svg>
-            ) : null}
-          </button>
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">Quote for {clientName}</h1>
-            <p className="mt-1 text-sm text-slate-600">{addressDisplay}</p>
-          </div>
-        </div>
-        <div className="flex flex-col items-start gap-3 md:items-end">
-          <div className="flex flex-wrap items-center gap-2">
-            {quoteStatus !== "accepted" && !isArchived && onAcceptWithoutSignature && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setShowAcceptConfirm(true)}
-                  disabled={isAcceptingWithoutSignature}
-                  className="inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
-                  title="Accept this proposal without requiring a customer signature"
-                >
-                  <svg className="h-3.5 w-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  {isAcceptingWithoutSignature ? "Accepting..." : "Accept Without Signature"}
-                </button>
-                {showAcceptConfirm && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
-                      <h3 className="text-lg font-semibold text-slate-900">Accept Without Signature?</h3>
-                      <p className="mt-2 text-sm text-slate-600">
-                        Are you sure you want to accept this quote without requiring a customer signature?
-                      </p>
-                      <div className="mt-4 flex justify-end gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setShowAcceptConfirm(false)}
-                          className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowAcceptConfirm(false);
-                            onAcceptWithoutSignature();
-                          }}
-                          className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
-                        >
-                          Yes, Accept
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-            <CustomerViewButton url={customerViewUrl} disabledReason={shareDisabledReason} />
-            {invoiceUrl ? <InvoiceButton url={invoiceUrl} /> : null}
-            <QuoteWorkOrderMenu
-              workOrderUrl={workOrderUrl}
-              secretWorkOrderUrl={secretWorkOrderUrl}
-              disabledReason={shareDisabledReason}
-              onSendRequest={onRequestSend}
-            />
-          </div>
-          {acceptWithoutSignatureError && (
-            <p className="text-[11px] text-rose-600">{acceptWithoutSignatureError}</p>
-          )}
+      <div className="flex items-start justify-between gap-3">
+        {/* Left side - Status and title */}
+        <div className="flex min-w-0 flex-col gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${statusClass}`}>
               {statusLabel}
@@ -157,37 +62,24 @@ export function QuoteBuilderHeader({
               </span>
             )}
           </div>
+          <div>
+            <h1 className="truncate text-lg font-semibold text-slate-900">Quote for {clientName}</h1>
+            <p className="text-xs text-slate-500">{quoteNumber}{createdAtLabel ? ` · ${createdAtLabel}` : ""}</p>
+          </div>
+        </div>
+
+        {/* Right side - Action buttons */}
+        <div className="flex shrink-0 items-center gap-2">
+          {invoiceUrl ? <InvoiceButton url={invoiceUrl} /> : null}
+          <QuoteWorkOrderMenu
+            workOrderUrl={workOrderUrl}
+            secretWorkOrderUrl={secretWorkOrderUrl}
+            disabledReason={shareDisabledReason}
+            onSendRequest={onRequestSend}
+          />
         </div>
       </div>
     </header>
-  );
-}
-
-function CustomerViewButton({ url, disabledReason }: CustomerViewButtonProps) {
-  const enabled = Boolean(url);
-
-  return (
-    <button
-      type="button"
-      onClick={() => {
-        if (enabled && url) {
-          window.open(url, "_blank", "noopener,noreferrer");
-        }
-      }}
-      disabled={!enabled}
-      className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-700 shadow-sm transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
-      title={
-        enabled
-          ? "Open the customer-facing proposal"
-          : disabledReason ?? "Save the quote to preview the customer view."
-      }
-    >
-      <svg className="h-3.5 w-3.5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="12" cy="12" r="3" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-      Customer View
-    </button>
   );
 }
 
@@ -195,7 +87,7 @@ function InvoiceButton({ url }: { url: string }) {
   return (
     <a
       href={url}
-      className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-700 shadow-sm transition hover:bg-slate-100"
+      className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-700 shadow-sm transition hover:bg-slate-100 sm:justify-start sm:py-1.5"
       target="_blank"
       rel="noreferrer"
     >
@@ -317,7 +209,7 @@ function QuoteWorkOrderMenu({
             setOpen((previous) => !previous);
           }
         }}
-        className="inline-flex items-center gap-2 rounded-md bg-white/90 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-700 shadow-sm transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-700 shadow-sm transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 sm:justify-start sm:py-1.5"
         aria-haspopup="menu"
         aria-expanded={open}
         title={buttonDisabled ? disabledReason ?? "Save the quote to share a work order." : undefined}

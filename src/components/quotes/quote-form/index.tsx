@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { QuoteBuilderHeader } from "@/components/quotes/quote-builder-header";
 import { QuoteSendDialog } from "@/components/dialog-forms/quote-send-dialog";
 import { WorkOrderDeliveryDialog } from "@/components/dialog-forms/work-order-delivery-dialog";
@@ -13,6 +14,132 @@ import type { QuoteFormProps } from "./types";
 
 export type { QuoteFormProps } from "./types";
 export { useQuoteFormContext } from "./QuoteFormContext";
+
+type QuoteActionsMenuProps = {
+  quoteStatus?: string;
+  isDeleting: boolean;
+  isAcceptingWithoutSignature: boolean;
+  onAcceptWithoutSignature: () => void;
+  onDelete: () => void;
+};
+
+function QuoteActionsMenu({
+  quoteStatus,
+  isDeleting,
+  isAcceptingWithoutSignature,
+  onAcceptWithoutSignature,
+  onDelete,
+}: QuoteActionsMenuProps) {
+  const [expanded, setExpanded] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showAcceptConfirm, setShowAcceptConfirm] = useState(false);
+
+  const canAcceptWithoutSignature = quoteStatus !== "accepted";
+
+  return (
+    <>
+      {!expanded ? (
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 cursor-pointer"
+        >
+          More
+        </button>
+      ) : (
+        <>
+          {canAcceptWithoutSignature && (
+            <button
+              type="button"
+              onClick={() => setShowAcceptConfirm(true)}
+              disabled={isAcceptingWithoutSignature}
+              className="inline-flex items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-5 py-2.5 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+            >
+              {isAcceptingWithoutSignature ? "Accepting..." : "Accept Without Signature"}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setShowDeleteConfirm(true)}
+            disabled={isDeleting}
+            className="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-white px-5 py-2.5 text-sm font-semibold text-rose-600 shadow-sm transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+          >
+            {isDeleting ? "Deleting..." : "Delete Quote"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setExpanded(false)}
+            className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 cursor-pointer"
+          >
+            Less
+          </button>
+        </>
+      )}
+
+      {/* Accept Without Signature Confirmation Dialog */}
+      {showAcceptConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-slate-900">Accept Without Signature?</h3>
+            <p className="mt-2 text-sm text-slate-600">
+              Are you sure you want to accept this quote without requiring a customer signature?
+            </p>
+            <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
+              <button
+                type="button"
+                onClick={() => setShowAcceptConfirm(false)}
+                className="w-full rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 sm:w-auto"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAcceptConfirm(false);
+                  onAcceptWithoutSignature();
+                }}
+                className="w-full rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 sm:w-auto"
+              >
+                Yes, Accept
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-slate-900">Delete Quote?</h3>
+            <p className="mt-2 text-sm text-slate-600">
+              Are you sure you want to delete this quote? This action cannot be undone.
+            </p>
+            <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="w-full rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 sm:w-auto"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  onDelete();
+                }}
+                className="w-full rounded-md bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 sm:w-auto"
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
 function QuoteFormContent() {
   const ctx = useQuoteFormContext();
@@ -92,22 +219,16 @@ function QuoteFormContent() {
 
       <QuoteBuilderHeader
         clientName={clientName}
-        propertyAddress={propertyAddress}
+        quoteNumber={computed.displayQuoteNumber}
+        createdAt={state.createdAt}
         statusClass={computed.statusClass}
         statusLabel={computed.statusLabel}
-        onBack={ctx.handleBackToDeal}
-        isNavigatingBack={isNavigatingBack}
         workOrderUrl={workOrder.shareUrl}
         secretWorkOrderUrl={workOrder.secretShareUrl}
-        customerViewUrl={computed.customerViewUrl}
         invoiceUrl={computed.invoiceUrl}
         shareDisabledReason={computed.shareDisabledReason}
         isArchived={isArchived}
         onRequestSend={ctx.handleWorkOrderSendRequest}
-        quoteStatus={state.status}
-        onAcceptWithoutSignature={ctx.handleAcceptWithoutSignature}
-        isAcceptingWithoutSignature={ctx.isAcceptingWithoutSignature}
-        acceptWithoutSignatureError={ctx.acceptWithoutSignatureError}
       />
 
       <QuoteDetailsEditor
@@ -115,10 +236,6 @@ function QuoteFormContent() {
         clientPhone={clientPhone}
         clientEmail={clientEmail}
         propertyAddress={propertyAddress}
-        quoteNumber={computed.displayQuoteNumber}
-        createdAt={state.createdAt}
-        lastSavedAt={state.lastSavedAt}
-        isSaving={state.isSaving}
       />
 
       <QuoteLineItemsEditor
@@ -185,14 +302,12 @@ function QuoteFormContent() {
               <p className="text-sm font-medium text-rose-600">{sendDialog.error}</p>
             ) : state.saveError ? (
               <p className="text-sm font-medium text-rose-600">{state.saveError}</p>
-            ) : (
-              <p className="text-sm text-slate-600">
-                {state.isSaving ? "Saving..." : state.lastSavedAt ? `Last saved ${computed.lastSavedLabel}` : "Not yet saved"}
-              </p>
-            )}
+            ) : ctx.acceptWithoutSignatureError ? (
+              <p className="text-sm font-medium text-rose-600">{ctx.acceptWithoutSignatureError}</p>
+            ) : null}
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-            {!isArchived && (
+          {!isArchived && (
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={() => ctx.openSendDialog()}
@@ -200,18 +315,15 @@ function QuoteFormContent() {
               >
                 Send Proposal
               </button>
-            )}
-            {!isArchived && (
-              <button
-                type="button"
-                onClick={ctx.handleDeleteQuote}
-                disabled={state.isDeleting}
-                className="inline-flex items-center justify-center rounded-lg border border-rose-200 px-5 py-2.5 text-sm font-semibold text-rose-600 shadow-sm transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
-              >
-                {state.isDeleting ? "Deleting..." : "Delete Quote"}
-              </button>
-            )}
-          </div>
+              <QuoteActionsMenu
+                quoteStatus={state.status}
+                isDeleting={state.isDeleting}
+                isAcceptingWithoutSignature={ctx.isAcceptingWithoutSignature}
+                onAcceptWithoutSignature={ctx.handleAcceptWithoutSignature}
+                onDelete={ctx.handleDeleteQuote}
+              />
+            </div>
+          )}
         </div>
       </section>
     </>
