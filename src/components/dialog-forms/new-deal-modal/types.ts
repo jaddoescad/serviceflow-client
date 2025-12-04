@@ -101,6 +101,7 @@ export type UseNewDealFormReturn = {
   handleEnableDrips: () => Promise<void>;
   handleDisableDrips: () => Promise<void>;
   handleCloseDripPrompt: () => void;
+  handleBackFromDrip: () => void;
 };
 
 export function createInitialFormState(defaultStage: DealStageId): FormState {

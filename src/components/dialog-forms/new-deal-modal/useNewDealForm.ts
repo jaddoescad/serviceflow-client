@@ -79,7 +79,7 @@ export function useNewDealForm({
   const [dripError, setDripError] = useState<string | null>(null);
   // Store pending deal data (before creation) for the drip prompt step
   const pendingDealDataRef = useRef<{
-    contact: ContactRecord;
+    contact: ContactRecord | null;
     addressRecord: ContactAddressRecord | null;
     payload: {
       company_id: string;
@@ -99,6 +99,21 @@ export function useNewDealForm({
       send_sms: boolean;
     };
     dealLabel: string;
+    contactParams?: {
+      company_id: string;
+      first_name: string;
+      last_name: string | null;
+      email: string | null;
+      phone: string | null;
+      addresses: {
+        address_line1: string | null;
+        address_line2: string | null;
+        city: string | null;
+        state: string | null;
+        postal_code: string | null;
+        country: string | null;
+      }[];
+    };
   } | null>(null);
 
   const memberOptions = useMemo(() => {
@@ -509,53 +524,41 @@ export function useNewDealForm({
           throw new Error("onCreated handler is required to create a deal.");
         }
 
-        let contact: ContactRecord | null = null;
-        let addressRecord: ContactAddressRecord | null = null;
-
-        const createdContact = await createContact({
-          company_id: companyId,
-          first_name: trimmedFirst,
-          last_name: normalizedLast,
-          email: trimmedEmail || null,
-          phone: trimmedPhone || null,
-          addresses: addressHasContent ? [addressPayload] : [],
-        });
-
-        contact = createdContact;
-        onContactCreated?.(createdContact);
-
-        const createdAddresses = createdContact.addresses ?? [];
-        if (createdAddresses.length > 0) {
-          addressRecord = createdAddresses[0];
-        }
-
-        if (!contact) {
-          throw new Error("A contact is required to create a deal.");
-        }
-
-        // Store payload for drip prompt step - deal will be created after user chooses
-        const payload = {
-          company_id: companyId,
-          contact_id: contact.id,
-          contact_address_id: addressRecord?.id ?? null,
-          first_name: contact.first_name,
-          last_name: contact.last_name,
-          email: contact.email,
-          phone: contact.phone,
-          lead_source: trimmedDealSource || null,
-          stage: form.stage,
-          salesperson: trimmedSalesperson || null,
-          project_manager: normalizedProjectManager || null,
-          assigned_to: null,
-          event_color: null,
-          send_email: false,
-          send_sms: false,
-        };
-
+        // Store form data for drip prompt step - nothing created yet
         const dealLabel = `${trimmedFirst}${normalizedLast ? ` ${normalizedLast}` : ""}`;
 
-        // Store pending data and show drip prompt (deal not created yet)
-        pendingDealDataRef.current = { contact, addressRecord, payload, dealLabel };
+        pendingDealDataRef.current = {
+          contact: null as unknown as ContactRecord,
+          addressRecord: null,
+          payload: {
+            company_id: companyId,
+            contact_id: "", // Will be set after contact creation
+            contact_address_id: null,
+            first_name: trimmedFirst,
+            last_name: normalizedLast,
+            email: trimmedEmail || null,
+            phone: trimmedPhone || null,
+            lead_source: trimmedDealSource || null,
+            stage: form.stage,
+            salesperson: trimmedSalesperson || null,
+            project_manager: normalizedProjectManager || null,
+            assigned_to: null,
+            event_color: null,
+            send_email: false,
+            send_sms: false,
+          },
+          dealLabel,
+          // Store contact creation params separately
+          contactParams: {
+            company_id: companyId,
+            first_name: trimmedFirst,
+            last_name: normalizedLast,
+            email: trimmedEmail || null,
+            phone: trimmedPhone || null,
+            addresses: addressHasContent ? [addressPayload] : [],
+          },
+        };
+
         setDripPromptState({ deal: null as unknown as DealRecord, dealLabel });
       }
     } catch (submitError) {
@@ -572,19 +575,31 @@ export function useNewDealForm({
     }
   };
 
-  const handleEnableDrips = useCallback(async () => {
+  const createDealWithDripChoice = useCallback(async (disableDrips: boolean) => {
     if (!dripPromptState || !pendingDealDataRef.current || !onCreated) return;
 
     setIsSavingDripChoice(true);
     setDripError(null);
 
     try {
-      const { contact, addressRecord, payload } = pendingDealDataRef.current;
+      const { payload, contactParams } = pendingDealDataRef.current;
 
-      // Create the deal with drips enabled
+      if (!contactParams) {
+        throw new Error("Contact params are required to create a deal.");
+      }
+
+      // Create contact first
+      const createdContact = await createContact(contactParams);
+      onContactCreated?.(createdContact);
+
+      const addressRecord = createdContact.addresses?.[0] ?? null;
+
+      // Create the deal with the contact
       const newDeal = await createDeal({
         ...payload,
-        disable_drips: false,
+        contact_id: createdContact.id,
+        contact_address_id: addressRecord?.id ?? null,
+        disable_drips: disableDrips,
       });
 
       // Invalidate React Query cache
@@ -594,7 +609,7 @@ export function useNewDealForm({
 
       const enrichedDeal = {
         ...newDeal,
-        contact: contact,
+        contact: createdContact,
         service_address: addressRecord,
       } as DealRecord;
 
@@ -608,45 +623,15 @@ export function useNewDealForm({
     } finally {
       setIsSavingDripChoice(false);
     }
-  }, [dripPromptState, onCreated, onClose, companyId, invalidateDashboard, invalidateCompanyDeals]);
+  }, [dripPromptState, onCreated, onClose, companyId, invalidateDashboard, invalidateCompanyDeals, onContactCreated]);
 
-  const handleDisableDrips = useCallback(async () => {
-    if (!dripPromptState || !pendingDealDataRef.current || !onCreated) return;
+  const handleEnableDrips = useCallback(() => {
+    createDealWithDripChoice(false);
+  }, [createDealWithDripChoice]);
 
-    setIsSavingDripChoice(true);
-    setDripError(null);
-
-    try {
-      const { contact, addressRecord, payload } = pendingDealDataRef.current;
-
-      // Create the deal with drips disabled
-      const newDeal = await createDeal({
-        ...payload,
-        disable_drips: true,
-      });
-
-      // Invalidate React Query cache
-      invalidateDashboard(companyId, "sales");
-      invalidateDashboard(companyId, "jobs");
-      invalidateCompanyDeals(companyId);
-
-      const enrichedDeal = {
-        ...newDeal,
-        contact: contact,
-        service_address: addressRecord,
-      } as DealRecord;
-
-      onCreated(enrichedDeal);
-      setDripPromptState(null);
-      pendingDealDataRef.current = null;
-      onClose();
-    } catch (err) {
-      console.error("Failed to create deal", err);
-      setDripError(err instanceof Error ? err.message : "Failed to create deal");
-    } finally {
-      setIsSavingDripChoice(false);
-    }
-  }, [dripPromptState, onCreated, onClose, companyId, invalidateDashboard, invalidateCompanyDeals]);
+  const handleDisableDrips = useCallback(() => {
+    createDealWithDripChoice(true);
+  }, [createDealWithDripChoice]);
 
   const handleCloseDripPrompt = useCallback(() => {
     // If user closes prompt without choosing, cancel and don't create the deal
@@ -654,6 +639,11 @@ export function useNewDealForm({
     pendingDealDataRef.current = null;
     onClose();
   }, [onClose]);
+
+  const handleBackFromDrip = useCallback(() => {
+    // Go back to step 1 without clearing data
+    setDripPromptState(null);
+  }, []);
 
   return {
     form,
@@ -683,5 +673,6 @@ export function useNewDealForm({
     handleEnableDrips,
     handleDisableDrips,
     handleCloseDripPrompt,
+    handleBackFromDrip,
   };
 }
