@@ -36,6 +36,58 @@ export const COMMUNICATION_TEMPLATE_DEFINITIONS: Record<CommunicationTemplateKey
       "{appointment_button}",
     ],
   },
+  appointment_reminder_1_day: {
+    key: "appointment_reminder_1_day",
+    label: "Appointment Reminder (1 Day)",
+    helpText:
+      "Templates used for appointment reminders sent 1 day before the scheduled time.",
+    defaultEmailSubject: "Reminder: Appointment tomorrow with {company-name}",
+    defaultEmailBody:
+      "Hi {first-name},\n\nThis is a friendly reminder that your appointment with {company-name} is tomorrow, {job-date} at {job-time}.\n\nIf you need to reschedule, please call {company-phone}.\n\nSee you soon!\n{company-name}",
+    defaultSmsBody:
+      "Reminder: Your appointment with {company-name} is tomorrow at {job-time}. Questions? {company-phone}",
+    keywords: [
+      "{company-name}",
+      "{company-phone}",
+      "{company-website}",
+      "{customer-name}",
+      "{first-name}",
+      "{last-name}",
+      "{job-date}",
+      "{job-time}",
+      "{job-start-date}",
+      "{job-end-date}",
+      "{job-start-time}",
+      "{job-end-time}",
+      "{job-location}",
+    ],
+  },
+  appointment_reminder_1_hour: {
+    key: "appointment_reminder_1_hour",
+    label: "Appointment Reminder (1 Hour)",
+    helpText:
+      "Templates used for appointment reminders sent 1 hour before the scheduled time.",
+    defaultEmailSubject: "Reminder: Appointment in 1 hour with {company-name}",
+    defaultEmailBody:
+      "Hi {first-name},\n\nJust a quick reminder that your appointment with {company-name} is in 1 hour at {job-time}.\n\nWe look forward to seeing you!\n{company-name}",
+    defaultSmsBody:
+      "Reminder: Your appointment with {company-name} is in 1 hour at {job-time}. See you soon!",
+    keywords: [
+      "{company-name}",
+      "{company-phone}",
+      "{company-website}",
+      "{customer-name}",
+      "{first-name}",
+      "{last-name}",
+      "{job-date}",
+      "{job-time}",
+      "{job-start-date}",
+      "{job-end-date}",
+      "{job-start-time}",
+      "{job-end-time}",
+      "{job-location}",
+    ],
+  },
   proposal_quote: {
     key: "proposal_quote",
     label: "Proposal Delivery",
@@ -205,6 +257,8 @@ export const COMMUNICATION_TEMPLATE_DEFINITIONS: Record<CommunicationTemplateKey
 
 export const COMMUNICATION_TEMPLATE_KEYS: CommunicationTemplateKey[] = [
   "appointment_confirmation",
+  "appointment_reminder_1_day",
+  "appointment_reminder_1_hour",
   "proposal_quote",
   "invoice_send",
   "invoice_payment_request",

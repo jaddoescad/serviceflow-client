@@ -1,54 +1,13 @@
 "use client";
 
 import { Modal, Button } from "@/components/ui/library";
+import { StepIndicator } from "@/components/dialog-forms/shared";
 import type { NewDealModalProps } from "./types";
 import { useNewDealForm } from "./useNewDealForm";
 import { ContactInfoSection } from "./ContactInfoSection";
 import { AddressSection } from "./AddressSection";
 import { DealDetailsSection } from "./DealDetailsSection";
 import { TeamAssignmentSection } from "./TeamAssignmentSection";
-
-function StepIndicator({ currentStep }: { currentStep: 1 | 2 }) {
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex items-center gap-1.5">
-        <div
-          className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold ${
-            currentStep === 1
-              ? "bg-blue-600 text-white"
-              : "bg-blue-100 text-blue-600"
-          }`}
-        >
-          {currentStep > 1 ? (
-            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-          ) : (
-            "1"
-          )}
-        </div>
-        <span className={`text-[11px] font-medium ${currentStep === 1 ? "text-slate-900" : "text-slate-500"}`}>
-          Details
-        </span>
-      </div>
-      <div className="h-px w-4 bg-slate-300" />
-      <div className="flex items-center gap-1.5">
-        <div
-          className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold ${
-            currentStep === 2
-              ? "bg-blue-600 text-white"
-              : "bg-slate-200 text-slate-500"
-          }`}
-        >
-          2
-        </div>
-        <span className={`text-[11px] font-medium ${currentStep === 2 ? "text-slate-900" : "text-slate-500"}`}>
-          Automations
-        </span>
-      </div>
-    </div>
-  );
-}
 
 export function NewDealModal(props: NewDealModalProps) {
   const { open, onClose, stages, deal } = props;

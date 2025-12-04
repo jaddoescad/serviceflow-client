@@ -1,5 +1,7 @@
 export type CommunicationTemplateKey =
   | "appointment_confirmation"
+  | "appointment_reminder_1_day"
+  | "appointment_reminder_1_hour"
   | "proposal_quote"
   | "invoice_send"
   | "invoice_payment_request"

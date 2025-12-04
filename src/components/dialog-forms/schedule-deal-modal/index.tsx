@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import type { DealRecord, ScheduleDealInput, UpdateDealAppointmentInput } from "@/features/deals";
 import { useDealInvalidation } from "@/features/deals";
 import type { ContactAddressRecord, ContactRecord } from "@/features/contacts";
@@ -12,8 +12,9 @@ import type { CommunicationTemplateSnapshot } from "@/features/communications";
 import { syncAppointmentToGoogle } from "@/lib/google-calendar-sync";
 import { formatFullName } from "@/lib/name";
 import { Modal } from "@/components/shared/modal";
+import { StepIndicator } from "@/components/dialog-forms/shared";
 
-import type { ScheduleDealModalProps, FormState, AddressFormState, CommunicationMethod } from "./types";
+import type { ScheduleDealModalProps, FormState, AddressFormState, CommunicationMethod, ReminderSettings } from "./types";
 import { DEFAULT_MODAL_COPY, NEW_CONTACT_OPTION } from "./constants";
 import {
   EMPTY_ADDRESS_FORM,
@@ -35,6 +36,24 @@ import {
   TeamAssignmentSection,
   SendConfirmationSection,
 } from "./sections";
+
+type PendingSubmissionData = {
+  trimmedFirst: string;
+  normalizedLast: string | null;
+  trimmedEmail: string;
+  trimmedPhone: string;
+  assignedToId: string | null;
+  trimmedAddressForm: AddressFormState;
+  addressHasContent: boolean;
+  renderedEmailSubject: string;
+  renderedEmailBody: string;
+  renderedSmsBody: string;
+  startDate: Date;
+  endDate: Date;
+  contactRecord: ContactRecord | null;
+  contactId: string | null;
+  addressRecord: ContactAddressRecord | null;
+};
 
 export type { ScheduleDealModalProps } from "./types";
 
@@ -60,6 +79,12 @@ export function ScheduleDealModal({
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Multi-step flow state (new mode only): 1=Details, 2=Confirmation
+  const [currentStep, setCurrentStep] = useState<1 | 2>(1);
+  const [isSavingFinal, setIsSavingFinal] = useState(false);
+  const [stepError, setStepError] = useState<string | null>(null);
+  const pendingSubmissionRef = useRef<PendingSubmissionData | null>(null);
 
   // Template loading
   const [appointmentTemplate, setAppointmentTemplate] = useState<CommunicationTemplateSnapshot>(() =>
@@ -175,20 +200,19 @@ export function ScheduleDealModal({
     };
   }, [open, companyId, supabase]);
 
-  // Reset error when modal closes
+  // Reset state when modal closes
   useEffect(() => {
     if (!open) {
       setError(null);
       setShowDeleteConfirm(false);
       setIsSubmitting(false);
       setIsDeleting(false);
+      setCurrentStep(1);
+      setIsSavingFinal(false);
+      setStepError(null);
+      pendingSubmissionRef.current = null;
     }
   }, [open]);
-
-  const selectedContactAddress =
-    selectedAddressId === "new"
-      ? null
-      : savedContactAddresses.find((address) => address.id === selectedAddressId) ?? null;
 
   const handleInputChange = useCallback(
     (event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -238,41 +262,37 @@ export function ScheduleDealModal({
     [setAddressForm, setSelectedAddressId]
   );
 
-  const handleSelectSavedAddress = useCallback(
-    (address: ContactAddressRecord) => {
-      setSelectedAddressId(address.id);
-      setAddressForm(mapContactAddressToForm(address));
+  const handleAddressSelectChange = useCallback(
+    (event: ChangeEvent<HTMLSelectElement>) => {
+      const value = event.target.value;
+      if (value === "new") {
+        setSelectedAddressId("new");
+        setAddressForm(EMPTY_ADDRESS_FORM);
+      } else {
+        const selectedAddress = savedContactAddresses.find((addr) => addr.id === value);
+        if (selectedAddress) {
+          setSelectedAddressId(selectedAddress.id);
+          setAddressForm(mapContactAddressToForm(selectedAddress));
+        }
+      }
     },
-    [setSelectedAddressId, setAddressForm]
+    [savedContactAddresses, setSelectedAddressId, setAddressForm]
   );
-
-  const handleUseNewAddress = useCallback(() => {
-    const currentSelection =
-      selectedAddressId === "new"
-        ? null
-        : savedContactAddresses.find((addr) => addr.id === selectedAddressId) ?? null;
-
-    if (currentSelection) {
-      setAddressForm(mapContactAddressToForm(currentSelection));
-    } else if (!isNewMode && deal?.service_address) {
-      setAddressForm(mapContactAddressToForm(deal.service_address));
-    } else if (isNewMode && selectedContact?.addresses?.length) {
-      setAddressForm(mapContactAddressToForm(selectedContact.addresses[0]));
-    } else {
-      setAddressForm(EMPTY_ADDRESS_FORM);
-    }
-
-    setSelectedAddressId("new");
-  }, [selectedAddressId, savedContactAddresses, isNewMode, deal, selectedContact, setAddressForm, setSelectedAddressId]);
-
-  const handleClearAddress = useCallback(() => {
-    setSelectedAddressId("new");
-    setAddressForm(EMPTY_ADDRESS_FORM);
-  }, [setSelectedAddressId, setAddressForm]);
 
   const handleCommunicationMethodChange = useCallback(
     (method: CommunicationMethod) => {
       setForm((prev) => (prev ? { ...prev, communicationMethod: method } : prev));
+    },
+    [setForm]
+  );
+
+  const handleReminderChange = useCallback(
+    (key: keyof ReminderSettings, value: boolean) => {
+      setForm((prev) =>
+        prev
+          ? { ...prev, reminders: { ...prev.reminders, [key]: value } }
+          : prev
+      );
     },
     [setForm]
   );
@@ -370,8 +390,8 @@ export function ScheduleDealModal({
         }
       }
 
-      let addressRecord = selectedContactAddress;
-      if (!addressRecord && selectedAddressId !== "new") {
+      let addressRecord: ContactAddressRecord | null = null;
+      if (selectedAddressId !== "new") {
         addressRecord = savedContactAddresses.find((addr) => addr.id === selectedAddressId) ?? null;
       }
 
@@ -395,97 +415,141 @@ export function ScheduleDealModal({
         }
       }
 
-      const resolvedLastName = normalizedLast ?? contactRecord?.last_name ?? deal?.last_name ?? null;
-
-      const dealPayload = {
-        first_name: trimmedFirst || contactRecord?.first_name || "",
-        last_name: resolvedLastName,
-        email: trimmedEmail || contactRecord?.email || null,
-        phone: trimmedPhone || contactRecord?.phone || null,
-        lead_source: form.leadSource.trim() || null,
-        contact_address_id: addressRecord?.id ?? null,
-        salesperson: form.salesperson.trim() || null,
-        project_manager: form.projectManager.trim() || null,
-        assigned_to: assignedToId,
-        crew_id: deal?.crew_id ?? null,
-        event_color: form.eventColor,
-        send_email: form.communicationMethod === "email" || form.communicationMethod === "both",
-        send_sms: form.communicationMethod === "sms" || form.communicationMethod === "both",
-        disable_drips: form.disableDrips,
-      };
-
-      let currentDeal = deal;
-
-      if (!currentDeal) {
-        currentDeal = await createDeal({
-          company_id: companyId,
-          contact_id: contactId,
-          contact_address_id: dealPayload.contact_address_id,
-          first_name: dealPayload.first_name,
-          last_name: dealPayload.last_name,
-          email: dealPayload.email,
-          phone: dealPayload.phone,
-          lead_source: dealPayload.lead_source,
-          stage: "estimate_scheduled",
-          salesperson: dealPayload.salesperson,
-          project_manager: dealPayload.project_manager,
-          assigned_to: dealPayload.assigned_to,
-          crew_id: dealPayload.crew_id,
-          event_color: dealPayload.event_color,
-          send_email: dealPayload.send_email,
-          send_sms: dealPayload.send_sms,
-          disable_drips: dealPayload.disable_drips,
-        });
-      }
-
-      if (!currentDeal) {
-        throw new Error("Failed to create or retrieve deal.");
-      }
-
-      const appointmentPayload = {
-        company_id: currentDeal.company_id ?? companyId,
-        assigned_to: dealPayload.assigned_to,
-        crew_id: dealPayload.crew_id,
-        event_color: form.eventColor,
-        scheduled_start: startDate.toISOString(),
-        scheduled_end: endDate.toISOString(),
-        appointment_notes: form.notes.trim() || null,
-        send_email: dealPayload.send_email,
-        send_sms: dealPayload.send_sms,
-      } satisfies ScheduleDealInput["appointment"];
-
-      if (isEditMode) {
-        if (!activeAppointment) {
-          throw new Error("Appointment unavailable for editing.");
-        }
-
-        const communications: UpdateDealAppointmentInput["communications"] = {};
-        if (appointmentPayload.send_email && trimmedEmail) {
-          communications.email = { to: trimmedEmail, subject: renderedEmailSubject, body: renderedEmailBody };
-        }
-        if (appointmentPayload.send_sms && trimmedPhone) {
-          communications.sms = { to: trimmedPhone, body: renderedSmsBody };
-        }
-
-        const updated = await updateDealAppointment(currentDeal.id, {
-          appointmentId: activeAppointment.id,
-          appointment: appointmentPayload,
-          deal: dealPayload,
-          communications: Object.keys(communications).length > 0 ? communications : undefined,
-        });
-
-        // Invalidate React Query cache
-        invalidateDashboard(companyId, "sales");
-        invalidateDashboard(companyId, "jobs");
-        invalidateCompanyDeals(companyId);
-
-        void syncAppointmentToGoogle(updated, updated.latest_appointment, companyName);
-        onScheduled(updated);
-        onClose();
+      // For new mode or existing mode, move to step 2 (Confirmation)
+      if (isNewMode || mode === "existing") {
+        pendingSubmissionRef.current = {
+          trimmedFirst,
+          normalizedLast,
+          trimmedEmail,
+          trimmedPhone,
+          assignedToId,
+          trimmedAddressForm,
+          addressHasContent,
+          renderedEmailSubject,
+          renderedEmailBody,
+          renderedSmsBody,
+          startDate,
+          endDate,
+          contactRecord,
+          contactId,
+          addressRecord,
+        };
+        setIsSubmitting(false);
+        setCurrentStep(2);
         return;
       }
 
-      const communications: ScheduleDealInput["communications"] = {};
+      // For edit mode, proceed with the full submission
+      await completeSubmission({
+        trimmedFirst,
+        normalizedLast,
+        trimmedEmail,
+        trimmedPhone,
+        assignedToId,
+        trimmedAddressForm,
+        addressHasContent,
+        renderedEmailSubject,
+        renderedEmailBody,
+        renderedSmsBody,
+        startDate,
+        endDate,
+        contactRecord,
+        contactId,
+        addressRecord,
+        disableDrips: form.disableDrips,
+      });
+    } catch (err) {
+      console.error("Failed to schedule deal", err);
+      setError(err instanceof Error ? err.message : "Could not schedule deal.");
+      setIsSubmitting(false);
+    }
+  };
+
+  const completeSubmission = async (data: PendingSubmissionData & { disableDrips: boolean }) => {
+    if (!form) return;
+
+    const {
+      trimmedFirst,
+      normalizedLast,
+      trimmedEmail,
+      trimmedPhone,
+      assignedToId,
+      renderedEmailSubject,
+      renderedEmailBody,
+      renderedSmsBody,
+      startDate,
+      endDate,
+      contactRecord,
+      contactId,
+      addressRecord,
+      disableDrips,
+    } = data;
+
+    const resolvedLastName = normalizedLast ?? contactRecord?.last_name ?? deal?.last_name ?? null;
+
+    const dealPayload = {
+      first_name: trimmedFirst || contactRecord?.first_name || "",
+      last_name: resolvedLastName,
+      email: trimmedEmail || contactRecord?.email || null,
+      phone: trimmedPhone || contactRecord?.phone || null,
+      lead_source: form.leadSource.trim() || null,
+      contact_address_id: addressRecord?.id ?? null,
+      salesperson: form.salesperson.trim() || null,
+      project_manager: form.projectManager.trim() || null,
+      assigned_to: assignedToId,
+      crew_id: deal?.crew_id ?? null,
+      event_color: form.eventColor,
+      send_email: form.communicationMethod === "email" || form.communicationMethod === "both",
+      send_sms: form.communicationMethod === "sms" || form.communicationMethod === "both",
+      disable_drips: disableDrips,
+    };
+
+    let currentDeal = deal;
+
+    if (!currentDeal) {
+      currentDeal = await createDeal({
+        company_id: companyId,
+        contact_id: contactId,
+        contact_address_id: dealPayload.contact_address_id,
+        first_name: dealPayload.first_name,
+        last_name: dealPayload.last_name,
+        email: dealPayload.email,
+        phone: dealPayload.phone,
+        lead_source: dealPayload.lead_source,
+        stage: "estimate_scheduled",
+        salesperson: dealPayload.salesperson,
+        project_manager: dealPayload.project_manager,
+        assigned_to: dealPayload.assigned_to,
+        crew_id: dealPayload.crew_id,
+        event_color: dealPayload.event_color,
+        send_email: dealPayload.send_email,
+        send_sms: dealPayload.send_sms,
+        disable_drips: dealPayload.disable_drips,
+      });
+    }
+
+    if (!currentDeal) {
+      throw new Error("Failed to create or retrieve deal.");
+    }
+
+    const appointmentPayload = {
+      company_id: currentDeal.company_id ?? companyId,
+      assigned_to: dealPayload.assigned_to,
+      crew_id: dealPayload.crew_id,
+      event_color: form.eventColor,
+      scheduled_start: startDate.toISOString(),
+      scheduled_end: endDate.toISOString(),
+      appointment_notes: form.notes.trim() || null,
+      send_email: dealPayload.send_email,
+      send_sms: dealPayload.send_sms,
+    } satisfies ScheduleDealInput["appointment"];
+
+    if (isEditMode) {
+      if (!activeAppointment) {
+        throw new Error("Appointment unavailable for editing.");
+      }
+
+      const communications: UpdateDealAppointmentInput["communications"] = {};
       if (appointmentPayload.send_email && trimmedEmail) {
         communications.email = { to: trimmedEmail, subject: renderedEmailSubject, body: renderedEmailBody };
       }
@@ -493,14 +557,24 @@ export function ScheduleDealModal({
         communications.sms = { to: trimmedPhone, body: renderedSmsBody };
       }
 
-      const payload: ScheduleDealInput = {
-        stage: stageOnSchedule,
+      // Build reminders for edit mode
+      const editReminders: UpdateDealAppointmentInput["reminders"] = {};
+      if (form.communicationMethod === "email" || form.communicationMethod === "both") {
+        editReminders.email1DayBefore = form.reminders.email1DayBefore;
+        editReminders.email1HourBefore = form.reminders.email1HourBefore;
+      }
+      if (form.communicationMethod === "sms" || form.communicationMethod === "both") {
+        editReminders.sms1DayBefore = form.reminders.sms1DayBefore;
+        editReminders.sms1HourBefore = form.reminders.sms1HourBefore;
+      }
+
+      const updated = await updateDealAppointment(currentDeal.id, {
+        appointmentId: activeAppointment.id,
         appointment: appointmentPayload,
         deal: dealPayload,
         communications: Object.keys(communications).length > 0 ? communications : undefined,
-      };
-
-      const updated = await scheduleDeal(currentDeal.id, payload);
+        reminders: Object.keys(editReminders).length > 0 ? editReminders : undefined,
+      });
 
       // Invalidate React Query cache
       invalidateDashboard(companyId, "sales");
@@ -510,13 +584,78 @@ export function ScheduleDealModal({
       void syncAppointmentToGoogle(updated, updated.latest_appointment, companyName);
       onScheduled(updated);
       onClose();
+      return;
+    }
+
+    const communications: ScheduleDealInput["communications"] = {};
+    if (appointmentPayload.send_email && trimmedEmail) {
+      communications.email = { to: trimmedEmail, subject: renderedEmailSubject, body: renderedEmailBody };
+    }
+    if (appointmentPayload.send_sms && trimmedPhone) {
+      communications.sms = { to: trimmedPhone, body: renderedSmsBody };
+    }
+
+    // Build reminders based on communication method
+    const reminders: ScheduleDealInput["reminders"] = {};
+    if (form.communicationMethod === "email" || form.communicationMethod === "both") {
+      reminders.email1DayBefore = form.reminders.email1DayBefore;
+      reminders.email1HourBefore = form.reminders.email1HourBefore;
+    }
+    if (form.communicationMethod === "sms" || form.communicationMethod === "both") {
+      reminders.sms1DayBefore = form.reminders.sms1DayBefore;
+      reminders.sms1HourBefore = form.reminders.sms1HourBefore;
+    }
+
+    const payload: ScheduleDealInput = {
+      stage: stageOnSchedule,
+      appointment: appointmentPayload,
+      deal: dealPayload,
+      communications: Object.keys(communications).length > 0 ? communications : undefined,
+      reminders: Object.keys(reminders).length > 0 ? reminders : undefined,
+    };
+
+    const updated = await scheduleDeal(currentDeal.id, payload);
+
+    // Invalidate React Query cache
+    invalidateDashboard(companyId, "sales");
+    invalidateDashboard(companyId, "jobs");
+    invalidateCompanyDeals(companyId);
+
+    void syncAppointmentToGoogle(updated, updated.latest_appointment, companyName);
+    onScheduled(updated);
+    onClose();
+  };
+
+  // Step 2: Submit the form
+  const handleStep2Submit = useCallback(async () => {
+    if (!pendingSubmissionRef.current) return;
+
+    setIsSavingFinal(true);
+    setStepError(null);
+
+    try {
+      await completeSubmission({
+        ...pendingSubmissionRef.current,
+        disableDrips: true, // Always disable drips for estimate scheduled
+      });
+      pendingSubmissionRef.current = null;
     } catch (err) {
       console.error("Failed to schedule deal", err);
-      setError(err instanceof Error ? err.message : "Could not schedule deal.");
+      setStepError(err instanceof Error ? err.message : "Could not schedule deal.");
     } finally {
-      setIsSubmitting(false);
+      setIsSavingFinal(false);
     }
-  };
+  }, []);
+
+  const handleBackStep = useCallback(() => {
+    setCurrentStep(1);
+  }, []);
+
+  const handleCloseMultiStep = useCallback(() => {
+    setCurrentStep(1);
+    pendingSubmissionRef.current = null;
+    onClose();
+  }, [onClose]);
 
   const handleDeleteClick = () => setShowDeleteConfirm(true);
   const handleDeleteCancel = () => setShowDeleteConfirm(false);
@@ -554,10 +693,13 @@ export function ScheduleDealModal({
   const primaryActionLabel = isEditMode ? modalCopy.editAction : modalCopy.createAction;
   const primaryActionPendingLabel = isEditMode ? modalCopy.editPendingAction : modalCopy.createPendingAction;
 
+  const showStepIndicator = isNewMode || mode === "existing";
+  const handleModalClose = currentStep > 1 ? handleCloseMultiStep : onClose;
+
   return (
     <Modal
       open={open}
-      onClose={onClose}
+      onClose={handleModalClose}
       labelledBy="schedule-deal-modal-title"
       ariaLabel="Schedule appointment"
       size="xl"
@@ -565,23 +707,31 @@ export function ScheduleDealModal({
     >
       <div className="relative flex max-h-[88vh] w-full max-w-xl flex-col overflow-hidden rounded-lg bg-white shadow-xl">
         <header className="flex items-center justify-between rounded-t-lg border-b border-slate-200 px-3.5 py-2">
-          <div>
-            {modalTitle ? (
-              <>
-                <p className="text-[11px] uppercase tracking-[0.08em] text-slate-400">{headerLabel}</p>
+          <div className="flex items-center gap-3">
+            <div>
+              {modalTitle ? (
+                <>
+                  <p className="text-[11px] uppercase tracking-[0.08em] text-slate-400">{headerLabel}</p>
+                  <h2 id="schedule-deal-modal-title" className="text-sm font-semibold text-slate-900">
+                    {modalTitle}
+                  </h2>
+                </>
+              ) : (
                 <h2 id="schedule-deal-modal-title" className="text-sm font-semibold text-slate-900">
-                  {modalTitle}
+                  {headerLabel}
                 </h2>
+              )}
+            </div>
+            {showStepIndicator && (
+              <>
+                <div className="h-4 w-px bg-slate-300" />
+                <StepIndicator currentStep={currentStep} totalSteps={2} />
               </>
-            ) : (
-              <h2 id="schedule-deal-modal-title" className="text-sm font-semibold text-slate-900">
-                {headerLabel}
-              </h2>
             )}
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleModalClose}
             className="flex h-6 w-6 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none"
             aria-label="Close"
           >
@@ -589,110 +739,126 @@ export function ScheduleDealModal({
           </button>
         </header>
 
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-1 flex-col gap-4 overflow-y-auto bg-slate-50 px-3.5 py-4 text-[12px]"
-        >
-          <AppointmentSchedulingSection
-            form={form}
-            assignmentOptions={assignmentOptions}
-            onInputChange={handleInputChange}
-          />
+        {/* Step 1: Details */}
+        {currentStep === 1 && (
+          <form
+            onSubmit={handleSubmit}
+            className="flex flex-1 flex-col gap-4 overflow-y-auto bg-slate-50 px-3.5 py-4 text-[12px]"
+          >
+            <AppointmentSchedulingSection
+              form={form}
+              assignmentOptions={assignmentOptions}
+              onInputChange={handleInputChange}
+            />
 
-          <ContactInformationSection
-            form={form}
-            onInputChange={handleInputChange}
-          />
+            <ContactInformationSection
+              form={form}
+              onInputChange={handleInputChange}
+            />
 
-          <DealDetailsSection
-            form={form}
-            dealSources={dealSources}
-            isLoadingDealSources={isLoadingDealSources}
-            onInputChange={handleInputChange}
-          />
+            <DealDetailsSection
+              form={form}
+              dealSources={dealSources}
+              isLoadingDealSources={isLoadingDealSources}
+              onInputChange={handleInputChange}
+            />
 
-          <ServiceAddressSection
-            addressForm={addressForm}
-            selectedAddressId={selectedAddressId}
-            contactAddresses={savedContactAddresses}
-            selectedContactAddress={selectedContactAddress}
-            suggestions={addressSuggestions}
-            showSuggestions={showAddressSuggestions}
-            isFetchingAddress={isFetchingAddress}
-            onAddressFieldChange={handleAddressFieldChange}
-            onAddressBlur={handleAddressBlur}
-            onAddressFocus={handleAddressFocus}
-            onSelectSavedAddress={handleSelectSavedAddress}
-            onUseNewAddress={handleUseNewAddress}
-            onClearAddress={handleClearAddress}
-            onSuggestionSelect={handleSuggestionSelect}
-          />
+            <ServiceAddressSection
+              addressForm={addressForm}
+              selectedAddressId={selectedAddressId}
+              contactAddresses={savedContactAddresses}
+              suggestions={addressSuggestions}
+              showSuggestions={showAddressSuggestions}
+              isFetchingAddress={isFetchingAddress}
+              onAddressFieldChange={handleAddressFieldChange}
+              onAddressBlur={handleAddressBlur}
+              onAddressFocus={handleAddressFocus}
+              onAddressSelectChange={handleAddressSelectChange}
+              onSuggestionSelect={handleSuggestionSelect}
+            />
 
-          <TeamAssignmentSection
-            form={form}
-            salespersonOptions={salespersonOptions}
-            projectManagerOptions={projectManagerOptions}
-            onInputChange={handleInputChange}
-          />
+            <TeamAssignmentSection
+              form={form}
+              salespersonOptions={salespersonOptions}
+              projectManagerOptions={projectManagerOptions}
+              onInputChange={handleInputChange}
+            />
 
-          <SendConfirmationSection
-            form={form}
-            emailSubject={emailSubject}
-            emailBody={emailBody}
-            smsBody={smsBody}
-            onCommunicationMethodChange={handleCommunicationMethodChange}
-            onEmailSubjectChange={(value) => {
-              setEmailSubjectEdited(true);
-              setEmailSubject(value);
-            }}
-            onEmailBodyChange={(value) => {
-              setEmailBodyEdited(true);
-              setEmailBody(value);
-            }}
-            onSmsBodyChange={(value) => {
-              setSmsBodyEdited(true);
-              setSmsBody(value);
-            }}
-          />
+            {error ? (
+              <p className="rounded border border-red-200 bg-red-100 px-3 py-2 text-[12px] font-medium text-red-600">
+                {error}
+              </p>
+            ) : null}
 
-          {error ? (
-            <p className="rounded border border-red-200 bg-red-100 px-3 py-2 text-[12px] font-medium text-red-600">
-              {error}
-            </p>
-          ) : null}
-
-          <footer className="mt-auto flex justify-between gap-2 border-t border-slate-200 pt-3">
-            <div>
-              {isEditMode && activeAppointment && !showDeleteConfirm ? (
+            <footer className="mt-auto flex justify-between gap-2 border-t border-slate-200 pt-3">
+              <div>
+                {isEditMode && activeAppointment && !showDeleteConfirm ? (
+                  <button
+                    type="button"
+                    onClick={handleDeleteClick}
+                    className="inline-flex items-center justify-center rounded border border-red-200 px-3 py-1.5 text-[12px] font-semibold text-red-600 transition hover:bg-red-50 focus:outline-none"
+                    disabled={isSubmitting || isDeleting}
+                  >
+                    Delete
+                  </button>
+                ) : null}
+              </div>
+              <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={handleDeleteClick}
-                  className="inline-flex items-center justify-center rounded border border-red-200 px-3 py-1.5 text-[12px] font-semibold text-red-600 transition hover:bg-red-50 focus:outline-none"
+                  onClick={onClose}
+                  className="inline-flex items-center justify-center rounded border border-slate-200 px-3 py-1.5 text-[12px] font-semibold text-slate-600 transition hover:bg-slate-100 focus:outline-none"
                   disabled={isSubmitting || isDeleting}
                 >
-                  Delete
+                  Cancel
                 </button>
-              ) : null}
-            </div>
-            <div className="flex gap-2">
+                <button
+                  type="submit"
+                  className="inline-flex items-center justify-center rounded bg-accent px-3 py-1.5 text-[12px] font-semibold text-white transition hover:bg-blue-600 focus:outline-none disabled:opacity-60"
+                  disabled={isSubmitting || isDeleting}
+                >
+                  {isSubmitting ? "Continuing…" : isNewMode ? "Continue" : primaryActionLabel}
+                </button>
+              </div>
+            </footer>
+          </form>
+        )}
+
+        {/* Step 2: Confirmation */}
+        {currentStep === 2 && (
+          <div className="flex flex-1 flex-col gap-4 overflow-y-auto bg-slate-50 px-3.5 py-4 text-[12px]">
+            <SendConfirmationSection
+              form={form}
+              onCommunicationMethodChange={handleCommunicationMethodChange}
+              onReminderChange={handleReminderChange}
+            />
+
+            {stepError ? (
+              <p className="rounded border border-red-200 bg-red-100 px-3 py-2 text-[12px] font-medium text-red-600">
+                {stepError}
+              </p>
+            ) : null}
+
+            <footer className="mt-auto flex justify-between gap-2 border-t border-slate-200 pt-3">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={handleBackStep}
                 className="inline-flex items-center justify-center rounded border border-slate-200 px-3 py-1.5 text-[12px] font-semibold text-slate-600 transition hover:bg-slate-100 focus:outline-none"
-                disabled={isSubmitting || isDeleting}
+                disabled={isSavingFinal}
               >
-                Cancel
+                Back
               </button>
               <button
-                type="submit"
+                type="button"
+                onClick={handleStep2Submit}
                 className="inline-flex items-center justify-center rounded bg-accent px-3 py-1.5 text-[12px] font-semibold text-white transition hover:bg-blue-600 focus:outline-none disabled:opacity-60"
-                disabled={isSubmitting || isDeleting}
+                disabled={isSavingFinal}
               >
-                {isSubmitting ? primaryActionPendingLabel : primaryActionLabel}
+                {isSavingFinal ? primaryActionPendingLabel : primaryActionLabel}
               </button>
-            </div>
-          </footer>
-        </form>
+            </footer>
+          </div>
+        )}
 
         {showDeleteConfirm ? (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-950/60 p-4">

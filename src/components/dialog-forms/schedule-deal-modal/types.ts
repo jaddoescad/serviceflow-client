@@ -14,6 +14,13 @@ export type ScheduleDealModalCopy = {
 
 export type CommunicationMethod = "both" | "email" | "sms" | "none";
 
+export type ReminderSettings = {
+  email1DayBefore: boolean;
+  email1HourBefore: boolean;
+  sms1DayBefore: boolean;
+  sms1HourBefore: boolean;
+};
+
 export type FormState = {
   firstName: string;
   lastName: string;
@@ -29,6 +36,7 @@ export type FormState = {
   startTime: string;
   endTime: string;
   communicationMethod: CommunicationMethod;
+  reminders: ReminderSettings;
   notes: string;
 };
 

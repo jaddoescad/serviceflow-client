@@ -467,7 +467,7 @@ export function KanbanBoard({
                           <h3>{stageOption.label}</h3>
                         </div>
                         <div className="flex items-center gap-2">
-                          {(() => {
+                          {stageOption.id !== "estimate_scheduled" && (() => {
                             const sequence = dripSequencesByStage[stageOption.id as DealStageId];
                             const hasSteps = (sequence?.steps?.length ?? 0) > 0;
                             const isActive = Boolean(sequence?.is_enabled && hasSteps);
@@ -584,17 +584,19 @@ export function KanbanBoard({
                                           >
                                             New proposal
                                           </button>
-                                          <button
-                                            type="button"
-                                            onClick={(event) => {
-                                              event.stopPropagation();
-                                              handleCancelDrips(deal);
-                                            }}
-                                            disabled={dripActionDealId === deal.id}
-                                            className="w-full px-3 py-1.5 text-left text-[11px] font-medium text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
-                                          >
-                                            {dripActionDealId === deal.id ? "Canceling…" : "Cancel drips"}
-                                          </button>
+                                          {stageOption.id !== "estimate_scheduled" && (
+                                            <button
+                                              type="button"
+                                              onClick={(event) => {
+                                                event.stopPropagation();
+                                                handleCancelDrips(deal);
+                                              }}
+                                              disabled={dripActionDealId === deal.id}
+                                              className="w-full px-3 py-1.5 text-left text-[11px] font-medium text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                            >
+                                              {dripActionDealId === deal.id ? "Canceling…" : "Cancel drips"}
+                                            </button>
+                                          )}
                                         </div>
                                       ) : null}
                                     </div>
@@ -604,7 +606,7 @@ export function KanbanBoard({
                                     {deal.lead_source ? `Source • ${deal.lead_source}` : "Source not set"}
                                   </p>
                                   <p className="text-[11px] text-slate-400">{formatLocation(deal)}</p>
-                                  {deal.disable_drips ? (
+                                  {stageOption.id !== "estimate_scheduled" && deal.disable_drips ? (
                                     <span className="inline-flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700">
                                       <svg
                                         className="h-3 w-3"
@@ -864,17 +866,19 @@ export function KanbanBoard({
                                           >
                                             New proposal
                                           </button>
-                                          <button
-                                            type="button"
-                                            onClick={(event) => {
-                                              event.stopPropagation();
-                                              handleCancelDrips(deal);
-                                            }}
-                                            disabled={dripActionDealId === deal.id}
-                                            className="w-full px-4 py-3 text-left text-sm font-medium text-rose-600 transition hover:bg-rose-50 active:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
-                                          >
-                                            {dripActionDealId === deal.id ? "Canceling…" : "Cancel drips"}
-                                          </button>
+                                          {stageOption.id !== "estimate_scheduled" && (
+                                            <button
+                                              type="button"
+                                              onClick={(event) => {
+                                                event.stopPropagation();
+                                                handleCancelDrips(deal);
+                                              }}
+                                              disabled={dripActionDealId === deal.id}
+                                              className="w-full px-4 py-3 text-left text-sm font-medium text-rose-600 transition hover:bg-rose-50 active:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                            >
+                                              {dripActionDealId === deal.id ? "Canceling…" : "Cancel drips"}
+                                            </button>
+                                          )}
                                         </div>
                                       ) : null}
                                     </div>
@@ -884,7 +888,7 @@ export function KanbanBoard({
                                     {deal.lead_source ? `Source • ${deal.lead_source}` : "Source not set"}
                                   </p>
                                   <p className="text-sm text-slate-400">{formatLocation(deal)}</p>
-                                  {deal.disable_drips ? (
+                                  {stageOption.id !== "estimate_scheduled" && deal.disable_drips ? (
                                     <span className="inline-flex items-center gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
                                       <svg
                                         className="h-3.5 w-3.5"

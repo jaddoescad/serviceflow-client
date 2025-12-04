@@ -208,6 +208,12 @@ export const createInitialFormState = (
       latestAppointment?.send_email ?? deal?.send_email ?? false,
       latestAppointment?.send_sms ?? deal?.send_sms ?? false
     ),
+    reminders: {
+      email1DayBefore: true,
+      email1HourBefore: true,
+      sms1DayBefore: true,
+      sms1HourBefore: true,
+    },
     notes: latestAppointment?.appointment_notes ?? "",
   };
 };
