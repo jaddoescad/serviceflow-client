@@ -68,7 +68,6 @@ export type UseNewDealFormReturn = {
   addressSuggestions: PlaceSuggestion[];
   isFetchingAddress: boolean;
   showAddressSuggestions: boolean;
-  placesEnabled: boolean;
 
   // Member options
   memberOptions: {

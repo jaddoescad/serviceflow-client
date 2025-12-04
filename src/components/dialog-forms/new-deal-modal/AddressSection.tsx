@@ -38,9 +38,6 @@ export function AddressSection({
 
   return (
     <section className="space-y-3">
-      <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-        Service Addresses
-      </h3>
       {existingAddresses && existingAddresses.length > 0 ? (
         <label className="flex flex-col gap-1 text-[10px] font-medium text-slate-600">
           <span>Saved addresses</span>
@@ -92,17 +89,6 @@ export function AddressSection({
               </div>
             </div>
           ) : null}
-        </label>
-
-        <label className="flex flex-col gap-1 text-[10px] font-medium text-slate-600">
-          <span>Address line 2</span>
-          <input
-            type="text"
-            value={addressForm.addressLine2}
-            onChange={onAddressFieldChange("addressLine2")}
-            placeholder="Apartment, suite, etc."
-            className="w-full rounded border border-slate-200 px-3 py-2 text-[12px] shadow-sm focus:border-accent focus:outline-none"
-          />
         </label>
 
         <div className="grid gap-2.5 md:grid-cols-3">

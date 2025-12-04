@@ -1,7 +1,6 @@
 import type { PlaceAddressDetails, PlaceSuggestion } from "@/types/google-places";
 import { API_BASE_URL } from "@/services/api";
 
-const GOOGLE_MAPS_PUBLIC_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY?.trim();
 const SUGGESTIONS_API_PATH = `${API_BASE_URL}/google-places/suggestions`;
 const DETAILS_API_PATH = `${API_BASE_URL}/google-places/details`;
 
@@ -15,16 +14,10 @@ type DetailsResponse = {
   error?: string;
 };
 
-export const isGoogleMapsConfigured = () => Boolean(GOOGLE_MAPS_PUBLIC_KEY);
-
 export const fetchPlaceSuggestions = async (
   input: string,
   signal?: AbortSignal
 ): Promise<PlaceSuggestion[]> => {
-  if (!isGoogleMapsConfigured()) {
-    return [];
-  }
-
   const query = input.trim();
   if (!query) {
     return [];
@@ -56,10 +49,6 @@ export const fetchPlaceSuggestions = async (
 export const fetchPlaceAddressDetails = async (
   placeId: string
 ): Promise<PlaceAddressDetails | null> => {
-  if (!isGoogleMapsConfigured()) {
-    return null;
-  }
-
   const trimmedPlaceId = placeId.trim();
   if (!trimmedPlaceId) {
     return null;

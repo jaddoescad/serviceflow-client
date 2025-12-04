@@ -3,7 +3,6 @@ import type { PlaceSuggestion } from "@/types/google-places";
 import {
   fetchPlaceAddressDetails,
   fetchPlaceSuggestions,
-  isGoogleMapsConfigured,
 } from "@/lib/google-places";
 import type { AddressFormState } from "../types";
 
@@ -24,11 +23,9 @@ export function useAddressSuggestions({
   const [isFetching, setIsFetching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const placesEnabled = isGoogleMapsConfigured();
-
   // Fetch suggestions when address line 1 changes
   useEffect(() => {
-    if (!open || !placesEnabled || selectedAddressId !== "new") {
+    if (!open || selectedAddressId !== "new") {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
@@ -64,7 +61,7 @@ export function useAddressSuggestions({
       window.clearTimeout(timeout);
       controller.abort();
     };
-  }, [addressLine1, open, placesEnabled, selectedAddressId]);
+  }, [addressLine1, open, selectedAddressId]);
 
   const handleSuggestionSelect = async (suggestion: PlaceSuggestion) => {
     setShowSuggestions(false);
@@ -105,7 +102,6 @@ export function useAddressSuggestions({
     isFetching,
     showSuggestions,
     setShowSuggestions,
-    placesEnabled,
     handleSuggestionSelect,
     handleAddressBlur,
     handleAddressFocus,

@@ -8,19 +8,20 @@ type TeamAssignmentSectionProps = {
     sales: CompanyMemberRecord[];
     project: CompanyMemberRecord[];
   };
+  dealSources: string[];
+  isLoadingDealSources: boolean;
   onInputChange: (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
 };
 
 export function TeamAssignmentSection({
   form,
   memberOptions,
+  dealSources,
+  isLoadingDealSources,
   onInputChange,
 }: TeamAssignmentSectionProps) {
   return (
     <section className="space-y-3">
-      <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-        Team & Assignment
-      </h3>
       <div className="grid gap-2.5 md:grid-cols-2">
         <label className="flex flex-col gap-1 text-[10px] font-medium text-slate-600">
           <span>Salesperson</span>
@@ -64,23 +65,36 @@ export function TeamAssignmentSection({
           </select>
         </label>
       </div>
-      <div className="flex items-center justify-between rounded border border-slate-200 bg-white px-3 py-2">
-        <div className="flex flex-col">
-          <span className="text-[11px] font-semibold text-slate-700">Disable drips for this deal</span>
-          <span className="text-[10px] text-slate-500">
-            Turn off automation so this deal never enters the stage drip sequences.
-          </span>
-        </div>
-        <label className="relative inline-flex cursor-pointer items-center">
+      <div className="grid gap-2.5 md:grid-cols-2">
+        <label className="flex flex-col gap-1 text-[10px] font-medium text-slate-600">
+          <span>Deal source</span>
+          <select
+            name="leadSource"
+            value={form.leadSource}
+            onChange={onInputChange}
+            disabled={isLoadingDealSources}
+            className="w-full rounded border border-slate-200 px-3 py-2 text-[12px] shadow-sm focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-100"
+          >
+            <option value="">Select a deal source</option>
+            {form.leadSource && !dealSources.includes(form.leadSource) ? (
+              <option value={form.leadSource}>{form.leadSource}</option>
+            ) : null}
+            {dealSources.map((source) => (
+              <option key={source} value={source}>
+                {source}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex items-center gap-2 self-end cursor-pointer rounded border border-slate-200 bg-white px-3 py-2">
           <input
             type="checkbox"
             name="disableDrips"
-            className="peer sr-only"
             checked={form.disableDrips}
             onChange={onInputChange}
+            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
           />
-          <div className="h-5 w-9 rounded-full bg-slate-300 transition peer-checked:bg-blue-600" />
-          <div className="absolute left-1 top-[4px] h-3.5 w-3.5 rounded-full bg-white shadow transition peer-checked:translate-x-4" />
+          <span className="text-[12px] font-medium text-slate-700">Disable drips</span>
         </label>
       </div>
     </section>

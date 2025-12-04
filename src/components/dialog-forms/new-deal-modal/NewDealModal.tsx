@@ -25,6 +25,7 @@ export function NewDealModal(props: NewDealModalProps) {
     memberOptions,
     modalTitle,
     submitLabel,
+    isEditMode,
     handleInputChange,
     handleAddressSelectChange,
     handleAddressFieldChange,
@@ -85,19 +86,21 @@ export function NewDealModal(props: NewDealModalProps) {
             onAddressSuggestionSelect={handleAddressSuggestionSelect}
           />
 
-          <DealDetailsSection
+          <TeamAssignmentSection
             form={form}
-            stages={stages}
+            memberOptions={memberOptions}
             dealSources={dealSources}
             isLoadingDealSources={isLoadingDealSources}
             onInputChange={handleInputChange}
           />
 
-          <TeamAssignmentSection
-            form={form}
-            memberOptions={memberOptions}
-            onInputChange={handleInputChange}
-          />
+          {isEditMode && (
+            <DealDetailsSection
+              form={form}
+              stages={stages}
+              onInputChange={handleInputChange}
+            />
+          )}
 
           {error ? (
             <p className="rounded border border-red-200 bg-red-100 px-3 py-2 text-[12px] font-medium text-red-600">

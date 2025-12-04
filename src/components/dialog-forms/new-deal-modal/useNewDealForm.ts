@@ -11,7 +11,6 @@ import { DEFAULT_DEAL_SOURCES } from "@/features/deals";
 import {
   fetchPlaceAddressDetails,
   fetchPlaceSuggestions,
-  isGoogleMapsConfigured,
 } from "@/lib/google-places";
 import type { PlaceSuggestion } from "@/types/google-places";
 import type { ContactAddressRecord, ContactRecord } from "@/features/contacts";
@@ -65,7 +64,6 @@ export function useNewDealForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const placesEnabled = isGoogleMapsConfigured();
   const [addressSuggestions, setAddressSuggestions] = useState<PlaceSuggestion[]>([]);
   const [isFetchingAddress, setIsFetchingAddress] = useState(false);
   const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
@@ -193,7 +191,7 @@ export function useNewDealForm({
   const activeAddressLine1 = addressForm.addressLine1;
 
   useEffect(() => {
-    if (!open || !placesEnabled) {
+    if (!open) {
       setAddressSuggestions([]);
       setShowAddressSuggestions(false);
       return;
@@ -238,7 +236,7 @@ export function useNewDealForm({
       window.clearTimeout(timeout);
       controller.abort();
     };
-  }, [activeAddressLine1, open, placesEnabled]);
+  }, [activeAddressLine1, open]);
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const target = event.target;
@@ -561,7 +559,6 @@ export function useNewDealForm({
     addressSuggestions,
     isFetchingAddress,
     showAddressSuggestions,
-    placesEnabled,
     memberOptions,
     modalTitle,
     submitLabel,
