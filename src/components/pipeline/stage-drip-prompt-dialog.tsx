@@ -50,10 +50,7 @@ export function StageDripPromptDialog({
 
       <ModalBody className="space-y-2 text-[12px]">
         <p className="text-slate-600">
-          {dealLabel} just moved to {stageLabel}.{" "}
-          {hasConfiguredDrips
-            ? "Turn on drips to automatically send the scheduled emails and texts for this column."
-            : "No drip steps are configured yet, but you can enable drips now and add steps later."}
+          {dealLabel} just moved to {stageLabel}. Turn on drips to automatically send the scheduled emails and texts for this stage.
         </p>
         {error ? (
           <p className="rounded border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] text-rose-600">{error}</p>

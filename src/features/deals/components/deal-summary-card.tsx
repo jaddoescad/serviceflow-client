@@ -27,11 +27,11 @@ type DealSummaryCardProps = {
   stageChangeError?: string | null;
 };
 
-const tagLabelClass = "text-[11px] font-semibold uppercase tracking-wide text-slate-500";
-const infoLabelClass = "text-[11px] font-semibold uppercase tracking-wide text-slate-500";
-const infoValueClass = "text-[13px] font-medium text-slate-900";
-const infoValueMutedClass = "text-[13px] font-medium text-slate-400";
-const sectionHeadingClass = "text-[11px] font-semibold uppercase tracking-wide text-slate-500";
+const tagLabelClass = "text-[13px] sm:text-[11px] font-semibold uppercase tracking-wide text-slate-500";
+const infoLabelClass = "text-[13px] sm:text-[11px] font-semibold uppercase tracking-wide text-slate-500";
+const infoValueClass = "text-[15px] sm:text-[13px] font-medium text-slate-900";
+const infoValueMutedClass = "text-[15px] sm:text-[13px] font-medium text-slate-400";
+const sectionHeadingClass = "text-[13px] sm:text-[11px] font-semibold uppercase tracking-wide text-slate-500";
 
 export function DealSummaryCard({
   snapshot,
@@ -123,8 +123,8 @@ export function DealSummaryCard({
         key={label}
         label={label}
         value={
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-[10px] font-semibold text-slate-600">
+          <div className="flex items-center gap-3 sm:gap-2.5">
+            <span className="flex h-8 w-8 sm:h-6 sm:w-6 items-center justify-center rounded-full bg-slate-200 text-[12px] sm:text-[10px] font-semibold text-slate-600">
               {initials}
             </span>
             <span className={display ? infoValueClass : infoValueMutedClass}>{display ?? fallback}</span>
@@ -135,7 +135,7 @@ export function DealSummaryCard({
   };
 
   return (
-    <section className={`flex h-full flex-col gap-6 ${className ?? ""}`}>
+    <section className={`flex h-full flex-col gap-4 sm:gap-6 ${className ?? ""}`}>
       {isArchived && (
         <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2">
           <div className="flex items-center gap-2">
@@ -149,41 +149,41 @@ export function DealSummaryCard({
       )}
       <header className="space-y-4">
         <div className="flex flex-col gap-2">
-          <p className={sectionHeadingClass}>Deal Overview</p>
           <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <h2 className="text-[22px] font-semibold leading-6 text-slate-900">
+            <div className="flex items-center justify-between w-full">
+              <h2 className="text-[20px] sm:text-[22px] font-semibold leading-6 text-slate-900">
                 {formatFullName({ first_name: snapshot.deal.first_name, last_name: snapshot.deal.last_name })}
               </h2>
-              {!isArchived && (
-                <button
-                  type="button"
-                  onClick={onEdit}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition hover:border-slate-300 hover:text-slate-700 disabled:opacity-60"
-                  aria-label="Edit deal information"
-                  disabled={!onEdit}
-                >
-                  <IconEdit />
-                </button>
-              )}
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  type="button"
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
-                  aria-label="More actions"
-                  aria-expanded={isDropdownOpen}
-                  aria-haspopup="true"
-                >
-                  <IconMoreVertical />
-                </button>
+              <div className="flex items-center gap-2">
+                {!isArchived && (
+                  <button
+                    type="button"
+                    onClick={onEdit}
+                    className="inline-flex h-10 w-10 sm:h-7 sm:w-7 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition hover:border-slate-300 hover:text-slate-700 disabled:opacity-60"
+                    aria-label="Edit deal information"
+                    disabled={!onEdit}
+                  >
+                    <IconEdit />
+                  </button>
+                )}
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="inline-flex h-10 w-10 sm:h-7 sm:w-7 items-center justify-center rounded-md border border-slate-200 text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
+                    aria-label="More actions"
+                    aria-expanded={isDropdownOpen}
+                    aria-haspopup="true"
+                  >
+                    <IconMoreVertical />
+                  </button>
                 {isDropdownOpen && (
-                  <div className="absolute right-0 top-full z-10 mt-1 w-36 rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+                  <div className="absolute right-0 top-full z-10 mt-1 w-40 sm:w-36 rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
                     {isArchived ? (
                       <button
                         type="button"
                         onClick={handleUnarchiveClick}
-                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                        className="flex w-full items-center gap-2 px-3 py-3 sm:py-2 text-left text-[15px] sm:text-sm text-slate-700 hover:bg-slate-50"
                       >
                         <IconUnarchive />
                         Unarchive
@@ -192,7 +192,7 @@ export function DealSummaryCard({
                       <button
                         type="button"
                         onClick={handleArchiveClick}
-                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                        className="flex w-full items-center gap-2 px-3 py-3 sm:py-2 text-left text-[15px] sm:text-sm text-slate-700 hover:bg-slate-50"
                       >
                         <IconArchive />
                         Archive
@@ -201,13 +201,14 @@ export function DealSummaryCard({
                     <button
                       type="button"
                       onClick={handleDeleteClick}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50"
+                      className="flex w-full items-center gap-2 px-3 py-3 sm:py-2 text-left text-[15px] sm:text-sm text-rose-600 hover:bg-rose-50"
                     >
                       <IconTrash />
                       Delete
                     </button>
                   </div>
                 )}
+                </div>
               </div>
             </div>
             <ConfirmDialog
@@ -243,17 +244,17 @@ export function DealSummaryCard({
               variant="danger"
               loading={isDeleting}
             />
-            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">ID {snapshot.deal.id}</p>
+            <p className="text-[13px] sm:text-[11px] font-medium uppercase tracking-wide text-slate-400">ID {snapshot.deal.id.slice(0, 8)}</p>
           </div>
         </div>
 
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-1">
-            <span className={`${tagLabelClass} w-[60px]`}>Stage</span>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[11px] sm:text-[10px] font-semibold uppercase tracking-wide text-slate-500">Drip</span>
+          <div className="flex items-center gap-3 sm:gap-2">
             <DealStageSelector
               value={snapshot.deal.stage}
               pipelineId={DEAL_STAGE_PIPELINE_MAP[snapshot.deal.stage]}
-              selectClassName="w-[176px]"
+              selectClassName="w-auto"
               disabled={isArchived}
               appointmentCount={snapshot.appointments?.length ?? 0}
               proposalCount={snapshot.proposals?.length ?? 0}
@@ -264,125 +265,121 @@ export function DealSummaryCard({
               isUpdating={isUpdatingStage}
               stageChangeError={stageChangeError}
             />
-          </div>
-          {!isArchived && (
-            <div className="flex items-center gap-1">
-              <span className={`${tagLabelClass} w-[60px]`}>Drip</span>
-              <div className="flex items-center gap-2">
+            {!isArchived && (
+              <button
+                type="button"
+                onClick={() => onToggleDrips?.(!dripsActive)}
+                disabled={!onToggleDrips || isTogglingDrips}
+                className="inline-flex items-center disabled:cursor-not-allowed disabled:opacity-60"
+              >
                 <span
-                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${dripsActive
-                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                    : "bg-amber-50 text-amber-700 border border-amber-200"
-                  }`}
+                  className={`relative inline-flex h-6 w-11 sm:h-5 sm:w-9 items-center rounded-full transition-colors ${dripsActive ? "bg-emerald-500" : "bg-slate-300"}`}
                 >
-                  <span className="text-[9px]">●</span>
-                  {dripsActive ? "Active" : "Paused"}
+                  <span
+                    className={`inline-block h-5 w-5 sm:h-4 sm:w-4 transform rounded-full bg-white shadow transition-transform ${dripsActive ? "translate-x-5 sm:translate-x-4" : "translate-x-0.5"}`}
+                  />
                 </span>
-                <button
-                  type="button"
-                  onClick={() => onToggleDrips?.(!dripsActive)}
-                  disabled={!onToggleDrips || isTogglingDrips}
-                  className="inline-flex items-center rounded border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isTogglingDrips ? "Updating…" : dripsActive ? "Pause drips" : "Activate drips"}
-                </button>
-              </div>
-            </div>
-          )}
-          {dripStatusMessage ? (
-            <p className="ml-[60px] text-[11px] text-slate-500">{dripStatusMessage}</p>
-          ) : null}
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
-      <SidebarSection>
-        <DetailList>
-          <DetailRow
-            icon={<IconUser />}
-            label="Primary Contact"
-            hideLabel
-            value={
-              <span className={infoValueClass}>
-                {contact
-                  ? formatFullName({ first_name: contact.first_name, last_name: contact.last_name })
-                  : formatFullName({ first_name: snapshot.deal.first_name, last_name: snapshot.deal.last_name })}
+      {/* Contact Card - iOS style */}
+      <section className="rounded-xl sm:rounded-lg bg-white sm:bg-transparent border border-slate-200 sm:border-0 overflow-hidden">
+        {/* Contact rows */}
+        <div className="divide-y divide-slate-100 sm:divide-y-0 sm:space-y-2">
+          {primaryPhone && (
+            <a
+              href={`tel:${primaryPhone}`}
+              className="flex items-center gap-4 px-4 py-3.5 sm:px-1 sm:py-1.5 hover:bg-slate-50 sm:hover:bg-transparent transition-colors"
+            >
+              <span className="flex h-10 w-10 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-green-500 sm:bg-transparent text-white sm:text-slate-500">
+                <IconPhone />
               </span>
-            }
-          />
-          <DetailRow
-            icon={<IconMail />}
-            label="Email"
-            hideLabel
-            value={
-              primaryEmail ? (
-                <a href={`mailto:${primaryEmail}`} className="text-sky-600 hover:text-sky-700">
-                  {primaryEmail}
-                </a>
-              ) : (
-                <span className={infoValueMutedClass}>No email</span>
-              )
-            }
-          />
-          <DetailRow
-            icon={<IconPhone />}
-            label="Phone"
-            hideLabel
-            value={
-              primaryPhone ? (
-                <a href={`tel:${primaryPhone}`} className="text-sky-600 hover:text-sky-700">
-                  {primaryPhone}
-                </a>
-              ) : (
-                <span className={infoValueMutedClass}>No phone</span>
-              )
-            }
-          />
-          {leadSource ? (
-            <DetailRow
-              icon={<IconGlobe />}
-              label="Website Form"
-              hideLabel
-              value={<span className={infoValueClass}>{leadSource}</span>}
-            />
-          ) : null}
-          <DetailRow
-            icon={<IconMapPin />}
-            label="Location"
-            hideLabel
-            value={
-              serviceAddress ? (
-                <div className="space-y-0.5 text-[13px] font-medium text-slate-900">
-                  <p>{serviceAddress.address_line1}</p>
-                  {serviceAddress.address_line2 ? <p>{serviceAddress.address_line2}</p> : null}
-                  <p>
-                    {serviceAddress.city}, {serviceAddress.state} {serviceAddress.postal_code}
-                  </p>
-                </div>
-              ) : (
-                <span className={infoValueMutedClass}>No service address</span>
-              )
-            }
-          />
-        </DetailList>
-      </SidebarSection>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] sm:text-[10px] font-medium text-slate-500">mobile</p>
+                <p className="text-[17px] sm:text-[13px] text-sky-600 font-normal truncate">{primaryPhone}</p>
+              </div>
+            </a>
+          )}
+          {primaryEmail && (
+            <a
+              href={`mailto:${primaryEmail}`}
+              className="flex items-center gap-4 px-4 py-3.5 sm:px-1 sm:py-1.5 hover:bg-slate-50 sm:hover:bg-transparent transition-colors"
+            >
+              <span className="flex h-10 w-10 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-sky-500 sm:bg-transparent text-white sm:text-slate-500">
+                <IconMail />
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] sm:text-[10px] font-medium text-slate-500">email</p>
+                <p className="text-[17px] sm:text-[13px] text-sky-600 font-normal truncate">{primaryEmail}</p>
+              </div>
+            </a>
+          )}
+          {serviceAddress && (
+            <a
+              href={`https://maps.google.com/?q=${encodeURIComponent(`${serviceAddress.address_line1}, ${serviceAddress.city}, ${serviceAddress.state} ${serviceAddress.postal_code}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-4 px-4 py-3.5 sm:px-1 sm:py-1.5 hover:bg-slate-50 sm:hover:bg-transparent transition-colors"
+            >
+              <span className="flex h-10 w-10 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-red-500 sm:bg-transparent text-white sm:text-slate-500">
+                <IconMapPin />
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] sm:text-[10px] font-medium text-slate-500">address</p>
+                <p className="text-[17px] sm:text-[13px] text-slate-900 font-normal">{serviceAddress.address_line1}</p>
+                <p className="text-[15px] sm:text-[12px] text-slate-500">{serviceAddress.city}, {serviceAddress.state} {serviceAddress.postal_code}</p>
+              </div>
+            </a>
+          )}
+          {leadSource && (
+            <div className="flex items-center gap-4 px-4 py-3.5 sm:px-1 sm:py-1.5">
+              <span className="flex h-10 w-10 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-purple-500 sm:bg-transparent text-white sm:text-slate-500">
+                <IconGlobe />
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] sm:text-[10px] font-medium text-slate-500">source</p>
+                <p className="text-[17px] sm:text-[13px] text-slate-900 font-normal">{leadSource}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
 
-      <SidebarSection>
-        <DetailList>
-          {renderAssignment("Salesperson", snapshot.deal.salesperson)}
-          {renderAssignment("Project Manager", snapshot.deal.project_manager)}
-          {renderAssignment("Crew", snapshot.deal.crew?.name ?? null)}
-        </DetailList>
-      </SidebarSection>
+      {/* Team Card - iOS style */}
+      <section className="rounded-xl sm:rounded-lg bg-white sm:bg-transparent border border-slate-200 sm:border-0 overflow-hidden">
+        <div className="divide-y divide-slate-100 sm:divide-y-0 sm:space-y-2">
+          <TeamMemberRow label="Salesperson" name={snapshot.deal.salesperson} />
+          <TeamMemberRow label="Project Manager" name={snapshot.deal.project_manager} />
+          <TeamMemberRow label="Crew" name={snapshot.deal.crew?.name ?? null} />
+        </div>
+      </section>
     </section>
   );
 }
 
-function SidebarSection({ children }: { children: ReactNode }) {
-  return <section className="space-y-1.5">{children}</section>;
+function TeamMemberRow({ label, name }: { label: string; name: string | null }) {
+  const display = name?.trim() || null;
+  const fallback = label === "Project Manager" ? "No PM" : label === "Crew" ? "No Crew" : "Unassigned";
+
+  return (
+    <div className="flex items-center justify-between px-4 py-3.5 sm:px-1 sm:py-1.5">
+      <p className="text-[15px] sm:text-[11px] font-medium text-slate-500">{label}</p>
+      <p className={`text-[17px] sm:text-[13px] font-normal ${display ? "text-slate-900" : "text-slate-400"}`}>
+        {display ?? fallback}
+      </p>
+    </div>
+  );
 }
 
-function DetailList({ children }: { children: ReactNode }) {
-  return <div className="flex flex-col gap-2">{children}</div>;
+function SidebarSection({ children }: { children: ReactNode }) {
+  return <section className="space-y-2 sm:space-y-1.5">{children}</section>;
+}
+
+function DetailList({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <div className={`flex flex-col gap-3 sm:gap-2 ${className}`}>{children}</div>;
 }
 
 function DetailRow({
@@ -396,19 +393,19 @@ function DetailRow({
   value: ReactNode;
   hideLabel?: boolean;
 }) {
-  const containerPadding = hideLabel ? "px-0.5 py-0.5" : "px-0.5 pt-2 pb-0.5";
+  const containerPadding = hideLabel ? "px-0.5 py-1 sm:py-0.5" : "px-0.5 pt-2 pb-1 sm:pb-0.5";
   const contentGap = hideLabel ? "gap-0" : "gap-2";
 
   return (
-    <div className={`flex items-start gap-2 ${containerPadding}`} aria-label={hideLabel ? label : undefined}>
+    <div className={`flex items-start gap-3 sm:gap-2 ${containerPadding}`} aria-label={hideLabel ? label : undefined}>
       {icon ? (
-        <span className="mt-0.5 flex h-4 w-4 items-center justify-center text-slate-500" aria-hidden="true">
+        <span className="mt-0.5 flex h-5 w-5 sm:h-4 sm:w-4 items-center justify-center text-slate-500" aria-hidden="true">
           {icon}
         </span>
       ) : null}
-      <div className={`flex flex-col ${contentGap}`}>
+      <div className={`flex min-w-0 flex-1 flex-col ${contentGap}`}>
         {hideLabel ? <span className="sr-only">{label}</span> : <p className={infoLabelClass}>{label}</p>}
-        <div className="text-[13px] font-medium text-slate-900 leading-4 [&>a]:text-sky-600 [&>a]:hover:text-sky-700">
+        <div className="text-[15px] sm:text-[13px] font-medium text-slate-900 leading-5 sm:leading-4 break-words [&>a]:text-sky-600 [&>a]:hover:text-sky-700">
           {value}
         </div>
       </div>
@@ -442,7 +439,7 @@ function IconUser() {
       strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="h-4 w-4"
+      className="h-5 w-5 sm:h-4 sm:w-4"
     >
       <path d="M16 19c0-2.21-2.686-4-6-4s-6 1.79-6 4" />
       <circle cx="10" cy="7" r="4" />
@@ -459,7 +456,7 @@ function IconMail() {
       strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="h-4 w-4"
+      className="h-5 w-5 sm:h-4 sm:w-4"
     >
       <rect width="20" height="16" x="2" y="4" rx="2" />
       <path d="m22 6-8.97 6.43a2 2 0 0 1-2.3 0L2 6" />
@@ -476,7 +473,7 @@ function IconPhone() {
       strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="h-4 w-4"
+      className="h-5 w-5 sm:h-4 sm:w-4"
     >
       <path d="M22 16.92V21a1 1 0 0 1-1.09 1 19.8 19.8 0 0 1-8.63-3.06 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 3 4.11 1 1 0 0 1 4 3h4.09A1 1 0 0 1 9 3.72l1.2 2.79a1 1 0 0 1-.27 1.18L8.6 8.4a16 16 0 0 0 6 6l.69-.33a1 1 0 0 1 1.18.27L19.28 16a1 1 0 0 1 .24 1.05Z" />
     </svg>
@@ -492,7 +489,7 @@ function IconMapPin() {
       strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="h-4 w-4"
+      className="h-5 w-5 sm:h-4 sm:w-4"
     >
       <path d="M20 10c0 5.25-8 12-8 12s-8-6.75-8-12a8 8 0 0 1 16 0Z" />
       <circle cx="12" cy="10" r="3" />
@@ -509,7 +506,7 @@ function IconGlobe() {
       strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="h-4 w-4"
+      className="h-5 w-5 sm:h-4 sm:w-4"
     >
       <circle cx="12" cy="12" r="10" />
       <path d="M2 12h20" />
