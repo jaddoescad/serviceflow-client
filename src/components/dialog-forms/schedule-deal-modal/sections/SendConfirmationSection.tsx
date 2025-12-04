@@ -1,19 +1,28 @@
-import type { FormState, CommunicationMethod, ReminderSettings } from "../types";
+import type { FormState, CommunicationMethod } from "../types";
+import { TEMPLATE_PARAMETERS } from "../constants";
+import { TemplateParameters } from "@/components/pipeline/template-parameters";
 
 type SendConfirmationSectionProps = {
   form: FormState;
+  emailSubject: string;
+  emailBody: string;
+  smsBody: string;
   onCommunicationMethodChange: (method: CommunicationMethod) => void;
-  onReminderChange: (key: keyof ReminderSettings, value: boolean) => void;
+  onEmailSubjectChange: (value: string) => void;
+  onEmailBodyChange: (value: string) => void;
+  onSmsBodyChange: (value: string) => void;
 };
 
 export function SendConfirmationSection({
   form,
+  emailSubject,
+  emailBody,
+  smsBody,
   onCommunicationMethodChange,
-  onReminderChange,
+  onEmailSubjectChange,
+  onEmailBodyChange,
+  onSmsBodyChange,
 }: SendConfirmationSectionProps) {
-  const showEmailReminders = form.communicationMethod === "email" || form.communicationMethod === "both";
-  const showSmsReminders = form.communicationMethod === "sms" || form.communicationMethod === "both";
-
   return (
     <section className="flex flex-col gap-2">
       <h3 className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
@@ -66,61 +75,60 @@ export function SendConfirmationSection({
         </button>
       </div>
 
-      {showEmailReminders && (
-        <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-slate-600 mb-2">
-            Email Reminders
-          </p>
-          <div className="flex flex-col gap-2">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.reminders.email1DayBefore}
-                onChange={(e) => onReminderChange("email1DayBefore", e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-[12px] text-slate-700">Reminder 1 day before</span>
+      {(form.communicationMethod === "email" || form.communicationMethod === "both") && (
+        <div className="mt-3 space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <div>
+            <label className="block text-[11px] font-medium uppercase tracking-wide text-slate-600">
+              Email Subject
             </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.reminders.email1HourBefore}
-                onChange={(e) => onReminderChange("email1HourBefore", e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-[12px] text-slate-700">Reminder 1 hour before</span>
+            <input
+              type="text"
+              value={emailSubject}
+              onChange={(e) => onEmailSubjectChange(e.target.value)}
+              className="mt-1 w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-[12px] text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-medium uppercase tracking-wide text-slate-600">
+              Email Message
             </label>
+            <textarea
+              value={emailBody}
+              onChange={(e) => onEmailBodyChange(e.target.value)}
+              rows={5}
+              className="mt-1 w-full rounded border border-slate-300 bg-white px-2.5 py-2 text-[12px] text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
         </div>
       )}
 
-      {showSmsReminders && (
-        <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-slate-600 mb-2">
-            SMS Reminders
-          </p>
-          <div className="flex flex-col gap-2">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.reminders.sms1DayBefore}
-                onChange={(e) => onReminderChange("sms1DayBefore", e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-[12px] text-slate-700">Reminder 1 day before</span>
+      {(form.communicationMethod === "sms" || form.communicationMethod === "both") && (
+        <div className="mt-3 space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <div>
+            <label className="block text-[11px] font-medium uppercase tracking-wide text-slate-600">
+              SMS Message
             </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.reminders.sms1HourBefore}
-                onChange={(e) => onReminderChange("sms1HourBefore", e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-[12px] text-slate-700">Reminder 1 hour before</span>
-            </label>
+            <textarea
+              value={smsBody}
+              onChange={(e) => onSmsBodyChange(e.target.value)}
+              rows={3}
+              className="mt-1 w-full rounded border border-slate-300 bg-white px-2.5 py-2 text-[12px] text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <p className="mt-1 text-[10px] text-slate-500">
+              Character count: {smsBody.length} / 160
+            </p>
           </div>
         </div>
       )}
+
+      {form.communicationMethod !== "none" ? (
+        <div className="mt-2 rounded-lg border border-slate-200 bg-white p-3">
+          <TemplateParameters
+            tokens={TEMPLATE_PARAMETERS.map((param) => param.token)}
+            description="Add these anywhere in the subject, email, or SMS to auto-fill details when sending."
+          />
+        </div>
+      ) : null}
     </section>
   );
 }

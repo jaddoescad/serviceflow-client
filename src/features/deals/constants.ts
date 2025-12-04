@@ -60,6 +60,11 @@ export const SALES_DEAL_STAGE_OPTIONS = [
   { id: "proposals_rejected", label: "Proposal(s) Rejected" },
 ] satisfies DealStageOption[];
 
+// Sales stages that have drip sequences (excludes estimate_scheduled)
+export const SALES_DRIP_STAGE_OPTIONS = SALES_DEAL_STAGE_OPTIONS.filter(
+  (stage) => stage.id !== "estimate_scheduled"
+);
+
 export const JOBS_DEAL_STAGE_OPTIONS = [
   { id: "project_accepted", label: "Project Accepted" },
   { id: "project_scheduled", label: "Project Scheduled" },
