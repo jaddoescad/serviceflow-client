@@ -257,6 +257,7 @@ function QuoteFormContent() {
         onAddDiscount={ctx.handleAddDiscount}
         onDeleteLineItem={ctx.handleDeleteLineItem}
         onToggleEdit={ctx.toggleLineItemEdit}
+        onCancelEdit={ctx.cancelLineItemEdit}
         onApplyTemplate={ctx.handleApplyTemplate}
         onSave={() => void ctx.handleSaveQuote()}
         onSendProposal={() => ctx.openSendDialog({ variant: "proposal" })}

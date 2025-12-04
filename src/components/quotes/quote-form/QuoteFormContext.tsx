@@ -143,6 +143,7 @@ type QuoteFormContextValue = {
   setClientMessage: (value: string) => void;
   setDisclaimer: (value: string) => void;
   toggleLineItemEdit: (clientId: string) => void;
+  cancelLineItemEdit: (clientId: string) => void;
   handleAddLineItem: () => void;
   handleAddDiscount: () => void;
   handleLineItemFieldChange: (clientId: string, field: "name" | "description", value: string) => void;
@@ -275,6 +276,7 @@ export function QuoteFormProvider({
   const [isDeleting, setIsDeleting] = useState(false);
   const lastSavedSnapshotRef = useRef<string | null>(null);
   const [editingLineItems, setEditingLineItems] = useState<Set<string>>(new Set());
+  const [originalLineItemValues, setOriginalLineItemValues] = useState<Map<string, EditableQuoteLineItem>>(new Map());
 
   const isProposalLocked = status === "accepted" || isArchived;
 
@@ -556,13 +558,52 @@ export function QuoteFormProvider({
     setEditingLineItems((prev) => {
       const next = new Set(prev);
       if (next.has(clientId)) {
+        // Exiting edit mode (via Save) - clear stored original values
         next.delete(clientId);
+        setOriginalLineItemValues((originals) => {
+          const updated = new Map(originals);
+          updated.delete(clientId);
+          return updated;
+        });
       } else {
+        // Entering edit mode - store original values
+        const item = lineItems.find((i) => i.client_id === clientId);
+        if (item) {
+          setOriginalLineItemValues((originals) => {
+            const updated = new Map(originals);
+            updated.set(clientId, { ...item });
+            return updated;
+          });
+        }
         next.add(clientId);
       }
       return next;
     });
-  }, [isProposalLocked]);
+  }, [isProposalLocked, lineItems]);
+
+  const cancelLineItemEdit = useCallback((clientId: string) => {
+    if (isProposalLocked) return;
+    // Restore original values
+    const original = originalLineItemValues.get(clientId);
+    if (original) {
+      setLineItems((items) =>
+        items.map((item) =>
+          item.client_id === clientId ? { ...original } : item
+        )
+      );
+    }
+    // Exit edit mode and clear stored original
+    setEditingLineItems((prev) => {
+      const next = new Set(prev);
+      next.delete(clientId);
+      return next;
+    });
+    setOriginalLineItemValues((originals) => {
+      const updated = new Map(originals);
+      updated.delete(clientId);
+      return updated;
+    });
+  }, [isProposalLocked, originalLineItemValues]);
 
   const handleAddLineItem = useCallback(() => {
     if (isProposalLocked) return;
@@ -1232,6 +1273,7 @@ export function QuoteFormProvider({
       setClientMessage,
       setDisclaimer,
       toggleLineItemEdit,
+      cancelLineItemEdit,
       handleAddLineItem,
       handleAddDiscount,
       handleLineItemFieldChange,
@@ -1337,6 +1379,7 @@ export function QuoteFormProvider({
       invoiceUrl,
       isNavigatingBack,
       toggleLineItemEdit,
+      cancelLineItemEdit,
       handleAddLineItem,
       handleAddDiscount,
       handleLineItemFieldChange,
