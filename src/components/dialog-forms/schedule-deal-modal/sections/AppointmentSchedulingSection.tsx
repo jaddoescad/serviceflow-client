@@ -15,8 +15,8 @@ export function AppointmentSchedulingSection({
   onInputChange,
 }: AppointmentSchedulingSectionProps) {
   return (
-    <section className="space-y-2.5 overflow-hidden">
-      <div className="grid gap-2.5 md:grid-cols-2 [&>*]:min-w-0">
+    <section className="space-y-2.5">
+      <div className="grid gap-2.5 md:grid-cols-2">
         <Input
           type="date"
           name="scheduledDate"

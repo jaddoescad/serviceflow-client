@@ -161,7 +161,7 @@ export function Modal({
           aria-label={labelledBy ? undefined : ariaLabel ?? "Dialog"}
           data-testid={dataTestId}
           className={classNames(
-            "relative flex w-full flex-col overflow-hidden rounded-xl sm:rounded-2xl border border-slate-200 bg-green-500 shadow-2xl outline-none",
+            "relative flex w-full flex-col overflow-hidden rounded-xl sm:rounded-2xl border border-slate-200 bg-white shadow-2xl outline-none",
             "max-h-[85dvh] sm:max-h-[88vh]",
             sizeClass,
             contentClassName,
