@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import type { DealRecord, ScheduleDealInput, UpdateDealAppointmentInput } from "@/features/deals";
-import { DEAL_STAGE_OPTIONS, useDealInvalidation } from "@/features/deals";
+import { useDealInvalidation } from "@/features/deals";
 import type { ContactAddressRecord, ContactRecord } from "@/features/contacts";
 import { useSupabaseBrowserClient } from "@/hooks/useSupabaseBrowserClient";
 import { createDeal, scheduleDeal, updateDealAppointment, deleteAppointment } from "@/features/deals";
@@ -34,7 +34,6 @@ import {
   ServiceAddressSection,
   TeamAssignmentSection,
   SendConfirmationSection,
-  AppointmentNotesSection,
 } from "./sections";
 
 export type { ScheduleDealModalProps } from "./types";
@@ -73,11 +72,6 @@ export function ScheduleDealModal({
     () => ({ ...DEFAULT_MODAL_COPY, ...copyOverrides }),
     [copyOverrides]
   );
-
-  const stageLabel = useMemo(() => {
-    const option = DEAL_STAGE_OPTIONS.find((item) => item.id === stageOnSchedule);
-    return option?.label ?? stageOnSchedule;
-  }, [stageOnSchedule]);
 
   // Form state management
   const {
@@ -599,21 +593,13 @@ export function ScheduleDealModal({
 
           <ContactInformationSection
             form={form}
-            isNewMode={isNewMode}
-            isExistingContactSelected={isExistingContactSelected}
-            selectedContact={selectedContact}
-            selectedContactId={selectedContactId}
-            contactOptions={contactOptions}
             onInputChange={handleInputChange}
-            onSelectContact={handleSelectContact}
           />
 
           <DealDetailsSection
             form={form}
             dealSources={dealSources}
             isLoadingDealSources={isLoadingDealSources}
-            stageLabel={stageLabel}
-            isEditMode={isEditMode}
             onInputChange={handleInputChange}
           />
 
@@ -660,8 +646,6 @@ export function ScheduleDealModal({
               setSmsBody(value);
             }}
           />
-
-          <AppointmentNotesSection form={form} onInputChange={handleInputChange} />
 
           {error ? (
             <p className="rounded border border-red-200 bg-red-100 px-3 py-2 text-[12px] font-medium text-red-600">

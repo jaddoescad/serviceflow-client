@@ -137,17 +137,6 @@ export function ServiceAddressSection({
             </div>
           </div>
 
-          <label className="flex flex-col gap-1 text-[10px] font-medium text-slate-600">
-            <span>Address line 2</span>
-            <input
-              type="text"
-              value={addressForm.addressLine2}
-              onChange={onAddressFieldChange("addressLine2")}
-              placeholder="Apartment, suite, etc."
-              className="w-full rounded border border-slate-200 px-2.5 py-1.5 text-[12px] shadow-sm focus:border-accent focus:outline-none"
-            />
-          </label>
-
           <div className="grid gap-2.5 md:grid-cols-3">
             <label className="flex flex-col gap-1 text-[10px] font-medium text-slate-600">
               <span>City</span>
