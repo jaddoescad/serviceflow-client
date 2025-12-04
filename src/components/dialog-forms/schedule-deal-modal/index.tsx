@@ -549,7 +549,7 @@ export function ScheduleDealModal({
   if (!open || !form) return null;
 
   const contactName = formatFullName({ first_name: form.firstName, last_name: form.lastName });
-  const modalTitle = contactName || (deal ? `Deal #${deal.id.slice(0, 6)}` : "New Appointment");
+  const modalTitle = contactName || (deal ? `Deal #${deal.id.slice(0, 6)}` : null);
   const headerLabel = isEditMode ? modalCopy.editHeader : modalCopy.createHeader;
   const primaryActionLabel = isEditMode ? modalCopy.editAction : modalCopy.createAction;
   const primaryActionPendingLabel = isEditMode ? modalCopy.editPendingAction : modalCopy.createPendingAction;
@@ -566,10 +566,18 @@ export function ScheduleDealModal({
       <div className="relative flex max-h-[88vh] w-full max-w-xl flex-col overflow-hidden rounded-lg bg-white shadow-xl">
         <header className="flex items-center justify-between rounded-t-lg border-b border-slate-200 px-3.5 py-2">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.08em] text-slate-400">{headerLabel}</p>
-            <h2 id="schedule-deal-modal-title" className="text-sm font-semibold text-slate-900">
-              {modalTitle}
-            </h2>
+            {modalTitle ? (
+              <>
+                <p className="text-[11px] uppercase tracking-[0.08em] text-slate-400">{headerLabel}</p>
+                <h2 id="schedule-deal-modal-title" className="text-sm font-semibold text-slate-900">
+                  {modalTitle}
+                </h2>
+              </>
+            ) : (
+              <h2 id="schedule-deal-modal-title" className="text-sm font-semibold text-slate-900">
+                {headerLabel}
+              </h2>
+            )}
           </div>
           <button
             type="button"
