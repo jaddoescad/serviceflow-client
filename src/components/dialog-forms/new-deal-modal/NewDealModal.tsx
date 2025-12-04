@@ -26,6 +26,9 @@ export function NewDealModal(props: NewDealModalProps) {
     modalTitle,
     submitLabel,
     isEditMode,
+    dripPromptState,
+    isSavingDripChoice,
+    dripError,
     handleInputChange,
     handleAddressSelectChange,
     handleAddressFieldChange,
@@ -33,10 +36,66 @@ export function NewDealModal(props: NewDealModalProps) {
     handleAddressBlur,
     handleAddressSuggestionSelect,
     handleSubmit,
+    handleEnableDrips,
+    handleDisableDrips,
+    handleCloseDripPrompt,
   } = useNewDealForm(props);
 
   if (!open) {
     return null;
+  }
+
+  // Show drip prompt step after deal is created
+  if (dripPromptState) {
+    return (
+      <Modal
+        open={open}
+        onClose={handleCloseDripPrompt}
+        labelledBy="drip-prompt-title"
+        ariaLabel="Enable drips"
+        size="sm"
+        align="top"
+      >
+        <div className="relative flex w-full max-w-md flex-col overflow-hidden rounded-lg bg-white shadow-lg">
+          <header className="flex items-center justify-between rounded-t-lg border-b border-slate-200 px-4 py-3">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Automations</p>
+              <h2 id="drip-prompt-title" className="text-sm font-semibold text-slate-900">
+                Enable drips?
+              </h2>
+            </div>
+            <button
+              type="button"
+              onClick={handleCloseDripPrompt}
+              className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none"
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </header>
+
+          <div className="px-4 py-4">
+            <p className="text-[12px] text-slate-600">
+              <span className="font-medium">{dripPromptState.dealLabel}</span> has been created. Would you like to enable automated drip messages for this deal?
+            </p>
+            {dripError ? (
+              <p className="mt-3 rounded border border-red-200 bg-red-100 px-3 py-2 text-[12px] font-medium text-red-600">
+                {dripError}
+              </p>
+            ) : null}
+          </div>
+
+          <footer className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
+            <Button variant="secondary" onClick={handleDisableDrips} disabled={isSavingDripChoice}>
+              Disable drips
+            </Button>
+            <Button variant="primary" onClick={handleEnableDrips} disabled={isSavingDripChoice}>
+              {isSavingDripChoice ? "Saving…" : "Enable drips"}
+            </Button>
+          </footer>
+        </div>
+      </Modal>
+    );
   }
 
   return (

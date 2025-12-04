@@ -54,6 +54,11 @@ export type NewDealModalProps = {
   onContactCreated?: (contact: ContactRecord) => void;
 };
 
+export type DripPromptState = {
+  deal: DealRecord;
+  dealLabel: string;
+} | null;
+
 export type UseNewDealFormReturn = {
   // Form state
   form: FormState;
@@ -80,6 +85,11 @@ export type UseNewDealFormReturn = {
   submitLabel: string;
   isEditMode: boolean;
 
+  // Drip prompt state (for two-step flow after deal creation)
+  dripPromptState: DripPromptState;
+  isSavingDripChoice: boolean;
+  dripError: string | null;
+
   // Handlers
   handleInputChange: (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   handleAddressSelectChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -88,6 +98,9 @@ export type UseNewDealFormReturn = {
   handleAddressBlur: () => void;
   handleAddressSuggestionSelect: (suggestion: PlaceSuggestion) => Promise<void>;
   handleSubmit: (event: React.FormEvent<HTMLFormElement>) => Promise<void>;
+  handleEnableDrips: () => Promise<void>;
+  handleDisableDrips: () => Promise<void>;
+  handleCloseDripPrompt: () => void;
 };
 
 export function createInitialFormState(defaultStage: DealStageId): FormState {

@@ -57,20 +57,20 @@ export function AddressSection({
         </label>
       ) : null}
 
-      <div className="space-y-2.5 rounded border border-slate-200 bg-white p-3">
+      <div className="space-y-3">
         <label className="flex flex-col gap-1 text-[10px] font-medium text-slate-600">
-          <span>Address line 1</span>
-          <input
-            type="text"
-            value={addressForm.addressLine1}
-            onChange={onAddressFieldChange("addressLine1")}
-            onFocus={onAddressLine1Focus}
-            onBlur={onAddressBlur}
-            placeholder="123 Main Street"
-            className="w-full rounded border border-slate-200 px-3 py-2 text-[12px] shadow-sm focus:border-accent focus:outline-none"
-          />
-          {showAddressSuggestions ? (
-            <div className="relative">
+          <span>Address</span>
+          <div className="relative">
+            <input
+              type="text"
+              value={addressForm.addressLine1}
+              onChange={onAddressFieldChange("addressLine1")}
+              onFocus={onAddressLine1Focus}
+              onBlur={onAddressBlur}
+              placeholder="123 Main Street"
+              className="w-full rounded border border-slate-200 px-3 py-2 text-[12px] shadow-sm focus:border-accent focus:outline-none"
+            />
+            {showAddressSuggestions ? (
               <div className="absolute z-10 mt-1 w-full rounded border border-slate-200 bg-white shadow">
                 {isFetchingAddress ? (
                   <p className="px-3 py-2 text-[11px] text-slate-500">Searching…</p>
@@ -87,8 +87,8 @@ export function AddressSection({
                   ))
                 ) : null}
               </div>
-            </div>
-          ) : null}
+            ) : null}
+          </div>
         </label>
 
         <div className="grid gap-2.5 md:grid-cols-3">
