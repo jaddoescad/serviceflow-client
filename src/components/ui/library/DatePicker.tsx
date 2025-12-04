@@ -1,11 +1,22 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { DayPicker } from "react-day-picker";
-import { format, parse, isValid } from "date-fns";
+import {
+  format,
+  parse,
+  isValid,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  addDays,
+  addMonths,
+  subMonths,
+  isSameMonth,
+  isSameDay,
+  isToday,
+} from "date-fns";
 import type { InputSize } from "./Input";
-
-import "react-day-picker/style.css";
 
 type DatePickerProps = {
   /** The selected date in YYYY-MM-DD format */
@@ -38,6 +49,8 @@ const labelSizeClasses: Record<InputSize, string> = {
   lg: "text-[13px] sm:text-[12px]",
 };
 
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
 export function DatePicker({
   value,
   onChange,
@@ -49,6 +62,7 @@ export function DatePicker({
   name,
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(() => new Date());
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Parse the value to a Date object
@@ -60,6 +74,13 @@ export function DatePicker({
     selectedDate && isValid(selectedDate)
       ? format(selectedDate, "MMMM d, yyyy")
       : "";
+
+  // Update currentMonth when value changes
+  useEffect(() => {
+    if (selectedDate && isValid(selectedDate)) {
+      setCurrentMonth(selectedDate);
+    }
+  }, [value]);
 
   // Close on outside click
   useEffect(() => {
@@ -92,13 +113,38 @@ export function DatePicker({
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen]);
 
-  const handleSelect = (date: Date | undefined) => {
-    if (date) {
-      onChange(format(date, "yyyy-MM-dd"));
-    }
+  const handleSelect = (date: Date) => {
+    onChange(format(date, "yyyy-MM-dd"));
     setIsOpen(false);
   };
 
+  const handlePrevMonth = () => {
+    setCurrentMonth((prev) => subMonths(prev, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentMonth((prev) => addMonths(prev, 1));
+  };
+
+  // Generate calendar days
+  const generateCalendarDays = () => {
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(monthStart);
+    const calendarStart = startOfWeek(monthStart);
+    const calendarEnd = endOfWeek(monthEnd);
+
+    const days: Date[] = [];
+    let day = calendarStart;
+
+    while (day <= calendarEnd) {
+      days.push(day);
+      day = addDays(day, 1);
+    }
+
+    return days;
+  };
+
+  const calendarDays = generateCalendarDays();
   const hasError = Boolean(error);
 
   return (
@@ -139,39 +185,70 @@ export function DatePicker({
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 z-50 mt-1 rounded-lg border border-slate-200 bg-white p-3 shadow-lg sm:left-auto sm:right-auto sm:w-auto">
-          <DayPicker
-            mode="single"
-            selected={selectedDate}
-            onSelect={handleSelect}
-            defaultMonth={selectedDate || new Date()}
-            showOutsideDays
-            classNames={{
-              root: "text-sm",
-              months: "flex flex-col",
-              month: "space-y-2",
-              caption: "flex justify-center pt-1 relative items-center",
-              caption_label: "text-sm font-semibold text-slate-900",
-              nav: "flex items-center gap-1",
-              nav_button:
-                "h-7 w-7 bg-transparent p-0 text-slate-500 hover:text-slate-900 inline-flex items-center justify-center rounded-md hover:bg-slate-100",
-              nav_button_previous: "absolute left-1",
-              nav_button_next: "absolute right-1",
-              table: "w-full border-collapse",
-              head_row: "flex",
-              head_cell:
-                "text-slate-500 rounded-md w-9 font-medium text-[11px] uppercase",
-              row: "flex w-full mt-1",
-              cell: "text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
-              day: "h-9 w-9 p-0 font-normal rounded-md hover:bg-slate-100 inline-flex items-center justify-center",
-              day_selected:
-                "bg-blue-600 text-white hover:bg-blue-700 focus:bg-blue-700",
-              day_today: "bg-slate-100 font-semibold",
-              day_outside: "text-slate-300",
-              day_disabled: "text-slate-300",
-              day_hidden: "invisible",
-            }}
-          />
+        <div className="absolute left-0 right-0 z-50 mt-1 rounded-lg border border-slate-200 bg-white p-4 shadow-lg">
+          {/* Header with month/year and navigation */}
+          <div className="mb-4 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={handlePrevMonth}
+              className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+              aria-label="Previous month"
+            >
+              <ChevronLeftIcon className="h-5 w-5" />
+            </button>
+            <span className="text-sm font-semibold text-slate-900">
+              {format(currentMonth, "MMMM yyyy")}
+            </span>
+            <button
+              type="button"
+              onClick={handleNextMonth}
+              className="flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+              aria-label="Next month"
+            >
+              <ChevronRightIcon className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Weekday headers */}
+          <div className="mb-2 grid grid-cols-7 gap-1">
+            {WEEKDAYS.map((day) => (
+              <div
+                key={day}
+                className="text-center text-[11px] font-medium text-slate-500"
+              >
+                {day}
+              </div>
+            ))}
+          </div>
+
+          {/* Calendar grid */}
+          <div className="grid grid-cols-7 gap-1">
+            {calendarDays.map((day, index) => {
+              const isCurrentMonth = isSameMonth(day, currentMonth);
+              const isSelected = selectedDate && isSameDay(day, selectedDate);
+              const isTodayDate = isToday(day);
+
+              return (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => handleSelect(day)}
+                  className={[
+                    "flex h-10 w-full items-center justify-center rounded-md text-sm transition",
+                    isSelected
+                      ? "bg-blue-600 font-semibold text-white"
+                      : isTodayDate
+                        ? "bg-slate-100 font-semibold text-slate-900"
+                        : isCurrentMonth
+                          ? "text-slate-700 hover:bg-slate-100"
+                          : "text-slate-300",
+                  ].join(" ")}
+                >
+                  {format(day, "d")}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -198,6 +275,34 @@ function CalendarIcon({ className = "" }: { className?: string }) {
         strokeLinejoin="round"
         d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
       />
+    </svg>
+  );
+}
+
+function ChevronLeftIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
+  );
+}
+
+function ChevronRightIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
     </svg>
   );
 }
