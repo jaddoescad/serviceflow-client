@@ -662,6 +662,7 @@ export function ScheduleDealModal({
               form={form}
               assignmentOptions={assignmentOptions}
               onInputChange={handleInputChange}
+              onDateChange={(value) => setForm((prev) => prev ? { ...prev, scheduledDate: value } : prev)}
             />
 
             <ContactInformationSection
