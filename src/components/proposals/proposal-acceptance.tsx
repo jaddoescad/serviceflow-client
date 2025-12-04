@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState, type ReactNode } from "react";
-import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/shared/modal";
+import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/library";
 import { useNavigate } from "react-router-dom";
 import { DEFAULT_PROPOSAL_TERMS_TEMPLATE_CONTENT } from "@/constants/proposal-terms";
 import { API_BASE_URL } from "@/services/api";

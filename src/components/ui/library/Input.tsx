@@ -22,19 +22,19 @@ type SelectProps = BaseFieldProps &
 type TextareaProps = BaseFieldProps & Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "size">;
 
 const sizeClasses: Record<InputSize, string> = {
-  sm: "px-2 py-1 text-[11px]",
-  md: "px-2.5 py-1.5 text-[12px]",
-  lg: "px-3 py-2 text-[13px]",
+  sm: "px-2.5 py-2 text-[13px] sm:px-2 sm:py-1 sm:text-[11px]",
+  md: "px-3 py-2.5 text-[14px] sm:px-2.5 sm:py-1.5 sm:text-[12px]",
+  lg: "px-3.5 py-3 text-[15px] sm:px-3 sm:py-2 sm:text-[13px]",
 };
 
 const labelSizeClasses: Record<InputSize, string> = {
-  sm: "text-[10px]",
-  md: "text-[11px]",
-  lg: "text-[12px]",
+  sm: "text-[11px] sm:text-[10px]",
+  md: "text-[12px] sm:text-[11px]",
+  lg: "text-[13px] sm:text-[12px]",
 };
 
 const baseInputClasses =
-  "w-full rounded-md border border-slate-300 text-slate-700 shadow-sm transition placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500";
+  "w-full rounded-md border border-slate-300 text-slate-700 shadow-sm transition placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500 min-h-[44px] sm:min-h-0";
 
 const errorInputClasses =
   "border-red-300 focus:border-red-500 focus:ring-red-500";

@@ -48,13 +48,13 @@ type ModalSectionProps = HTMLAttributes<HTMLDivElement> & {
 };
 
 const SIZE_CLASSES: Record<ModalSize, string> = {
-  sm: "max-w-sm",
-  md: "max-w-md",
-  lg: "max-w-lg",
-  xl: "max-w-xl",
-  "2xl": "max-w-2xl",
-  "3xl": "max-w-3xl",
-  "4xl": "max-w-4xl",
+  sm: "max-w-[calc(100vw-2rem)] sm:max-w-sm",
+  md: "max-w-[calc(100vw-2rem)] sm:max-w-md",
+  lg: "max-w-[calc(100vw-2rem)] sm:max-w-lg",
+  xl: "max-w-[calc(100vw-2rem)] sm:max-w-xl",
+  "2xl": "max-w-[calc(100vw-2rem)] sm:max-w-2xl",
+  "3xl": "max-w-[calc(100vw-2rem)] sm:max-w-3xl",
+  "4xl": "max-w-[calc(100vw-2rem)] sm:max-w-4xl",
   full: "max-w-full mx-4",
 };
 
@@ -161,7 +161,7 @@ export function Modal({
           aria-label={labelledBy ? undefined : ariaLabel ?? "Dialog"}
           data-testid={dataTestId}
           className={classNames(
-            "relative flex max-h-[90vh] w-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl outline-none",
+            "relative flex max-h-[85vh] sm:max-h-[90vh] w-full flex-col overflow-hidden rounded-xl sm:rounded-2xl border border-slate-200 bg-white shadow-2xl outline-none",
             sizeClass,
             contentClassName,
             className

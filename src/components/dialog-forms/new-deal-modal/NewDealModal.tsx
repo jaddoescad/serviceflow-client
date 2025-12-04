@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Modal, Button } from "@/components/ui/library";
+import { Modal, ModalHeader, ModalBody, ModalFooter, Button } from "@/components/ui/library";
 import type { NewDealModalProps } from "./types";
 import { useNewDealForm } from "./useNewDealForm";
 import { ContactInfoSection } from "./ContactInfoSection";
@@ -79,46 +79,36 @@ export function NewDealModal(props: NewDealModalProps) {
       size="xl"
       align="top"
     >
-      <div className="relative flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-white shadow-lg">
-        <header className="flex items-center justify-between rounded-t-lg border-b border-slate-200 px-4 py-3">
-          <div className="flex items-center gap-2">
-            {step === "drips" && !isEditMode ? (
-              <button
-                type="button"
-                onClick={handleBack}
-                className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none"
-                aria-label="Go back"
-              >
-                ←
-              </button>
-            ) : null}
-            <h2 id="new-deal-modal-title" className="text-sm font-semibold text-slate-900">
-              {step === "drips" ? "Enable Drips" : modalTitle}
-            </h2>
-          </div>
+      <ModalHeader
+        title={step === "drips" ? "Enable Drips" : modalTitle}
+        titleId="new-deal-modal-title"
+        onClose={handleClose}
+      >
+        {step === "drips" && !isEditMode ? (
           <button
             type="button"
-            onClick={handleClose}
-            className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none"
-            aria-label="Close"
+            onClick={handleBack}
+            className="absolute left-4 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none"
+            aria-label="Go back"
           >
-            ×
+            ←
           </button>
-        </header>
+        ) : null}
+      </ModalHeader>
 
-        {step === "form" ? (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (isEditMode) {
-                // In edit mode, submit directly with current disableDrips value
-                submitDeal(form.disableDrips);
-              } else {
-                handleNext();
-              }
-            }}
-            className="flex flex-1 flex-col gap-4 overflow-y-auto bg-slate-50 px-4 py-5"
-          >
+      {step === "form" ? (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (isEditMode) {
+              submitDeal(form.disableDrips);
+            } else {
+              handleNext();
+            }
+          }}
+          className="flex flex-1 flex-col overflow-hidden"
+        >
+          <ModalBody className="flex flex-col gap-4 bg-slate-50">
             <ContactInfoSection
               form={form}
               onInputChange={handleInputChange}
@@ -159,19 +149,21 @@ export function NewDealModal(props: NewDealModalProps) {
                 {error}
               </p>
             ) : null}
+          </ModalBody>
 
-            <footer className="mt-auto flex justify-end gap-2 border-t border-slate-200 pt-3">
-              <Button variant="secondary" onClick={handleClose} disabled={isSubmitting}>
-                Cancel
-              </Button>
-              <Button type="submit" variant="primary" disabled={isSubmitting}>
-                {isEditMode ? (isSubmitting ? "Saving…" : "Save Deal") : "Next"}
-              </Button>
-            </footer>
-          </form>
-        ) : (
-          <div className="flex flex-1 flex-col gap-4 overflow-y-auto bg-slate-50 px-4 py-5">
-            <div className="space-y-3 text-[12px]">
+          <ModalFooter>
+            <Button variant="secondary" onClick={handleClose} disabled={isSubmitting}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" disabled={isSubmitting}>
+              {isEditMode ? (isSubmitting ? "Saving…" : "Save Deal") : "Next"}
+            </Button>
+          </ModalFooter>
+        </form>
+      ) : (
+        <>
+          <ModalBody className="flex flex-col gap-4 bg-slate-50">
+            <div className="space-y-3 text-[12px] sm:text-[13px]">
               <p className="text-slate-500">
                 Drips automatically send scheduled messages based on the deal&apos;s pipeline stage.
               </p>
@@ -182,26 +174,26 @@ export function NewDealModal(props: NewDealModalProps) {
                 {error}
               </p>
             ) : null}
+          </ModalBody>
 
-            <footer className="mt-auto flex justify-end gap-2 border-t border-slate-200 pt-3">
-              <Button
-                variant="secondary"
-                onClick={() => handleDripChoice(true)}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Creating…" : "Disable drips"}
-              </Button>
-              <Button
-                variant="primary"
-                onClick={() => handleDripChoice(false)}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Creating…" : "Enable drips"}
-              </Button>
-            </footer>
-          </div>
-        )}
-      </div>
+          <ModalFooter>
+            <Button
+              variant="secondary"
+              onClick={() => handleDripChoice(true)}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Creating…" : "Disable drips"}
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => handleDripChoice(false)}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Creating…" : "Enable drips"}
+            </Button>
+          </ModalFooter>
+        </>
+      )}
     </Modal>
   );
 }

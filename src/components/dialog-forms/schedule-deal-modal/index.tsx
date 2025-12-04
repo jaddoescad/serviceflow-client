@@ -11,7 +11,7 @@ import { getCommunicationTemplateByKey, toCommunicationTemplateSnapshot } from "
 import type { CommunicationTemplateSnapshot } from "@/features/communications";
 import { syncAppointmentToGoogle } from "@/lib/google-calendar-sync";
 import { formatFullName } from "@/lib/name";
-import { Modal } from "@/components/shared/modal";
+import { Modal, ModalHeader, ModalBody, ModalFooter, Button } from "@/components/ui/library";
 
 import type { ScheduleDealModalProps, FormState, AddressFormState, CommunicationMethod } from "./types";
 import { DEFAULT_MODAL_COPY, NEW_CONTACT_OPTION } from "./constants";
@@ -631,46 +631,33 @@ export function ScheduleDealModal({
       size="xl"
       align="top"
     >
-      <div className="relative flex max-h-[88vh] w-full max-w-xl flex-col overflow-hidden rounded-lg bg-white shadow-xl">
-        <header className="flex items-center justify-between rounded-t-lg border-b border-slate-200 px-3.5 py-2">
-          <div className="flex items-center gap-2">
-            {step === "communication" && (
-              <button
-                type="button"
-                onClick={handleBack}
-                className="flex h-6 w-6 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none"
-                aria-label="Go back"
-              >
-                ←
-              </button>
-            )}
-            <div>
-              <h2 id="schedule-deal-modal-title" className="text-sm font-semibold text-slate-900">
-                {step === "communication" ? "Notifications" : headerLabel}
-              </h2>
-              {modalTitle ? (
-                <p className="text-[11px] text-slate-500">{modalTitle}</p>
-              ) : null}
-            </div>
-          </div>
+      <ModalHeader
+        title={step === "communication" ? "Notifications" : headerLabel}
+        subtitle={modalTitle || undefined}
+        titleId="schedule-deal-modal-title"
+        onClose={handleClose}
+      >
+        {step === "communication" && (
           <button
             type="button"
-            onClick={handleClose}
-            className="flex h-6 w-6 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none"
-            aria-label="Close"
+            onClick={handleBack}
+            className="absolute left-4 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none"
+            aria-label="Go back"
           >
-            ×
+            ←
           </button>
-        </header>
+        )}
+      </ModalHeader>
 
-        {step === "details" ? (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleNext();
-            }}
-            className="flex flex-1 flex-col gap-4 overflow-y-auto bg-slate-50 px-3.5 py-4 text-[12px]"
-          >
+      {step === "details" ? (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleNext();
+          }}
+          className="flex flex-1 flex-col overflow-hidden"
+        >
+          <ModalBody className="flex flex-col gap-4 bg-slate-50 text-[13px] sm:text-[12px]">
             <AppointmentSchedulingSection
               form={form}
               assignmentOptions={assignmentOptions}
@@ -718,26 +705,20 @@ export function ScheduleDealModal({
                 {error}
               </p>
             ) : null}
+          </ModalBody>
 
-            <footer className="mt-auto flex justify-end gap-2 border-t border-slate-200 pt-3">
-              <button
-                type="button"
-                onClick={handleClose}
-                className="inline-flex items-center justify-center rounded border border-slate-200 px-3 py-1.5 text-[12px] font-semibold text-slate-600 transition hover:bg-slate-100 focus:outline-none"
-                disabled={isSubmitting}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="inline-flex items-center justify-center rounded bg-accent px-3 py-1.5 text-[12px] font-semibold text-white transition hover:bg-blue-600 focus:outline-none"
-              >
-                Next
-              </button>
-            </footer>
-          </form>
-        ) : (
-          <div className="flex flex-1 flex-col gap-4 overflow-y-auto bg-slate-50 px-3.5 py-4 text-[12px]">
+          <ModalFooter>
+            <Button variant="secondary" onClick={handleClose} disabled={isSubmitting}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary">
+              Next
+            </Button>
+          </ModalFooter>
+        </form>
+      ) : (
+        <>
+          <ModalBody className="flex flex-col gap-4 bg-slate-50 text-[13px] sm:text-[12px]">
             <CommunicationStep
               form={form}
               onCheckboxChange={handleInputChange}
@@ -749,71 +730,58 @@ export function ScheduleDealModal({
                 {error}
               </p>
             ) : null}
+          </ModalBody>
 
-            <footer className="mt-auto flex justify-between gap-2 border-t border-slate-200 pt-3">
-              <div>
-                {isEditMode && activeAppointment && !showDeleteConfirm ? (
-                  <button
-                    type="button"
-                    onClick={handleDeleteClick}
-                    className="inline-flex items-center justify-center rounded border border-red-200 px-3 py-1.5 text-[12px] font-semibold text-red-600 transition hover:bg-red-50 focus:outline-none"
-                    disabled={isSubmitting || isDeleting}
-                  >
-                    Delete
-                  </button>
-                ) : null}
-              </div>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={handleClose}
-                  className="inline-flex items-center justify-center rounded border border-slate-200 px-3 py-1.5 text-[12px] font-semibold text-slate-600 transition hover:bg-slate-100 focus:outline-none"
+          <ModalFooter className="justify-between">
+            <div>
+              {isEditMode && activeAppointment && !showDeleteConfirm ? (
+                <Button
+                  variant="danger"
+                  onClick={handleDeleteClick}
                   disabled={isSubmitting || isDeleting}
                 >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSubmit()}
-                  className="inline-flex items-center justify-center rounded bg-accent px-3 py-1.5 text-[12px] font-semibold text-white transition hover:bg-blue-600 focus:outline-none disabled:opacity-60"
-                  disabled={isSubmitting || isDeleting}
-                >
-                  {isSubmitting ? primaryActionPendingLabel : primaryActionLabel}
-                </button>
-              </div>
-            </footer>
-          </div>
-        )}
+                  Delete
+                </Button>
+              ) : null}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={handleClose}
+                disabled={isSubmitting || isDeleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => handleSubmit()}
+                disabled={isSubmitting || isDeleting}
+              >
+                {isSubmitting ? primaryActionPendingLabel : primaryActionLabel}
+              </Button>
+            </div>
+          </ModalFooter>
+        </>
+      )}
 
-        {showDeleteConfirm ? (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-950/60 p-4">
-            <div className="w-full max-w-sm rounded-lg bg-white p-4 shadow-xl">
-              <h3 className="mb-2 text-sm font-semibold text-slate-900">Delete Appointment?</h3>
-              <p className="mb-4 text-[12px] text-slate-600">
-                This will permanently delete the appointment. This action cannot be undone.
-              </p>
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={handleDeleteCancel}
-                  className="inline-flex items-center justify-center rounded border border-slate-200 px-3 py-1.5 text-[12px] font-semibold text-slate-600 transition hover:bg-slate-100"
-                  disabled={isDeleting}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDeleteConfirm}
-                  className="inline-flex items-center justify-center rounded bg-red-600 px-3 py-1.5 text-[12px] font-semibold text-white transition hover:bg-red-700 disabled:opacity-60"
-                  disabled={isDeleting}
-                >
-                  {isDeleting ? "Deleting..." : "Delete"}
-                </button>
-              </div>
+      {showDeleteConfirm ? (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-950/60 p-4">
+          <div className="w-full max-w-sm rounded-lg bg-white p-4 shadow-xl">
+            <h3 className="mb-2 text-sm font-semibold text-slate-900">Delete Appointment?</h3>
+            <p className="mb-4 text-[12px] text-slate-600">
+              This will permanently delete the appointment. This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="secondary" onClick={handleDeleteCancel} disabled={isDeleting}>
+                Cancel
+              </Button>
+              <Button variant="danger" onClick={handleDeleteConfirm} disabled={isDeleting}>
+                {isDeleting ? "Deleting..." : "Delete"}
+              </Button>
             </div>
           </div>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
     </Modal>
   );
 }

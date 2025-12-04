@@ -1,6 +1,7 @@
 import type { ChangeEvent, MouseEvent } from "react";
 import type { ContactAddressRecord } from "@/features/contacts";
 import type { PlaceSuggestion } from "@/types/google-places";
+import { Input, Select } from "@/components/ui/library";
 import type { AddressFormState } from "./types";
 import { NEW_CONTACT_OPTION, formatAddressSummary } from "./types";
 
@@ -39,89 +40,83 @@ export function AddressSection({
   return (
     <section className="space-y-3">
       {existingAddresses && existingAddresses.length > 0 ? (
-        <label className="flex flex-col gap-1 text-[10px] font-medium text-slate-600">
-          <span>Saved addresses</span>
-          <select
-            name="contactAddressSelection"
-            value={selectedAddressId}
-            onChange={onAddressSelectChange}
-            className="w-full rounded border border-slate-200 px-3 py-2 text-[12px] shadow-sm focus:border-accent focus:outline-none"
-          >
-            {existingAddresses.map((address) => (
-              <option key={address.id} value={address.id}>
-                {formatAddressSummary(address)}
-              </option>
-            ))}
-            <option value={NEW_CONTACT_OPTION}>Add new address</option>
-          </select>
-        </label>
+        <Select
+          name="contactAddressSelection"
+          label="Saved addresses"
+          value={selectedAddressId}
+          onChange={onAddressSelectChange}
+          size="md"
+        >
+          {existingAddresses.map((address) => (
+            <option key={address.id} value={address.id}>
+              {formatAddressSummary(address)}
+            </option>
+          ))}
+          <option value={NEW_CONTACT_OPTION}>Add new address</option>
+        </Select>
       ) : null}
 
       <div className="space-y-2.5">
-        <label className="flex flex-col gap-1 text-[10px] font-medium text-slate-600">
-          <span>Address line 1</span>
-          <input
+        <div className="relative">
+          <Input
             type="text"
+            name="addressLine1"
+            label="Address line 1"
             value={addressForm.addressLine1}
             onChange={onAddressFieldChange("addressLine1")}
             onFocus={onAddressLine1Focus}
             onBlur={onAddressBlur}
             placeholder="123 Main Street"
-            className="w-full rounded border border-slate-200 px-3 py-2 text-[12px] shadow-sm focus:border-accent focus:outline-none"
+            size="md"
           />
           {showAddressSuggestions ? (
-            <div className="relative">
-              <div className="absolute z-10 mt-1 w-full rounded border border-slate-200 bg-white shadow">
-                {isFetchingAddress ? (
-                  <p className="px-3 py-2 text-[11px] text-slate-500">Searching…</p>
-                ) : addressSuggestions.length ? (
-                  addressSuggestions.map((suggestion) => (
-                    <button
-                      type="button"
-                      key={suggestion.placeId}
-                      onMouseDown={handleSuggestionMouseDown(suggestion)}
-                      className="block w-full px-3 py-2 text-left text-[11px] text-slate-600 hover:bg-slate-100"
-                    >
-                      {suggestion.description}
-                    </button>
-                  ))
-                ) : null}
-              </div>
+            <div className="absolute left-0 right-0 z-10 mt-1 rounded border border-slate-200 bg-white shadow">
+              {isFetchingAddress ? (
+                <p className="px-3 py-2 text-[11px] text-slate-500">Searching…</p>
+              ) : addressSuggestions.length ? (
+                addressSuggestions.map((suggestion) => (
+                  <button
+                    type="button"
+                    key={suggestion.placeId}
+                    onMouseDown={handleSuggestionMouseDown(suggestion)}
+                    className="block w-full px-3 py-2 text-left text-[11px] text-slate-600 hover:bg-slate-100"
+                  >
+                    {suggestion.description}
+                  </button>
+                ))
+              ) : null}
             </div>
           ) : null}
-        </label>
+        </div>
 
         <div className="grid gap-2.5 md:grid-cols-3">
-          <label className="flex flex-col gap-1 text-[10px] font-medium text-slate-600">
-            <span>City</span>
-            <input
-              type="text"
-              value={addressForm.city}
-              onChange={onAddressFieldChange("city")}
-              placeholder="City"
-              className="w-full rounded border border-slate-200 px-3 py-2 text-[12px] shadow-sm focus:border-accent focus:outline-none"
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-[10px] font-medium text-slate-600">
-            <span>State / Province</span>
-            <input
-              type="text"
-              value={addressForm.state}
-              onChange={onAddressFieldChange("state")}
-              placeholder="State / Province"
-              className="w-full rounded border border-slate-200 px-3 py-2 text-[12px] shadow-sm focus:border-accent focus:outline-none"
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-[10px] font-medium text-slate-600">
-            <span>Postal code</span>
-            <input
-              type="text"
-              value={addressForm.postalCode}
-              onChange={onAddressFieldChange("postalCode")}
-              placeholder="Postal code"
-              className="w-full rounded border border-slate-200 px-3 py-2 text-[12px] shadow-sm focus:border-accent focus:outline-none"
-            />
-          </label>
+          <Input
+            type="text"
+            name="city"
+            label="City"
+            value={addressForm.city}
+            onChange={onAddressFieldChange("city")}
+            placeholder="City"
+            size="md"
+          />
+          <Input
+            type="text"
+            name="state"
+            label="State / Province"
+            value={addressForm.state}
+            onChange={onAddressFieldChange("state")}
+            placeholder="State / Province"
+            size="md"
+          />
+          <Input
+            type="text"
+            name="postalCode"
+            label="Postal code"
+            value={addressForm.postalCode}
+            onChange={onAddressFieldChange("postalCode")}
+            placeholder="Postal code"
+            size="md"
+          />
         </div>
       </div>
     </section>

@@ -8,7 +8,7 @@ import {
   formatAppointmentTimeRange,
   formatDealServiceAddress,
 } from "@/lib/appointments-format";
-import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/shared/modal";
+import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/library";
 import type { AppointmentRecord } from "@/features/appointments";
 import type { DealRecord } from "@/features/deals";
 import { apiClient } from "@/services/api";
