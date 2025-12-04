@@ -162,7 +162,7 @@ export function Modal({
           data-testid={dataTestId}
           className={classNames(
             "relative flex w-full flex-col overflow-hidden rounded-xl sm:rounded-2xl border border-slate-200 bg-white shadow-2xl outline-none",
-            "max-h-[82dvh] sm:max-h-[88vh]",
+            "max-h-[85dvh] sm:max-h-[88vh]",
             sizeClass,
             contentClassName,
             className
