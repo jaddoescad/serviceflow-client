@@ -283,7 +283,7 @@ export default function CustomerProposalView() {
         ) : null}
 
           <footer className="mt-8 border-t border-slate-200 pt-4 text-center text-xs text-slate-500">
-            <p>Sent via ServiceFlow • Proposal ID {quote.public_share_id}</p>
+            <p>Sent via ServiceFlow • Proposal #{formatQuoteId(quote.id)}</p>
           </footer>
         </div>
       </div>
