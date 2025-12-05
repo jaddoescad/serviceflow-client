@@ -29,6 +29,16 @@ export type QuoteRecord = {
   acceptance_signed_at: string | null;
 };
 
+/** Minimal response from quote save operation */
+export type QuoteSaveResponse = {
+  success: boolean;
+  id: string;
+  quote_number: string;
+  public_share_id: string | null;
+  is_new: boolean;
+  new_line_items: Array<{ id: string; client_id: string }>;
+};
+
 export type QuoteAttachment = {
   id: string;
   storage_key: string;
@@ -66,6 +76,7 @@ export type UpsertQuoteInput = {
 
 export type UpsertQuoteLineItemInput = {
   id?: string;
+  client_id?: string;
   name: string;
   description: string;
   quantity: number;

@@ -1,29 +1,21 @@
 import { apiClient } from "@/services/api";
 import type {
   QuoteRecord,
+  QuoteSaveResponse,
   SaveQuotePayload,
   QuoteDeliveryRequestPayload,
   QuoteDeliveryResponsePayload,
 } from "./types";
 
-export const saveQuote = async (data: SaveQuotePayload): Promise<QuoteRecord> => {
-  const quote = data.quote;
-
-  if (quote?.id) {
-    return apiClient<QuoteRecord>(`/quotes/${quote.id}`, {
-      method: "PATCH",
-      body: JSON.stringify(data),
-    });
-  }
-
-  return apiClient<QuoteRecord>("/quotes", {
+export const saveQuote = async (data: SaveQuotePayload): Promise<QuoteSaveResponse> => {
+  return apiClient<QuoteSaveResponse>("/quotes", {
     method: "POST",
     body: JSON.stringify(data),
   });
 };
 
-export const createQuote = async (data: SaveQuotePayload): Promise<QuoteRecord> => {
-  return apiClient<QuoteRecord>("/quotes", {
+export const createQuote = async (data: SaveQuotePayload): Promise<QuoteSaveResponse> => {
+  return apiClient<QuoteSaveResponse>("/quotes", {
     method: "POST",
     body: JSON.stringify(data),
   });

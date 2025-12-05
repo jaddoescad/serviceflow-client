@@ -16,6 +16,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import type {
   EditableQuoteLineItem,
   QuoteRecord,
+  QuoteSaveResponse,
   QuoteDeliveryMethod,
   QuoteDeliveryRequestPayload,
   UpsertQuoteInput,
@@ -150,7 +151,7 @@ type QuoteFormContextValue = {
   handleLineItemUnitPriceChange: (clientId: string, value: string) => void;
   handleApplyTemplate: (clientId: string, templateId: string) => void;
   handleDeleteLineItem: (clientId: string) => void;
-  handleSaveQuote: () => Promise<QuoteRecord | null>;
+  handleSaveQuote: () => Promise<QuoteSaveResponse | null>;
   handleDeleteQuote: () => Promise<void>;
 
   // Actions - Attachments
@@ -452,11 +453,17 @@ export function QuoteFormProvider({
     }
   }, [isProposalLocked]);
 
+  // Sync state when initialQuote becomes available (handles async loading)
   useEffect(() => {
-    if (initialQuote?.public_share_id) {
-      setPublicShareId(initialQuote.public_share_id);
+    if (initialQuote) {
+      if (initialQuote.public_share_id && !publicShareId) {
+        setPublicShareId(initialQuote.public_share_id);
+      }
+      if (initialQuote.id && !quoteId) {
+        setQuoteId(initialQuote.id);
+      }
     }
-  }, [initialQuote?.public_share_id]);
+  }, [initialQuote, publicShareId, quoteId]);
 
   // Fetch invoice URL
   useEffect(() => {
@@ -679,7 +686,7 @@ export function QuoteFormProvider({
   );
 
   const handleSaveQuote = useCallback(
-    async (snapshotOverride?: string): Promise<QuoteRecord | null> => {
+    async (snapshotOverride?: string): Promise<QuoteSaveResponse | null> => {
       setIsSaving(true);
       setSaveError(null);
 
@@ -699,6 +706,7 @@ export function QuoteFormProvider({
 
         const lineItemsInput: UpsertQuoteLineItemInput[] = lineItems.map((item, index) => ({
           id: item.id,
+          client_id: item.client_id,
           name: item.name.trim(),
           description: item.description,
           quantity: 1,
@@ -715,34 +723,37 @@ export function QuoteFormProvider({
           deletedLineItemIds,
         };
 
-        const saved = await createQuote(payload);
+        const saved: QuoteSaveResponse = await createQuote(payload);
 
-        const previousItems = lineItems;
-        const updatedLineItems = saved.line_items.map((item, index) => {
-          const matchById = previousItems.find((previous) => previous.id && previous.id === item.id);
-          const fallbackClientId =
-            matchById?.client_id ?? previousItems[index]?.client_id ?? item.id ?? createClientId();
-          return mapRecordToEditable(item, fallbackClientId);
-        });
+        // Merge server-assigned IDs into new line items
+        const newItemMap = new Map(
+          (saved.new_line_items ?? []).map((item) => [item.client_id, item.id])
+        );
 
-        setQuoteId(saved.id);
-        setPublicShareId(saved.public_share_id ?? null);
-        setStatus(saved.status);
-        setQuoteNumber(saved.quote_number);
-        setCreatedAt(new Date(saved.created_at));
-        setClientMessage(saved.client_message ?? "");
-        setDisclaimer(saved.disclaimer ?? "");
+        // Merge server-assigned IDs into new line items
+        const updatedLineItems = lineItems.map((item) => ({
+          ...item,
+          id: newItemMap.get(item.client_id) ?? item.id,
+        }));
+
+        // Update state only for fields that may have changed server-side
+        if (saved.is_new) {
+          setQuoteId(saved.id);
+          setQuoteNumber(saved.quote_number);
+          setCreatedAt(new Date());
+        }
+        setPublicShareId(saved.public_share_id ?? publicShareId);
         setLineItems(updatedLineItems);
         setDeletedLineItemIds([]);
-        setLastSavedAt(new Date(saved.updated_at));
+        setLastSavedAt(new Date());
 
         const committedSnapshot =
           snapshotOverride ??
           JSON.stringify({
-            quoteNumber: saved.quote_number,
-            clientMessage: saved.client_message ?? "",
-            disclaimer: saved.disclaimer ?? "",
-            status: saved.status,
+            quoteNumber: saved.is_new ? saved.quote_number : quoteNumber,
+            clientMessage,
+            disclaimer,
+            status,
             lineItems: updatedLineItems,
             deletedLineItemIds: [] as string[],
           });
@@ -756,8 +767,9 @@ export function QuoteFormProvider({
           navigate(`/deals/${dealId}/proposals/quote?quoteId=${saved.id}`, { replace: true });
         }
 
-        // Invalidate all quote-related caches so deal page shows updated data
-        invalidateQuoteCaches(dealId);
+        // Invalidate quote-related caches so deal page shows updated data.
+        // Skip proposalData since we already updated state from the save response.
+        invalidateQuoteCaches(dealId, { skipProposalData: true });
 
         return saved;
       } catch (error) {

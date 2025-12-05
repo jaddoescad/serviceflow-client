@@ -3,6 +3,7 @@ export type {
   QuoteStatus,
   QuoteLineItemRecord,
   QuoteRecord,
+  QuoteSaveResponse,
   QuoteAttachment,
   QuoteWithAttachments,
   EditableQuoteLineItem,

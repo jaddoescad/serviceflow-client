@@ -114,15 +114,20 @@ export function useInvalidateQuotes() {
      * Invalidates all quote-related caches for a deal.
      * Use this after saving/creating/deleting quotes to ensure
      * deal pages and dashboards show updated data.
+     *
+     * @param options.skipProposalData - Skip invalidating proposalData cache.
+     *   Use when saving from within the quote form (which manages its own state).
      */
-    invalidateQuoteCaches: (dealId: string) => {
+    invalidateQuoteCaches: (dealId: string, options?: { skipProposalData?: boolean }) => {
       queryClient.invalidateQueries({ queryKey: quoteKeys.list(dealId) });
       queryClient.invalidateQueries({ queryKey: dealKeys.detail(dealId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.dealDetail.detail(dealId) });
-      queryClient.invalidateQueries({
-        queryKey: ['dealDetail', 'proposalData', dealId],
-        exact: false
-      });
+      if (!options?.skipProposalData) {
+        queryClient.invalidateQueries({
+          queryKey: ['dealDetail', 'proposalData', dealId],
+          exact: false
+        });
+      }
       queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
     },
   };
@@ -170,8 +175,13 @@ export function useCreateQuoteAndNavigate() {
         });
         queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
 
-        // Navigate to the new quote
-        navigate(`/deals/${params.dealId}/proposals/quote?quoteId=${quote.id}`);
+        // Navigate to the new quote (only if we got a valid ID)
+        if (quote.id) {
+          navigate(`/deals/${params.dealId}/proposals/quote?quoteId=${quote.id}`);
+        } else {
+          console.error("Quote created but no ID returned", quote);
+          navigate(`/deals/${params.dealId}/proposals/quote`);
+        }
       } catch (error) {
         toast.error("Failed to create quote", getErrorMessage(error));
         setIsCreating(false);

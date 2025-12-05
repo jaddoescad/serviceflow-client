@@ -65,6 +65,7 @@ export type UpsertQuoteInput = {
 
 export type UpsertQuoteLineItemInput = {
   id?: string;
+  client_id?: string;
   name: string;
   description: string;
   quantity: number;
