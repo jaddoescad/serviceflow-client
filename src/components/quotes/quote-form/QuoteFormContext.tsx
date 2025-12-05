@@ -249,9 +249,10 @@ export function QuoteFormProvider({
   // ============================================================================
   const initialLineItems = useMemo(() => {
     if (initialQuote && initialQuote.line_items.length > 0) {
-      return initialQuote.line_items.map((item) => mapRecordToEditable(item));
+      return { items: initialQuote.line_items.map((item) => mapRecordToEditable(item)), isNew: false };
     }
-    return [createEmptyLineItem()];
+    const emptyItem = createEmptyLineItem();
+    return { items: [emptyItem], isNew: true };
   }, [initialQuote]);
 
   const [quoteId, setQuoteId] = useState<string | undefined>(() => initialQuote?.id);
@@ -267,7 +268,7 @@ export function QuoteFormProvider({
   const [disclaimer, setDisclaimer] = useState(
     () => initialQuote?.disclaimer ?? QUOTE_DEFAULT_DISCLAIMER
   );
-  const [lineItems, setLineItems] = useState<EditableQuoteLineItem[]>(() => initialLineItems);
+  const [lineItems, setLineItems] = useState<EditableQuoteLineItem[]>(() => initialLineItems.items);
   const [deletedLineItemIds, setDeletedLineItemIds] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -277,7 +278,13 @@ export function QuoteFormProvider({
   const [hasPendingChanges, setHasPendingChanges] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const lastSavedSnapshotRef = useRef<string | null>(null);
-  const [editingLineItems, setEditingLineItems] = useState<Set<string>>(new Set());
+  const [editingLineItems, setEditingLineItems] = useState<Set<string>>(() => {
+    // Start initial empty line item in edit mode for new quotes
+    if (initialLineItems.isNew && initialLineItems.items.length > 0) {
+      return new Set([initialLineItems.items[0].client_id]);
+    }
+    return new Set();
+  });
   const [originalLineItemValues, setOriginalLineItemValues] = useState<Map<string, EditableQuoteLineItem>>(new Map());
 
   const isProposalLocked = status === "accepted" || isArchived;
@@ -615,7 +622,9 @@ export function QuoteFormProvider({
 
   const handleAddLineItem = useCallback(() => {
     if (isProposalLocked) return;
-    setLineItems((items) => [...items, createEmptyLineItem()]);
+    const newItem = createEmptyLineItem();
+    setLineItems((items) => [...items, newItem]);
+    setEditingLineItems((prev) => new Set([...prev, newItem.client_id]));
   }, [isProposalLocked]);
 
   const handleAddDiscount = useCallback(() => {

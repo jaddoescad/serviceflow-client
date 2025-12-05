@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createEmptyLineItem } from "./utils";
 
 /**
  * Tests for QuoteFormContext URL update behavior after saving a new quote.
@@ -171,5 +172,69 @@ describe("Quote data persistence after save", () => {
     ];
 
     expect(oldProblems).toHaveLength(4);
+  });
+});
+
+describe("handleAddLineItem behavior", () => {
+  /**
+   * Simulates the add line item logic from QuoteFormContext.handleAddLineItem
+   */
+  function simulateAddLineItem(params: {
+    isProposalLocked: boolean;
+    lineItems: Array<{ client_id: string }>;
+    editingLineItems: Set<string>;
+  }) {
+    const { isProposalLocked, lineItems, editingLineItems } = params;
+
+    if (isProposalLocked) {
+      return { lineItems, editingLineItems };
+    }
+
+    const newItem = createEmptyLineItem();
+    const updatedLineItems = [...lineItems, newItem];
+    const updatedEditingLineItems = new Set([...editingLineItems, newItem.client_id]);
+
+    return {
+      lineItems: updatedLineItems,
+      editingLineItems: updatedEditingLineItems,
+      newItem,
+    };
+  }
+
+  it("should add new line item in edit mode", () => {
+    const result = simulateAddLineItem({
+      isProposalLocked: false,
+      lineItems: [],
+      editingLineItems: new Set(),
+    });
+
+    expect(result.lineItems).toHaveLength(1);
+    expect(result.newItem).toBeDefined();
+    expect(result.editingLineItems.has(result.newItem!.client_id)).toBe(true);
+  });
+
+  it("should not add line item when proposal is locked", () => {
+    const result = simulateAddLineItem({
+      isProposalLocked: true,
+      lineItems: [],
+      editingLineItems: new Set(),
+    });
+
+    expect(result.lineItems).toHaveLength(0);
+    expect(result.editingLineItems.size).toBe(0);
+  });
+
+  it("should preserve existing editing items when adding new one", () => {
+    const existingItem = createEmptyLineItem();
+    const result = simulateAddLineItem({
+      isProposalLocked: false,
+      lineItems: [existingItem],
+      editingLineItems: new Set([existingItem.client_id]),
+    });
+
+    expect(result.lineItems).toHaveLength(2);
+    expect(result.editingLineItems.size).toBe(2);
+    expect(result.editingLineItems.has(existingItem.client_id)).toBe(true);
+    expect(result.editingLineItems.has(result.newItem!.client_id)).toBe(true);
   });
 });
