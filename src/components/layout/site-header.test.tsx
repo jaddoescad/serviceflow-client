@@ -1,25 +1,31 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-
-vi.mock("@/components/auth/sign-out-button", () => ({
-  SignOutButton: () => <button type="button">Sign out</button>,
-}));
 
 import { SiteHeader } from "./site-header";
 
 describe("SiteHeader", () => {
-  it("renders the app branding", () => {
+  it("renders with default title", () => {
     render(<SiteHeader />);
 
     expect(screen.getByRole("banner")).toBeInTheDocument();
     expect(screen.getByText("ServiceFlow")).toBeInTheDocument();
-    expect(screen.getByText("Supabase Auth Starter")).toBeInTheDocument();
   });
 
-  it("shows the sign out button without the test action", () => {
-    render(<SiteHeader />);
+  it("renders with custom title", () => {
+    render(<SiteHeader title="Custom Title" />);
 
-    expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Test" })).not.toBeInTheDocument();
+    expect(screen.getByText("Custom Title")).toBeInTheDocument();
+  });
+
+  it("renders actions when provided", () => {
+    render(<SiteHeader actions={<button type="button">Action</button>} />);
+
+    expect(screen.getByRole("button", { name: "Action" })).toBeInTheDocument();
+  });
+
+  it("renders mobile menu button when provided", () => {
+    render(<SiteHeader mobileMenuButton={<button type="button">Menu</button>} />);
+
+    expect(screen.getByRole("button", { name: "Menu" })).toBeInTheDocument();
   });
 });
