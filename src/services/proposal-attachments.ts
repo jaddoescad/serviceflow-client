@@ -1,4 +1,5 @@
-import { apiClient } from "@/services/api";
+import { apiClient, getAccessToken } from "@/services/api";
+import { createSupabaseBrowserClient } from '@/supabase/clients/browser';
 
 export const createProposalAttachmentsRepository = () => {
   return {
@@ -39,9 +40,25 @@ export const createProposalAttachmentsRepository = () => {
       // I'll just use fetch directly for this one, or cast to any to override headers.
       
       const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+      // Get auth token - try cached first, then fetch from Supabase
+      let token = getAccessToken();
+      if (!token) {
+        const supabase = createSupabaseBrowserClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        token = session?.access_token ?? null;
+      }
+
+      if (!token) {
+        throw new Error('Unauthorized - No token provided');
+      }
+
       const response = await fetch(`${API_BASE_URL}/proposal-attachments`, {
         method: 'POST',
         body: formData,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
         // Don't set Content-Type header, let browser set it with boundary
       });
 
