@@ -106,7 +106,10 @@ export function QuoteLineItemsEditor({
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => onDeleteLineItem(item.client_id)}
+                                            onClick={() => {
+                                                onDeleteLineItem(item.client_id);
+                                                onSave();
+                                            }}
                                             className="cursor-pointer rounded p-1 text-rose-400 hover:bg-rose-100 hover:text-rose-600"
                                         >
                                             <IconTrash />
