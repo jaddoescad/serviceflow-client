@@ -1,10 +1,8 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useSessionContext, useCompanyContext } from "@/contexts/AuthContext";
 import { QuoteForm } from "@/components/quotes/quote-form";
 import { useDealProposalData } from "@/hooks";
-import { useCreateQuote } from "@/features/quotes";
-import { QUOTE_DEFAULT_CLIENT_MESSAGE, QUOTE_DEFAULT_DISCLAIMER } from "@/constants/quotes";
 import { formatFullName } from "@/lib/name";
 import { QuoteFormSkeleton } from "@/components/ui/skeleton";
 import type { QuoteCompanyBranding } from "@/types/company-branding";
@@ -31,12 +29,9 @@ export default function QuoteBuilderPage() {
   const { company } = useCompanyContext();
 
   const dealId = params.dealId as string;
-  const mode = searchParams.get("mode") ?? null;
-  const requestedQuoteId = searchParams.get("quoteId") ?? null;
-  const isCreatingRef = useRef(false);
+  const quoteId = searchParams.get("quoteId") ?? null;
 
-  const { data: payload, isLoading: proposalLoading } = useDealProposalData(dealId, requestedQuoteId);
-  const createQuoteMutation = useCreateQuote(dealId);
+  const { data: payload, isLoading: proposalLoading } = useDealProposalData(dealId, quoteId);
 
   const pageData = useMemo(() => {
     if (!payload || !company) return null;
@@ -108,33 +103,6 @@ export default function QuoteBuilderPage() {
     };
   }, [payload, company]);
 
-  // Handle create mode - need to create quote and redirect
-  useEffect(() => {
-    if (mode !== "create" || !pageData || !company || isCreatingRef.current) return;
-
-    isCreatingRef.current = true;
-
-    createQuoteMutation.mutate(
-      {
-        company_id: company.id,
-        deal_id: pageData.deal.id,
-        quote_number: "", // Will be generated from UUID on server
-        title: "",
-        client_message: QUOTE_DEFAULT_CLIENT_MESSAGE,
-        disclaimer: QUOTE_DEFAULT_DISCLAIMER,
-        status: "draft",
-      },
-      {
-        onSuccess: (createdQuote) => {
-          navigate(`/deals/${pageData.deal.id}/proposals/quote?quoteId=${createdQuote.id}`);
-        },
-        onError: () => {
-          isCreatingRef.current = false;
-        },
-      }
-    );
-  }, [mode, pageData, company, navigate, createQuoteMutation]);
-
   useEffect(() => {
     if (authLoading) return;
     if (!company) {
@@ -148,7 +116,7 @@ export default function QuoteBuilderPage() {
     }
   }, [proposalLoading, payload, navigate]);
 
-  if (authLoading || proposalLoading || mode === "create") {
+  if (authLoading || proposalLoading) {
     return <QuoteFormSkeleton />;
   }
 

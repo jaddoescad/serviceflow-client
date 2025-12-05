@@ -120,6 +120,7 @@ export function KanbanBoard({
     handleDealScheduled,
     handleProposalCreated,
   } = useDealActions({
+    companyId,
     stages,
     setColumns,
     setDealsWithProposals,
@@ -458,7 +459,7 @@ export function KanbanBoard({
                 <Droppable droppableId={stageOption.id} key={stageOption.id}>
                   {(provided) => (
                     <div
-                      className="flex h-full min-h-0 min-w-[240px] max-h-full flex-col rounded-lg border border-slate-200 bg-slate-50"
+                      className="flex h-full min-h-0 min-w-[240px] max-h-full flex-col overflow-hidden rounded-lg border border-slate-200 bg-slate-50"
                       ref={provided.innerRef}
                       {...provided.droppableProps}
                     >

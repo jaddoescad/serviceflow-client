@@ -1,12 +1,13 @@
 import { useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import type { DealRecord, DealStageId, DealStageOption } from "@/features/deals";
 import { updateDealStage } from "@/features/deals";
+import { useCreateQuoteAndNavigate } from "@/features/quotes";
 import type { ScheduleDripsPayload } from "@/features/drips";
 import type { DealProposalSummary } from "@/types/pipeline";
 import type { DealsByStage } from "../types";
 
 type UseDealActionsProps = {
+  companyId: string;
   stages: DealStageOption[];
   setColumns: React.Dispatch<React.SetStateAction<DealsByStage>>;
   setDealsWithProposals: React.Dispatch<React.SetStateAction<string[]>>;
@@ -23,6 +24,7 @@ type UseDealActionsProps = {
 };
 
 export function useDealActions({
+  companyId,
   stages,
   setColumns,
   setDealsWithProposals,
@@ -31,7 +33,7 @@ export function useDealActions({
   setDragError,
   scheduleDealDrips,
 }: UseDealActionsProps) {
-  const navigate = useNavigate();
+  const { createQuoteAndNavigate } = useCreateQuoteAndNavigate();
 
   const handleContactCreated = useCallback(() => {
     // Contact created - no need to track in kanban board state
@@ -127,9 +129,9 @@ export function useDealActions({
         });
       }
 
-      navigate(`/deals/${deal.id}/proposals/quote?mode=create`);
+      createQuoteAndNavigate({ companyId, dealId: deal.id });
     },
-    [navigate, setColumns, setDealsWithProposals, setDragError, setProposalSummaries]
+    [companyId, createQuoteAndNavigate, setColumns, setDealsWithProposals, setDragError, setProposalSummaries]
   );
 
   return {

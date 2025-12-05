@@ -466,6 +466,7 @@ export function DealDetailBoard({
           />
         ) : null}
         <DealDocumentsCard
+          companyId={companyId}
           dealId={snapshotState.deal.id}
           proposals={snapshotState.proposals}
           invoices={snapshotState.invoices}

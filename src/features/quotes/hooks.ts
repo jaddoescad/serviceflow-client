@@ -1,3 +1,5 @@
+import { useCallback, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { quoteKeys } from "./query-keys";
 import { dealKeys } from "@/features/deals";
@@ -6,6 +8,7 @@ import { dashboardKeys } from "@/hooks/useDashboardData";
 import { saveQuote, createQuote, deleteQuote, sendQuoteDelivery } from "./api";
 import { useToast } from "@/components/ui/toast";
 import { getErrorMessage } from "@/lib/errors";
+import { QUOTE_DEFAULT_CLIENT_MESSAGE, QUOTE_DEFAULT_DISCLAIMER } from "./constants";
 import type { SaveQuotePayload, QuoteDeliveryRequestPayload } from "./types";
 
 export function useSaveQuote(dealId: string) {
@@ -123,4 +126,59 @@ export function useInvalidateQuotes() {
       queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
     },
   };
+}
+
+/**
+ * Hook to create a new quote and navigate to the quote editor.
+ * This is the recommended way to create quotes - handles the API call
+ * and navigation in a single action triggered by user interaction.
+ */
+export function useCreateQuoteAndNavigate() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  const [isCreating, setIsCreating] = useState(false);
+
+  const createQuoteAndNavigate = useCallback(
+    async (params: { companyId: string; dealId: string }) => {
+      if (isCreating) return;
+
+      setIsCreating(true);
+
+      try {
+        const quote = await createQuote({
+          quote: {
+            company_id: params.companyId,
+            deal_id: params.dealId,
+            quote_number: "", // Server will generate
+            title: "", // Server will generate
+            client_message: QUOTE_DEFAULT_CLIENT_MESSAGE,
+            disclaimer: QUOTE_DEFAULT_DISCLAIMER,
+            status: "draft",
+          },
+          lineItems: [],
+          deletedLineItemIds: [],
+        });
+
+        // Invalidate caches
+        queryClient.invalidateQueries({ queryKey: quoteKeys.list(params.dealId) });
+        queryClient.invalidateQueries({ queryKey: dealKeys.detail(params.dealId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.dealDetail.detail(params.dealId) });
+        queryClient.invalidateQueries({
+          queryKey: ["dealDetail", "proposalData", params.dealId],
+          exact: false,
+        });
+        queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+
+        // Navigate to the new quote
+        navigate(`/deals/${params.dealId}/proposals/quote?quoteId=${quote.id}`);
+      } catch (error) {
+        toast.error("Failed to create quote", getErrorMessage(error));
+        setIsCreating(false);
+      }
+    },
+    [isCreating, navigate, queryClient, toast]
+  );
+
+  return { createQuoteAndNavigate, isCreating };
 }

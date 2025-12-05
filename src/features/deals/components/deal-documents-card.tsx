@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useCreateQuoteAndNavigate } from "@/features/quotes";
 import type {
   DealDetailSnapshot,
   DealInvoiceRecord,
@@ -47,6 +48,7 @@ const formatInvoiceStatusLabel = (status: DealInvoiceRecord["status"] | null | u
 type DocumentFilter = "all" | "proposal" | "invoice";
 
 type DealDocumentsCardProps = Pick<DealDetailSnapshot, "proposals" | "invoices"> & {
+  companyId: string;
   dealId: string;
   className?: string;
   isArchived?: boolean;
@@ -70,8 +72,9 @@ const filters: Array<{ id: DocumentFilter; label: string }> = [
   { id: "invoice", label: "Invoice" },
 ];
 
-export function DealDocumentsCard({ dealId, proposals, invoices, className, isArchived = false }: DealDocumentsCardProps) {
+export function DealDocumentsCard({ companyId, dealId, proposals, invoices, className, isArchived = false }: DealDocumentsCardProps) {
   const navigate = useNavigate();
+  const { createQuoteAndNavigate, isCreating } = useCreateQuoteAndNavigate();
   const [activeFilter, setActiveFilter] = useState<DocumentFilter>("all");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -92,7 +95,7 @@ export function DealDocumentsCard({ dealId, proposals, invoices, className, isAr
   const handleCreate = (kind: "proposal" | "invoice") => {
     setIsMenuOpen(false);
     if (kind === "proposal") {
-      navigate(`/deals/${dealId}/proposals/quote?mode=create`);
+      createQuoteAndNavigate({ companyId, dealId });
       return;
     }
     // Placeholder for invoice routing.
