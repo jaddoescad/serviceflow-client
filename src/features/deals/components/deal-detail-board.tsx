@@ -391,7 +391,7 @@ export function DealDetailBoard({
   );
 
   return (
-    <div className="flex flex-1 w-full flex-col gap-4 overflow-y-auto px-4 lg:grid lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start lg:gap-6 lg:px-6">
+    <div className="flex flex-1 w-full flex-col gap-4 overflow-y-auto px-4 lg:grid lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start lg:gap-6 lg:px-6">
       <AppointmentDetailsDialog
         open={Boolean(appointmentDetailContext)}
         appointment={appointmentDetailContext?.appointment ?? null}

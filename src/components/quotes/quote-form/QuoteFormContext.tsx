@@ -749,6 +749,12 @@ export function QuoteFormProvider({
         lastSavedSnapshotRef.current = committedSnapshot;
         setHasPendingChanges(false);
 
+        // If this was a new quote (no previous quoteId), update URL to include the new quoteId
+        // This ensures subsequent fetches include the quoteId and return the full quote data
+        if (!quoteId && saved.id) {
+          navigate(`/deals/${dealId}/proposals/quote?quoteId=${saved.id}`, { replace: true });
+        }
+
         // Invalidate proposal data cache so quote count is updated
         queryClient.invalidateQueries({
           queryKey: ['dealDetail', 'proposalData', dealId],
@@ -764,7 +770,7 @@ export function QuoteFormProvider({
         setIsSaving(false);
       }
     },
-    [clientMessage, companyId, dealId, deletedLineItemIds, disclaimer, defaultQuoteNumber, lineItems, quoteId, quoteNumber, status, queryClient]
+    [clientMessage, companyId, dealId, deletedLineItemIds, disclaimer, defaultQuoteNumber, lineItems, navigate, quoteId, quoteNumber, status, queryClient]
   );
 
   const handleDeleteQuote = useCallback(async () => {

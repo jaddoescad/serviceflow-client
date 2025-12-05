@@ -75,3 +75,22 @@ export const formatQuoteId = (id: string): string => {
   const shortId = id.replace(/-/g, "").slice(0, 8).toUpperCase();
   return `Q-${shortId}`;
 };
+
+/**
+ * UUID v4 regex pattern for validation
+ */
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Validates and sanitizes a UUID string.
+ * Handles edge cases like string "undefined" or "null" that can occur when
+ * JavaScript undefined/null values are coerced to strings in URLs.
+ * @param value - The value to validate as a UUID
+ * @returns The validated UUID string, or undefined if invalid
+ */
+export const sanitizeUuid = (value: unknown): string | undefined => {
+  if (typeof value === "string" && UUID_REGEX.test(value)) {
+    return value;
+  }
+  return undefined;
+};

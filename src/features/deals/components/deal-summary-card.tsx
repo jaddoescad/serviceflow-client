@@ -135,7 +135,7 @@ export function DealSummaryCard({
   };
 
   return (
-    <section className={`flex h-full flex-col gap-4 sm:gap-6 ${className ?? ""}`}>
+    <section className={`flex h-full flex-col gap-4 sm:gap-3 ${className ?? ""}`}>
       {isArchived && (
         <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2">
           <div className="flex items-center gap-2">
@@ -147,11 +147,11 @@ export function DealSummaryCard({
           </p>
         </div>
       )}
-      <header className="space-y-4 pt-2 pb-2">
+      <header className="space-y-3 sm:space-y-2 pt-2 pb-2 sm:pt-1 sm:pb-1">
         {/* Name Header - compact */}
         <div className="flex items-start justify-between">
           <div className="min-w-0 flex-1">
-            <h2 className="text-[22px] sm:text-[22px] font-semibold leading-tight text-slate-900 truncate">
+            <h2 className="text-[22px] sm:text-lg font-semibold leading-tight text-slate-900 truncate">
               {formatFullName({ first_name: snapshot.deal.first_name, last_name: snapshot.deal.last_name })}
             </h2>
             <p className="text-[13px] sm:text-[11px] text-slate-400 mt-0.5">#{snapshot.deal.id.slice(0, 8)}</p>
@@ -294,7 +294,7 @@ export function DealSummaryCard({
       {/* Contact Card - iOS style */}
       <section className="rounded-xl sm:rounded-lg bg-white sm:bg-transparent border border-slate-200 sm:border-0 overflow-hidden">
         {/* Contact rows */}
-        <div className="divide-y divide-slate-100 sm:divide-y-0 sm:space-y-2">
+        <div className="divide-y divide-slate-100 sm:divide-y-0 sm:space-y-0.5">
           {primaryPhone && (
             <a
               href={`tel:${primaryPhone}`}
@@ -323,7 +323,7 @@ export function DealSummaryCard({
               </div>
             </a>
           )}
-          {serviceAddress && (
+          {serviceAddress ? (
             <a
               href={`https://maps.google.com/?q=${encodeURIComponent(`${serviceAddress.address_line1}, ${serviceAddress.city}, ${serviceAddress.state} ${serviceAddress.postal_code}`)}`}
               target="_blank"
@@ -339,6 +339,16 @@ export function DealSummaryCard({
                 <p className="text-[15px] sm:text-[12px] text-slate-500">{serviceAddress.city}, {serviceAddress.state} {serviceAddress.postal_code}</p>
               </div>
             </a>
+          ) : (
+            <div className="flex items-center gap-4 px-4 py-3.5 sm:px-1 sm:py-1.5">
+              <span className="flex h-10 w-10 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-slate-300 sm:bg-transparent text-white sm:text-slate-400">
+                <IconMapPin />
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] sm:text-[10px] font-medium text-slate-500">address</p>
+                <p className="text-[17px] sm:text-[13px] text-slate-400 font-normal">No address</p>
+              </div>
+            </div>
           )}
           {leadSource && (
             <div className="flex items-center gap-4 px-4 py-3.5 sm:px-1 sm:py-1.5">
@@ -356,7 +366,7 @@ export function DealSummaryCard({
 
       {/* Team Card - iOS style */}
       <section className="rounded-xl sm:rounded-lg bg-white sm:bg-transparent border border-slate-200 sm:border-0 overflow-hidden">
-        <div className="divide-y divide-slate-100 sm:divide-y-0 sm:space-y-2">
+        <div className="divide-y divide-slate-100 sm:divide-y-0 sm:space-y-0.5">
           <TeamMemberRow label="Salesperson" name={snapshot.deal.salesperson} />
           <TeamMemberRow label="Project Manager" name={snapshot.deal.project_manager} />
           <TeamMemberRow label="Crew" name={snapshot.deal.crew?.name ?? null} />
