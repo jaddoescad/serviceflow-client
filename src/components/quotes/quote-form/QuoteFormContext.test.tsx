@@ -108,13 +108,29 @@ describe("Quote save URL update logic", () => {
 describe("Quote data persistence after save", () => {
   /**
    * This test documents the data flow that ensures line items persist.
+   *
+   * NOTE: As of the architecture refactor, quotes are now created BEFORE
+   * navigating to the quote page. The quote page always loads with an
+   * existing quoteId. This eliminates the "mode=create" pattern entirely.
    */
-  it("documents the correct data flow for new quote save", () => {
-    // STEP 1: User is on page without quoteId
-    const urlBeforeSave = "/deals/deal-123/proposals/quote?mode=create";
-    expect(urlBeforeSave).not.toContain("quoteId=");
+  it("documents the correct data flow for new quote creation (refactored)", () => {
+    // NEW FLOW (after refactor):
+    // STEP 1: User clicks "New Quote" button
+    // STEP 2: createQuoteAndNavigate() creates quote via API
+    const createdQuote = {
+      id: "new-quote-id",
+      line_items: [],
+    };
 
-    // STEP 2: User saves, API returns new quote with line items
+    // STEP 3: Navigate to quote page WITH quoteId already set
+    const url = `/deals/deal-123/proposals/quote?quoteId=${createdQuote.id}`;
+    expect(url).toContain(`quoteId=${createdQuote.id}`);
+
+    // STEP 4: Quote page loads and fetches existing quote
+    const refetchQuoteId = new URL(`http://x${url}`).searchParams.get("quoteId");
+    expect(refetchQuoteId).toBe(createdQuote.id);
+
+    // STEP 5: User adds line items and saves - quote already exists
     const savedQuote = {
       id: "new-quote-id",
       line_items: [
@@ -123,52 +139,37 @@ describe("Quote data persistence after save", () => {
       ],
     };
 
-    // STEP 3: URL is updated with new quoteId (THE FIX)
-    const urlAfterSave = `/deals/deal-123/proposals/quote?quoteId=${savedQuote.id}`;
-    expect(urlAfterSave).toContain(`quoteId=${savedQuote.id}`);
-
-    // STEP 4: Query refetches with quoteId in URL
-    const refetchQuoteId = new URL(`http://x${urlAfterSave}`).searchParams.get("quoteId");
-    expect(refetchQuoteId).toBe(savedQuote.id);
-
-    // STEP 5: Server returns full quote data (not null) because quoteId is provided
-    const serverResponse = {
-      quote: savedQuote, // Would be null without quoteId!
-      quoteCount: 1,
-    };
-    expect(serverResponse.quote).not.toBeNull();
-    expect(serverResponse.quote.line_items).toHaveLength(2);
+    // STEP 6: URL already has quoteId, no update needed
+    // Refetch will always include quoteId
+    expect(savedQuote.line_items).toHaveLength(2);
   });
 
-  it("documents the bug scenario without the fix", () => {
-    // WITHOUT THE FIX:
+  it("documents why the old mode=create approach was problematic", () => {
+    /**
+     * OLD FLOW (before refactor) - HAD BUGS:
+     *
+     * 1. User clicks "New Quote" → navigates to ?mode=create
+     * 2. useEffect detects mode=create, creates quote
+     * 3. After creation, navigates to ?quoteId=xxx
+     *
+     * PROBLEMS:
+     * - React Strict Mode ran useEffect twice → created 2 quotes
+     * - Race conditions between API call and navigation
+     * - Required fragile useRef guards with eslint-disable
+     * - If first save happened before navigation, quoteId wasn't in URL
+     *
+     * The refactor eliminates all these issues by:
+     * - Creating quote at button click (not in useEffect)
+     * - Navigating only AFTER quote exists
+     * - Quote page always receives existing quoteId
+     */
+    const oldProblems = [
+      "Double quote creation in Strict Mode",
+      "Race conditions",
+      "Fragile ref-based guards",
+      "eslint-disable required",
+    ];
 
-    // STEP 1: User is on page without quoteId
-    const urlBeforeSave = "/deals/deal-123/proposals/quote?mode=create";
-
-    // STEP 2: User saves, API returns new quote with line items
-    const savedQuote = {
-      id: "new-quote-id",
-      line_items: [{ id: "li-1", name: "Service 1", unit_price: 100 }],
-    };
-
-    // STEP 3: URL is NOT updated (BUG)
-    const urlAfterSave = urlBeforeSave; // Same URL, no quoteId
-    expect(urlAfterSave).not.toContain("quoteId=");
-
-    // STEP 4: Query refetches WITHOUT quoteId
-    const refetchQuoteId = new URL(`http://x${urlAfterSave}`).searchParams.get("quoteId");
-    expect(refetchQuoteId).toBeNull();
-
-    // STEP 5: Server returns quote: null because no quoteId provided
-    // (This is the actual server behavior - it only returns quote when quoteId is specified)
-    const serverResponseWithoutQuoteId = {
-      quote: null, // NULL because quoteId not provided!
-      quoteCount: 1,
-    };
-    expect(serverResponseWithoutQuoteId.quote).toBeNull();
-
-    // STEP 6: Line items are LOST
-    // The QuoteForm receives null quote and reinitializes with empty line items
+    expect(oldProblems).toHaveLength(4);
   });
 });
