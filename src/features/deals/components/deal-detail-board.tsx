@@ -23,7 +23,7 @@ import { useSessionContext } from "@/contexts/AuthContext";
 import { useArchiveDeal, useUnarchiveDeal, useDeleteDeal, useUpdateDealStage } from "../hooks";
 import { useNavigate } from "react-router-dom";
 import type { DealNoteWithAuthor } from "@/types/deal-notes";
-import { useDripSequences, type DripSequenceRecord } from "@/features/drips";
+import type { DripSequenceMeta } from "@/types/deal-details";
 
 type DealDetailBoardProps = {
   snapshot: DealDetailSnapshot;
@@ -104,19 +104,16 @@ export function DealDetailBoard({
   const [stageChangeError, setStageChangeError] = useState<string | null>(null);
   const [isUpdatingStageWithDrips, setIsUpdatingStageWithDrips] = useState(false);
 
-  // Fetch drip sequences for the current pipeline
-  const currentPipelineId = DEAL_STAGE_PIPELINE_MAP[snapshotState.deal.stage];
-  const { data: dripSequences } = useDripSequences(companyId, currentPipelineId);
-
-  // Build a lookup map of drip sequences by stage
+  // Build a lookup map of drip sequences by stage from snapshot data
   const dripSequencesByStage = useMemo(() => {
-    if (!dripSequences) return undefined;
-    const map: Record<DealStageId, DripSequenceRecord> = {} as Record<DealStageId, DripSequenceRecord>;
-    for (const seq of dripSequences) {
+    const meta = snapshotState.dripSequencesMeta;
+    if (!meta) return undefined;
+    const map: Record<string, DripSequenceMeta> = {};
+    for (const seq of meta) {
       map[seq.stage_id] = seq;
     }
     return map;
-  }, [dripSequences]);
+  }, [snapshotState.dripSequencesMeta]);
 
   // Build contacts list from deal's contact (no need to fetch all company contacts)
   const contactsState = useMemo(() => {

@@ -5,7 +5,7 @@ import { DEAL_STAGE_OPTIONS, SALES_DEAL_STAGE_OPTIONS, JOBS_DEAL_STAGE_OPTIONS }
 import { StageDripPromptDialog } from "@/components/pipeline/stage-drip-prompt-dialog";
 import { useToast } from "@/components/ui/toast";
 import type { DealPipelineId, DealStageId, DealStageOption } from "../types";
-import type { DripSequenceRecord } from "@/features/drips";
+import type { DripSequenceMeta } from "@/types/deal-details";
 
 type StageValidation = {
   canMove: boolean;
@@ -22,7 +22,7 @@ type DealStageSelectorProps = {
   proposalCount?: number;
   dealLabel: string;
   defaultDripsEnabled: boolean;
-  dripSequencesByStage?: Record<DealStageId, DripSequenceRecord>;
+  dripSequencesByStage?: Record<string, DripSequenceMeta>;
   onStageChange?: (stage: DealStageId, enableDrips: boolean) => void;
   isUpdating?: boolean;
   stageChangeError?: string | null;

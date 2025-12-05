@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { formatCurrency } from "@/lib/currency";
 import { parseUnitPrice } from "@/lib/form-utils";
 import { ChangeOrderPanel } from "./change-order-panel";
 import { IconPencil, IconTrash, TotalsSummary } from "@/components/shared";
+import { ConfirmDialog } from "@/components/ui/library/Modal";
 import type { ProductTemplateRecord } from "@/features/products";
 import type { EditableQuoteLineItem } from "@/features/quotes";
 
@@ -60,6 +62,27 @@ export function QuoteLineItemsEditor({
     quoteId,
     onSendChangeOrder,
 }: QuoteLineItemsEditorProps) {
+    const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; clientId: string | null; itemName: string }>({
+        open: false,
+        clientId: null,
+        itemName: "",
+    });
+
+    const handleDeleteClick = (clientId: string, itemName: string) => {
+        setDeleteConfirm({ open: true, clientId, itemName });
+    };
+
+    const handleConfirmDelete = () => {
+        if (deleteConfirm.clientId) {
+            onDeleteLineItem(deleteConfirm.clientId);
+        }
+        setDeleteConfirm({ open: false, clientId: null, itemName: "" });
+    };
+
+    const handleCancelDelete = () => {
+        setDeleteConfirm({ open: false, clientId: null, itemName: "" });
+    };
+
     return (
         <section className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -106,10 +129,7 @@ export function QuoteLineItemsEditor({
                                         </button>
                                         <button
                                             type="button"
-                                            onClick={() => {
-                                                onDeleteLineItem(item.client_id);
-                                                onSave();
-                                            }}
+                                            onClick={() => handleDeleteClick(item.client_id, item.name || "Untitled item")}
                                             className="cursor-pointer rounded p-1 text-rose-400 hover:bg-rose-100 hover:text-rose-600"
                                         >
                                             <IconTrash />
@@ -284,6 +304,17 @@ export function QuoteLineItemsEditor({
                     </div>
                 </div>
             </div>
+
+            <ConfirmDialog
+                open={deleteConfirm.open}
+                onClose={handleCancelDelete}
+                onConfirm={handleConfirmDelete}
+                title="Delete line item?"
+                description={`Are you sure you want to delete "${deleteConfirm.itemName}"? This action cannot be undone.`}
+                confirmLabel="Delete"
+                cancelLabel="Cancel"
+                variant="danger"
+            />
         </section>
     );
 }

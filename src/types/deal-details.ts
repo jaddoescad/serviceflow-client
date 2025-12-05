@@ -75,6 +75,15 @@ export type DealChecklistItem = {
   completed: boolean;
 };
 
+/**
+ * Lightweight drip sequence metadata - only what's needed for UI indicators
+ */
+export type DripSequenceMeta = {
+  stage_id: string;
+  is_enabled: boolean;
+  step_count: number;
+};
+
 export type DealDetailSnapshot = {
   deal: DealRecord;
   proposals: DealProposalRecord[];
@@ -83,4 +92,5 @@ export type DealDetailSnapshot = {
   notes: DealNoteWithAuthor[];
   attachments: DealAttachmentRecord[];
   checklist: DealChecklistItem[];
+  dripSequencesMeta?: DripSequenceMeta[];
 };

@@ -8,12 +8,12 @@ import {
   Button,
 } from "@/components/ui/library";
 import type { DealStageOption } from "@/features/deals";
-import type { DripSequenceRecord } from "@/features/drips";
+import type { DripSequenceMeta } from "@/types/deal-details";
 
 type StageDripPromptDialogProps = {
   open: boolean;
   stage: DealStageOption | null;
-  sequence: DripSequenceRecord | null;
+  sequence: DripSequenceMeta | null;
   dealLabel: string;
   defaultEnabled: boolean;
   isSaving: boolean;
@@ -40,7 +40,7 @@ export function StageDripPromptDialog({
   }
 
   const stageLabel = stage?.label ?? "this stage";
-  const hasConfiguredDrips = Boolean(sequence?.is_enabled && sequence?.steps?.length);
+  const hasConfiguredDrips = Boolean(sequence?.is_enabled && sequence?.step_count);
 
   return (
     <Modal open={open} onClose={onClose} ariaLabel={`Enable drips for ${stageLabel}`} size="sm">

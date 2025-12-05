@@ -73,6 +73,7 @@ export default function DealPage() {
       notes,
       attachments: mergedAttachments,
       checklist: [],
+      dripSequencesMeta: payload.dripSequencesMeta ?? [],
     };
 
     return { snapshot };

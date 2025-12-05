@@ -1,12 +1,11 @@
 import { type ReactNode, useState, useRef, useEffect } from "react";
-import type { DealDetailSnapshot } from "@/types/deal-details";
+import type { DealDetailSnapshot, DripSequenceMeta } from "@/types/deal-details";
 import { DealStageSelector } from "./deal-stage-selector";
 import { DEAL_STAGE_PIPELINE_MAP } from "../constants";
 import { formatFullName } from "@/lib/name";
 import { ConfirmDialog } from "@/components/ui/library";
 
 import type { DealStageId } from "../types";
-import type { DripSequenceRecord } from "@/features/drips";
 
 type DealSummaryCardProps = {
   snapshot: DealDetailSnapshot;
@@ -21,7 +20,7 @@ type DealSummaryCardProps = {
   onToggleDrips?: (enable: boolean) => void;
   isTogglingDrips?: boolean;
   dripStatusMessage?: string | null;
-  dripSequencesByStage?: Record<DealStageId, DripSequenceRecord>;
+  dripSequencesByStage?: Record<string, DripSequenceMeta>;
   onStageChange?: (stage: DealStageId, enableDrips: boolean) => void;
   isUpdatingStage?: boolean;
   stageChangeError?: string | null;

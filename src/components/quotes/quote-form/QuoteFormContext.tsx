@@ -151,7 +151,10 @@ type QuoteFormContextValue = {
   handleLineItemUnitPriceChange: (clientId: string, value: string) => void;
   handleApplyTemplate: (clientId: string, templateId: string) => void;
   handleDeleteLineItem: (clientId: string) => void;
-  handleSaveQuote: () => Promise<QuoteSaveResponse | null>;
+  handleSaveQuote: (options?: {
+    deletedLineItemIdsOverride?: string[];
+    lineItemsOverride?: EditableQuoteLineItem[];
+  }) => Promise<QuoteSaveResponse | null>;
   handleDeleteQuote: () => Promise<void>;
 
   // Actions - Attachments
@@ -472,15 +475,16 @@ export function QuoteFormProvider({
     }
   }, [initialQuote, publicShareId, quoteId]);
 
-  // Fetch invoice URL
+  // Fetch invoice URL - only for accepted quotes (invoices are created on acceptance)
   useEffect(() => {
+    // Only accepted quotes can have invoices - skip fetch for draft/sent/declined
+    if (!quoteId || status !== "accepted") {
+      setInvoiceUrl(null);
+      return;
+    }
+
     let cancelled = false;
     const loadInvoice = async () => {
-      if (!quoteId) {
-        if (!cancelled) setInvoiceUrl(null);
-        return;
-      }
-
       try {
         const invoice = await getInvoiceByQuoteId(quoteId);
         if (!cancelled) {
@@ -678,29 +682,60 @@ export function QuoteFormProvider({
     [isProposalLocked, productTemplateMap]
   );
 
+  // We need a ref to handleSaveQuote since handleDeleteLineItem needs to call it
+  // but is defined before handleSaveQuote in the code
+  const handleSaveQuoteRef = useRef<((options?: {
+    snapshotOverride?: string;
+    deletedLineItemIdsOverride?: string[];
+    lineItemsOverride?: EditableQuoteLineItem[];
+  }) => Promise<QuoteSaveResponse | null>) | null>(null);
+
   const handleDeleteLineItem = useCallback(
     (clientId: string) => {
       if (isProposalLocked) return;
-      setLineItems((items) => {
-        const target = items.find((item) => item.client_id === clientId);
-        if (target?.id) {
-          setDeletedLineItemIds((ids) =>
-            ids.includes(target.id as string) ? ids : [...ids, target.id as string]
-          );
-        }
-        return items.filter((item) => item.client_id !== clientId);
-      });
+
+      // Compute the new state values synchronously before updating state
+      const target = lineItems.find((item) => item.client_id === clientId);
+      const newLineItems = lineItems.filter((item) => item.client_id !== clientId);
+      const newDeletedIds =
+        target?.id && !deletedLineItemIds.includes(target.id)
+          ? [...deletedLineItemIds, target.id]
+          : deletedLineItemIds;
+
+      // Update state
+      setLineItems(newLineItems);
+      if (target?.id) {
+        setDeletedLineItemIds(newDeletedIds);
+      }
+
+      // Trigger save with the computed values (bypassing stale state)
+      if (handleSaveQuoteRef.current) {
+        void handleSaveQuoteRef.current({
+          lineItemsOverride: newLineItems,
+          deletedLineItemIdsOverride: newDeletedIds,
+        });
+      }
     },
-    [isProposalLocked]
+    [isProposalLocked, lineItems, deletedLineItemIds]
   );
 
   const handleSaveQuote = useCallback(
-    async (snapshotOverride?: string): Promise<QuoteSaveResponse | null> => {
+    async (options?: {
+      snapshotOverride?: string;
+      deletedLineItemIdsOverride?: string[];
+      lineItemsOverride?: EditableQuoteLineItem[];
+    }): Promise<QuoteSaveResponse | null> => {
+      const { snapshotOverride, deletedLineItemIdsOverride, lineItemsOverride } = options ?? {};
+
       setIsSaving(true);
       setSaveError(null);
 
       try {
         const normalizedQuoteNumber = quoteNumber.trim() || defaultQuoteNumber;
+
+        // Use overrides if provided, otherwise use current state
+        const effectiveLineItems = lineItemsOverride ?? lineItems;
+        const effectiveDeletedIds = deletedLineItemIdsOverride ?? deletedLineItemIds;
 
         const quoteInput: UpsertQuoteInput = {
           id: quoteId,
@@ -713,7 +748,7 @@ export function QuoteFormProvider({
           status: status || "draft",
         };
 
-        const lineItemsInput: UpsertQuoteLineItemInput[] = lineItems.map((item, index) => ({
+        const lineItemsInput: UpsertQuoteLineItemInput[] = effectiveLineItems.map((item, index) => ({
           id: item.id,
           client_id: item.client_id,
           name: item.name.trim(),
@@ -729,7 +764,7 @@ export function QuoteFormProvider({
             ...item,
             unit_price: item.unitPrice,
           })),
-          deletedLineItemIds,
+          deletedLineItemIds: effectiveDeletedIds,
         };
 
         const saved: QuoteSaveResponse = await createQuote(payload);
@@ -739,8 +774,8 @@ export function QuoteFormProvider({
           (saved.new_line_items ?? []).map((item) => [item.client_id, item.id])
         );
 
-        // Merge server-assigned IDs into new line items
-        const updatedLineItems = lineItems.map((item) => ({
+        // Merge server-assigned IDs into new line items (use effectiveLineItems which may be overridden)
+        const updatedLineItems = effectiveLineItems.map((item) => ({
           ...item,
           id: newItemMap.get(item.client_id) ?? item.id,
         }));
@@ -791,6 +826,9 @@ export function QuoteFormProvider({
     },
     [clientMessage, companyId, dealId, deletedLineItemIds, disclaimer, defaultQuoteNumber, lineItems, navigate, quoteId, quoteNumber, status, invalidateQuoteCaches]
   );
+
+  // Keep ref in sync so handleDeleteLineItem can call handleSaveQuote
+  handleSaveQuoteRef.current = handleSaveQuote;
 
   const handleDeleteQuote = useCallback(async () => {
     if (isDeleting) return;
