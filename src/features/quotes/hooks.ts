@@ -107,5 +107,20 @@ export function useInvalidateQuotes() {
       queryClient.invalidateQueries({ queryKey: quoteKeys.list(dealId) }),
     invalidateDetail: (quoteId: string) =>
       queryClient.invalidateQueries({ queryKey: quoteKeys.detail(quoteId) }),
+    /**
+     * Invalidates all quote-related caches for a deal.
+     * Use this after saving/creating/deleting quotes to ensure
+     * deal pages and dashboards show updated data.
+     */
+    invalidateQuoteCaches: (dealId: string) => {
+      queryClient.invalidateQueries({ queryKey: quoteKeys.list(dealId) });
+      queryClient.invalidateQueries({ queryKey: dealKeys.detail(dealId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dealDetail.detail(dealId) });
+      queryClient.invalidateQueries({
+        queryKey: ['dealDetail', 'proposalData', dealId],
+        exact: false
+      });
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+    },
   };
 }

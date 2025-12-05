@@ -26,7 +26,7 @@ import type { ProductTemplateRecord } from "@/features/products";
 import type { CommunicationTemplateSnapshot } from "@/features/communications";
 import type { ProposalAttachmentAsset } from "@/types/proposal-attachments";
 import type { WorkOrderDeliveryMethod, WorkOrderDeliveryRequestPayload } from "@/types/work-order-delivery";
-import { QUOTE_DEFAULT_CLIENT_MESSAGE, QUOTE_DEFAULT_DISCLAIMER, createQuote, deleteQuote, sendQuoteDelivery, acceptQuoteWithoutSignature } from "@/features/quotes";
+import { QUOTE_DEFAULT_CLIENT_MESSAGE, QUOTE_DEFAULT_DISCLAIMER, createQuote, deleteQuote, sendQuoteDelivery, acceptQuoteWithoutSignature, useInvalidateQuotes } from "@/features/quotes";
 import { getInvoiceByQuoteId } from "@/features/invoices";
 import { parseUnitPrice, createClientId, formatQuoteId } from "@/lib/form-utils";
 import { renderCommunicationTemplate } from "@/features/communications";
@@ -236,6 +236,7 @@ export function QuoteFormProvider({
 }: QuoteFormProviderProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { invalidateQuoteCaches } = useInvalidateQuotes();
   const { setHeaderAction, setBackAction } = useDealDetailHeaderAction();
 
   // Repositories
@@ -755,11 +756,8 @@ export function QuoteFormProvider({
           navigate(`/deals/${dealId}/proposals/quote?quoteId=${saved.id}`, { replace: true });
         }
 
-        // Invalidate proposal data cache so quote count is updated
-        queryClient.invalidateQueries({
-          queryKey: ['dealDetail', 'proposalData', dealId],
-          exact: false
-        });
+        // Invalidate all quote-related caches so deal page shows updated data
+        invalidateQuoteCaches(dealId);
 
         return saved;
       } catch (error) {
@@ -770,7 +768,7 @@ export function QuoteFormProvider({
         setIsSaving(false);
       }
     },
-    [clientMessage, companyId, dealId, deletedLineItemIds, disclaimer, defaultQuoteNumber, lineItems, navigate, quoteId, quoteNumber, status, queryClient]
+    [clientMessage, companyId, dealId, deletedLineItemIds, disclaimer, defaultQuoteNumber, lineItems, navigate, quoteId, quoteNumber, status, invalidateQuoteCaches]
   );
 
   const handleDeleteQuote = useCallback(async () => {
@@ -786,18 +784,15 @@ export function QuoteFormProvider({
 
     try {
       await deleteQuote(dealId, quoteId);
-      // Invalidate proposal data cache so quote count is updated
-      queryClient.invalidateQueries({
-        queryKey: ['dealDetail', 'proposalData', dealId],
-        exact: false
-      });
+      // Invalidate all quote-related caches so deal page shows updated data
+      invalidateQuoteCaches(dealId);
       navigate(`/deals/${dealId}`);
     } catch (error) {
       console.error("Failed to delete quote", error);
       setSaveError("We couldn't delete this quote. Please try again.");
       setIsDeleting(false);
     }
-  }, [dealId, isDeleting, quoteId, navigate, queryClient]);
+  }, [dealId, isDeleting, quoteId, navigate, invalidateQuoteCaches]);
 
   // ============================================================================
   // Attachment Handlers
