@@ -36,6 +36,7 @@ import { getCommunicationTemplateByKey } from "@/features/communications";
 import { queryKeys } from "@/hooks/query-keys";
 import { invoiceDetailKeys } from "@/hooks/useInvoiceDetail";
 
+import { formatButtonMarker } from "@/lib/template-variables";
 import type { InvoiceDetailProps } from "./types";
 import { buildInvoiceTemplateDefaults, buildPaymentRequestTemplateDefaults } from "./utils";
 
@@ -234,6 +235,7 @@ export function InvoiceDetailProvider({
   companyName,
   companyEmail,
   companyPhone,
+  companyWebsite,
   dealId,
   invoice,
   paymentRequests,
@@ -324,11 +326,13 @@ export function InvoiceDetailProvider({
     () =>
       buildInvoiceTemplateDefaults(invoiceTemplateSnapshot, {
         companyName,
+        companyPhone,
+        companyWebsite,
         clientName,
         invoiceNumber: invoiceState.invoice_number,
         invoiceUrl: invoiceShareUrl,
       }),
-    [clientName, companyName, invoiceTemplateSnapshot, invoiceShareUrl, invoiceState.invoice_number]
+    [clientName, companyName, companyPhone, companyWebsite, invoiceTemplateSnapshot, invoiceShareUrl, invoiceState.invoice_number]
   );
 
   const buildPaymentRequestDefaults = useCallback(
@@ -336,6 +340,7 @@ export function InvoiceDetailProvider({
       buildPaymentRequestTemplateDefaults(paymentRequestTemplateSnapshot, {
         companyName,
         companyPhone,
+        companyWebsite,
         clientName,
         invoiceNumber: invoiceState.invoice_number,
         invoiceUrl: invoiceShareUrl,
@@ -345,6 +350,7 @@ export function InvoiceDetailProvider({
       clientName,
       companyName,
       companyPhone,
+      companyWebsite,
       invoiceShareUrl,
       invoiceState.invoice_number,
       paymentRequestTemplateSnapshot,
@@ -615,12 +621,14 @@ export function InvoiceDetailProvider({
         const templateVars = {
           "company-name": companyName,
           "company-phone": companyPhone ?? "",
+          "company-website": companyWebsite ?? "",
           "client-name": clientName,
           "customer-name": clientName,
           "first-name": firstName || clientName || "Client",
           "last-name": lastName,
           "invoice-number": invoiceState.invoice_number,
-          "invoice-button": invoiceShareUrl ?? "",
+          "invoice-button": formatButtonMarker(invoiceShareUrl, "View Invoice"),
+          "invoice-url": invoiceShareUrl ?? "",
           "payment-amount": formatCurrency(activePaymentRequest.amount),
         };
 
@@ -691,12 +699,14 @@ export function InvoiceDetailProvider({
       const templateVars = {
         "company-name": companyName,
         "company-phone": companyPhone ?? "",
+        "company-website": companyWebsite ?? "",
         "client-name": clientName,
         "customer-name": clientName,
         "first-name": firstName || clientName || "Client",
         "last-name": lastName,
         "invoice-number": invoiceState.invoice_number,
-        "invoice-button": invoiceShareUrl ?? "",
+        "invoice-button": formatButtonMarker(invoiceShareUrl, "View Invoice"),
+        "invoice-url": invoiceShareUrl ?? "",
         "payment-amount": formatCurrency(paymentAmount),
       };
 
@@ -711,7 +721,7 @@ export function InvoiceDetailProvider({
       setDefaultReceiptSubject(renderedSubject);
       setIsReceivePaymentDialogOpen(true);
     },
-    [clientName, companyName, companyPhone, invoiceShareUrl, invoiceState.balance_due, invoiceState.invoice_number, paymentReceiptTemplateSnapshot]
+    [clientName, companyName, companyPhone, companyWebsite, invoiceShareUrl, invoiceState.balance_due, invoiceState.invoice_number, paymentReceiptTemplateSnapshot]
   );
 
   const closeReceivePaymentDialog = useCallback(() => {
@@ -789,12 +799,14 @@ export function InvoiceDetailProvider({
       const templateVars = {
         "company-name": companyName,
         "company-phone": companyPhone ?? "",
+        "company-website": companyWebsite ?? "",
         "client-name": clientName,
         "customer-name": clientName,
         "first-name": firstName || clientName || "Client",
         "last-name": lastName,
         "invoice-number": invoiceState.invoice_number,
-        "invoice-button": invoiceShareUrl ?? "",
+        "invoice-button": formatButtonMarker(invoiceShareUrl, "View Invoice"),
+        "invoice-url": invoiceShareUrl ?? "",
         "payment-amount": formatCurrency(payment.amount),
       };
 
@@ -806,7 +818,7 @@ export function InvoiceDetailProvider({
       setSendReceiptDefaultSubject(renderedSubject);
       setIsSendReceiptDialogOpen(true);
     },
-    [clientName, companyName, companyPhone, invoiceShareUrl, invoiceState.invoice_number, paymentReceiptTemplateSnapshot]
+    [clientName, companyName, companyPhone, companyWebsite, invoiceShareUrl, invoiceState.invoice_number, paymentReceiptTemplateSnapshot]
   );
 
   const closeSendReceiptDialog = useCallback(() => {

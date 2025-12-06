@@ -2,6 +2,7 @@ import type { EditableQuoteLineItem, QuoteRecord } from "@/features/quotes";
 import type { CommunicationTemplateSnapshot } from "@/features/communications";
 import { renderCommunicationTemplate } from "@/features/communications";
 import { createClientId } from "@/lib/form-utils";
+import { formatButtonMarker, stripButtonMarkers } from "@/lib/template-variables";
 import type { ProposalTemplateContext, WorkOrderTemplateContext } from "./types";
 
 export const mapRecordToEditable = (
@@ -45,15 +46,18 @@ export const buildProposalTemplateDefaults = (
     "first-name": firstName || context.clientName || "Client",
     "last-name": lastName,
     "quote-number": context.quoteNumber,
-    "proposal-button": context.proposalUrl ?? "",
+    "proposal-button": formatButtonMarker(context.proposalUrl, "View Proposal"),
+    "proposal-url": context.proposalUrl ?? "",
+    "invoice-button": formatButtonMarker(context.invoiceUrl, "View Invoice"),
+    "invoice-url": context.invoiceUrl ?? "",
     "change-order-number": context.changeOrderNumber ?? "",
-    "change-order-button": context.proposalUrl ?? "",
+    "change-order-button": formatButtonMarker(context.proposalUrl, "View Change Order"),
   };
 
   return {
     emailSubject: renderCommunicationTemplate(template.emailSubject, templateVars),
     emailBody: renderCommunicationTemplate(template.emailBody, templateVars),
-    smsBody: renderCommunicationTemplate(template.smsBody, templateVars),
+    smsBody: stripButtonMarkers(renderCommunicationTemplate(template.smsBody, templateVars)),
   };
 };
 
@@ -71,14 +75,14 @@ export const buildWorkOrderTemplateDefaults = (
     "first-name": firstName || context.clientName || "Client",
     "last-name": lastName,
     "quote-number": context.quoteNumber,
-    "work-order-button": context.workOrderUrl,
+    "work-order-button": formatButtonMarker(context.workOrderUrl, "View Work Order"),
     "work-order-address": context.workOrderAddress,
   };
 
   return {
     emailSubject: renderCommunicationTemplate(template.emailSubject, templateVars),
     emailBody: renderCommunicationTemplate(template.emailBody, templateVars),
-    smsBody: renderCommunicationTemplate(template.smsBody, templateVars),
+    smsBody: stripButtonMarkers(renderCommunicationTemplate(template.smsBody, templateVars)),
   };
 };
 

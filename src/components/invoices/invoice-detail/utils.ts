@@ -4,6 +4,7 @@ import {
   INVOICE_DELIVERY_DEFAULT_EMAIL_BODY,
   INVOICE_DELIVERY_DEFAULT_TEXT_MESSAGE,
 } from "@/constants/invoice-delivery";
+import { formatButtonMarker, stripButtonMarkers } from "@/lib/template-variables";
 import type { TemplateContext } from "./types";
 
 export const formatDate = (value: string): string => {
@@ -33,17 +34,20 @@ export function buildInvoiceTemplateDefaults(
   const templateVars = {
     "company-name": context.companyName,
     "company-phone": context.companyPhone ?? "",
+    "company-website": context.companyWebsite ?? "",
     "client-name": context.clientName,
     "customer-name": context.clientName,
     "first-name": firstName || context.clientName || "Client",
     "last-name": lastName,
     "invoice-number": context.invoiceNumber,
-    "invoice-button": context.invoiceUrl ?? "",
+    "invoice-button": formatButtonMarker(context.invoiceUrl, "View Invoice"),
+    "invoice-url": context.invoiceUrl ?? "",
   };
 
-  const smsBody =
+  const smsBody = stripButtonMarkers(
     renderCommunicationTemplate(template.smsBody, templateVars) ||
-    renderCommunicationTemplate(INVOICE_DELIVERY_DEFAULT_TEXT_MESSAGE, templateVars);
+    renderCommunicationTemplate(INVOICE_DELIVERY_DEFAULT_TEXT_MESSAGE, templateVars)
+  );
 
   const emailSubject =
     renderCommunicationTemplate(template.emailSubject, templateVars) || fallbackSubject;
@@ -69,16 +73,18 @@ export const buildPaymentRequestTemplateDefaults = (
   const templateVars = {
     "company-name": context.companyName,
     "company-phone": context.companyPhone ?? "",
+    "company-website": context.companyWebsite ?? "",
     "client-name": context.clientName,
     "customer-name": context.clientName,
     "first-name": firstName || context.clientName || "Client",
     "last-name": lastName,
     "invoice-number": context.invoiceNumber,
-    "invoice-button": context.invoiceUrl ?? "",
+    "invoice-button": formatButtonMarker(context.invoiceUrl, "View Invoice"),
+    "invoice-url": context.invoiceUrl ?? "",
     "payment-amount": context.paymentAmount ?? "",
   };
 
-  const smsBody = renderCommunicationTemplate(template.smsBody, templateVars);
+  const smsBody = stripButtonMarkers(renderCommunicationTemplate(template.smsBody, templateVars));
   const emailSubject = renderCommunicationTemplate(template.emailSubject, templateVars);
   const emailBody = renderCommunicationTemplate(template.emailBody, templateVars);
 
@@ -99,12 +105,14 @@ export const buildPaymentReceiptTemplateDefaults = (
   const templateVars = {
     "company-name": context.companyName,
     "company-phone": context.companyPhone ?? "",
+    "company-website": context.companyWebsite ?? "",
     "client-name": context.clientName,
     "customer-name": context.clientName,
     "first-name": firstName || context.clientName || "Client",
     "last-name": lastName,
     "invoice-number": context.invoiceNumber,
-    "invoice-button": context.invoiceUrl ?? "",
+    "invoice-button": formatButtonMarker(context.invoiceUrl, "View Invoice"),
+    "invoice-url": context.invoiceUrl ?? "",
     "payment-amount": context.paymentAmount ?? "",
   };
 

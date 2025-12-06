@@ -25,19 +25,22 @@ import { getCommunicationTemplateByKey } from "@/features/communications";
 import { queryKeys } from "@/hooks/query-keys";
 import { invoiceDetailKeys } from "@/hooks/useInvoiceDetail";
 
+import { formatButtonMarker } from "@/lib/template-variables";
 import type { InvoiceDetailProps } from "./types";
 import { buildInvoiceTemplateDefaults, buildPaymentRequestTemplateDefaults } from "./utils";
 
 export function useInvoiceDetail({
   companyId,
   companyName,
+  companyPhone,
+  companyWebsite,
   dealId,
   invoice,
   paymentRequests,
   payments,
   clientName,
   clientEmail,
-  clientPhone,
+  clientPhone: clientPhoneNumber,
   invoiceTemplate,
   paymentRequestTemplate,
   paymentReceiptTemplate,
@@ -109,30 +112,34 @@ export function useInvoiceDetail({
     () =>
       buildInvoiceTemplateDefaults(invoiceTemplateSnapshot, {
         companyName,
+        companyPhone,
+        companyWebsite,
         clientName,
         invoiceNumber: invoiceState.invoice_number,
         invoiceUrl: invoiceShareUrl,
       }),
-    [clientName, companyName, invoiceTemplateSnapshot, invoiceShareUrl, invoiceState.invoice_number]
+    [clientName, companyName, companyPhone, companyWebsite, invoiceTemplateSnapshot, invoiceShareUrl, invoiceState.invoice_number]
   );
 
   const buildPaymentRequestDefaults = useCallback(
     (request: InvoicePaymentRequestRecord) =>
       buildPaymentRequestTemplateDefaults(paymentRequestTemplateSnapshot, {
         companyName,
+        companyPhone,
+        companyWebsite,
         clientName,
         invoiceNumber: invoiceState.invoice_number,
         invoiceUrl: invoiceShareUrl,
         paymentAmount: formatCurrency(request.amount),
       }),
-    [clientName, companyName, invoiceShareUrl, invoiceState.invoice_number, paymentRequestTemplateSnapshot]
+    [clientName, companyName, companyPhone, companyWebsite, invoiceShareUrl, invoiceState.invoice_number, paymentRequestTemplateSnapshot]
   );
 
   const initialInvoiceSendMethod: InvoiceDeliveryMethod = useMemo(() => {
-    if (clientEmail && clientPhone) return "both";
-    if (clientPhone) return "text";
+    if (clientEmail && clientPhoneNumber) return "both";
+    if (clientPhoneNumber) return "text";
     return "email";
-  }, [clientEmail, clientPhone]);
+  }, [clientEmail, clientPhoneNumber]);
 
   const totals = useMemo(() => {
     const lineTotal = invoiceState.line_items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
@@ -146,7 +153,7 @@ export function useInvoiceDetail({
   // Dialog state
   const [isSendInvoiceDialogOpen, setIsSendInvoiceDialogOpen] = useState(false);
   const [invoiceSendMethod, setInvoiceSendMethod] = useState<InvoiceDeliveryMethod>(initialInvoiceSendMethod);
-  const [textRecipient, setTextRecipient] = useState(clientPhone);
+  const [textRecipient, setTextRecipient] = useState(clientPhoneNumber);
   const [textBody, setTextBody] = useState(invoiceTemplateDefaults.smsBody);
   const [emailRecipient, setEmailRecipient] = useState(clientEmail);
   const [emailCc, setEmailCc] = useState<string>("");
@@ -349,14 +356,19 @@ export function useInvoiceDetail({
       setActionError(null);
 
       try {
+        const [firstName, ...restName] = clientName.trim().split(" ");
         const templateVars = {
-          company_name: companyName,
-          companyName,
-          customer_name: clientName,
-          client_name: clientName,
-          invoice_number: invoiceState.invoice_number,
-          invoice_button: invoiceShareUrl ?? "",
-          payment_amount: formatCurrency(activePaymentRequest.amount),
+          "company-name": companyName,
+          "company-phone": companyPhone ?? "",
+          "company-website": companyWebsite ?? "",
+          "customer-name": clientName,
+          "client-name": clientName,
+          "first-name": firstName || clientName || "Client",
+          "last-name": restName.join(" "),
+          "invoice-number": invoiceState.invoice_number,
+          "invoice-button": formatButtonMarker(invoiceShareUrl, "View Invoice"),
+          "invoice-url": invoiceShareUrl ?? "",
+          "payment-amount": formatCurrency(activePaymentRequest.amount),
         };
 
         const renderedPayload: typeof payload = {
@@ -395,7 +407,7 @@ export function useInvoiceDetail({
         setIsSendingPaymentRequest(false);
       }
     },
-    [activePaymentRequest, companyName, clientName, dealId, invoiceShareUrl, invoiceState.id, invoiceState.invoice_number]
+    [activePaymentRequest, companyName, companyPhone, companyWebsite, clientName, dealId, invoiceShareUrl, invoiceState.id, invoiceState.invoice_number]
   );
 
   const handleReceivePayment = useCallback(
@@ -424,15 +436,17 @@ export function useInvoiceDetail({
       try {
         const [firstName, ...restName] = clientName.trim().split(" ");
         const templateVars = {
-          company_name: companyName,
-          companyName,
-          customer_name: clientName,
-          client_name: clientName,
-          first_name: firstName || clientName || "Client",
-          last_name: restName.join(" "),
-          invoice_number: invoiceState.invoice_number,
-          invoice_button: invoiceShareUrl ?? "",
-          payment_amount: formatCurrency(input.amount),
+          "company-name": companyName,
+          "company-phone": companyPhone ?? "",
+          "company-website": companyWebsite ?? "",
+          "customer-name": clientName,
+          "client-name": clientName,
+          "first-name": firstName || clientName || "Client",
+          "last-name": restName.join(" "),
+          "invoice-number": invoiceState.invoice_number,
+          "invoice-button": formatButtonMarker(invoiceShareUrl, "View Invoice"),
+          "invoice-url": invoiceShareUrl ?? "",
+          "payment-amount": formatCurrency(input.amount),
         };
 
         const renderedInput = {
@@ -473,7 +487,7 @@ export function useInvoiceDetail({
         setReceivePaymentSubmitting(false);
       }
     },
-    [clientName, companyName, dealId, invoiceShareUrl, invoiceState.id, invoiceState.invoice_number, supabaseBrowserClient]
+    [clientName, companyName, companyPhone, companyWebsite, dealId, invoiceShareUrl, invoiceState.id, invoiceState.invoice_number, supabaseBrowserClient]
   );
 
   const openSendPaymentRequestDialog = useCallback((request: InvoicePaymentRequestRecord) => {
@@ -509,15 +523,17 @@ export function useInvoiceDetail({
       try {
         const [firstName, ...restName] = clientName.trim().split(" ");
         const templateVars = {
-          company_name: companyName,
-          companyName,
-          customer_name: clientName,
-          client_name: clientName,
-          first_name: firstName || clientName || "Client",
-          last_name: restName.join(" "),
-          invoice_number: invoiceState.invoice_number,
-          invoice_button: invoiceShareUrl ?? "",
-          payment_amount: formatCurrency(activeReceiptPayment.amount),
+          "company-name": companyName,
+          "company-phone": companyPhone ?? "",
+          "company-website": companyWebsite ?? "",
+          "customer-name": clientName,
+          "client-name": clientName,
+          "first-name": firstName || clientName || "Client",
+          "last-name": restName.join(" "),
+          "invoice-number": invoiceState.invoice_number,
+          "invoice-button": formatButtonMarker(invoiceShareUrl, "View Invoice"),
+          "invoice-url": invoiceShareUrl ?? "",
+          "payment-amount": formatCurrency(activeReceiptPayment.amount),
         };
 
         await apiClient(
@@ -542,7 +558,7 @@ export function useInvoiceDetail({
         setIsSendingReceipt(false);
       }
     },
-    [activeReceiptPayment, clientName, companyName, dealId, invoiceShareUrl, invoiceState.id, invoiceState.invoice_number]
+    [activeReceiptPayment, clientName, companyName, companyPhone, companyWebsite, dealId, invoiceShareUrl, invoiceState.id, invoiceState.invoice_number]
   );
 
   const handleCancelPaymentRequest = useCallback((request: InvoicePaymentRequestRecord) => {

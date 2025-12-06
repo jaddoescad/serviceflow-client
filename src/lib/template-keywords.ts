@@ -55,12 +55,16 @@ export const JOB_KEYWORDS = [
 export const INVOICE_KEYWORDS = [
   "{invoice-number}",
   "{invoice-button}",
+  "{invoice-url}",
   "{payment-amount}",
 ] as const;
 
 export const PROPOSAL_KEYWORDS = [
   "{quote-number}",
   "{proposal-button}",
+  "{proposal-url}",
+  "{invoice-button}",
+  "{invoice-url}",
 ] as const;
 
 export const CHANGE_ORDER_KEYWORDS = [

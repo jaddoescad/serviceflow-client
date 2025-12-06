@@ -33,12 +33,16 @@ export type UserVariables = {
 export type InvoiceVariables = {
   "invoice-number": string;
   "invoice-button": string;
+  "invoice-url": string;
   "payment-amount": string;
 };
 
 export type ProposalVariables = {
   "quote-number": string;
   "proposal-button": string;
+  "proposal-url": string;
+  "invoice-button": string;
+  "invoice-url": string;
 };
 
 export type JobVariables = {
@@ -128,7 +132,29 @@ export function buildUserVariables(options: {
 }
 
 /**
- * Build invoice-related template variables
+ * Formats a URL with a button marker for server-side HTML button rendering.
+ * Format: [BTN:Label]URL
+ *
+ * In emails, this renders as a styled HTML button.
+ * In SMS/plain text, the marker is stripped and only the URL is shown.
+ */
+export function formatButtonMarker(url: string | null | undefined, label: string): string {
+  if (!url) return "";
+  return `[BTN:${label}]${url}`;
+}
+
+/**
+ * Strips button markers from text for plain text output (SMS).
+ * Converts [BTN:Label]URL to just URL.
+ */
+export function stripButtonMarkers(text: string): string {
+  return text.replace(/\[BTN:[^\]]+\](https?:\/\/[^\s]+)/g, "$1");
+}
+
+/**
+ * Build invoice-related template variables.
+ * -button uses marker format for styled buttons in emails (plain URL in SMS).
+ * -url always shows plain URL.
  */
 export function buildInvoiceVariables(options: {
   invoiceNumber: string;
@@ -137,21 +163,28 @@ export function buildInvoiceVariables(options: {
 }): InvoiceVariables {
   return {
     "invoice-number": options.invoiceNumber,
-    "invoice-button": options.invoiceUrl ?? "",
+    "invoice-button": formatButtonMarker(options.invoiceUrl, "View Invoice"),
+    "invoice-url": options.invoiceUrl ?? "",
     "payment-amount": options.paymentAmount != null ? formatCurrency(options.paymentAmount) : "",
   };
 }
 
 /**
- * Build proposal-related template variables
+ * Build proposal-related template variables.
+ * -button uses marker format for styled buttons in emails (plain URL in SMS).
+ * -url always shows plain URL.
  */
 export function buildProposalVariables(options: {
   quoteNumber: string;
   proposalUrl?: string | null;
+  invoiceUrl?: string | null;
 }): ProposalVariables {
   return {
     "quote-number": options.quoteNumber,
-    "proposal-button": options.proposalUrl ?? "",
+    "proposal-button": formatButtonMarker(options.proposalUrl, "View Proposal"),
+    "proposal-url": options.proposalUrl ?? "",
+    "invoice-button": formatButtonMarker(options.invoiceUrl, "View Invoice"),
+    "invoice-url": options.invoiceUrl ?? "",
   };
 }
 
@@ -288,6 +321,7 @@ export function buildProposalTemplateVariables(options: {
   clientName: string;
   quoteNumber: string;
   proposalUrl?: string | null;
+  invoiceUrl?: string | null;
   changeOrderNumber?: string | null;
   changeOrderUrl?: string | null;
   currentUserName?: string | null;
@@ -303,6 +337,7 @@ export function buildProposalTemplateVariables(options: {
     ...buildProposalVariables({
       quoteNumber: options.quoteNumber,
       proposalUrl: options.proposalUrl,
+      invoiceUrl: options.invoiceUrl,
     }),
     ...(options.changeOrderNumber
       ? buildChangeOrderVariables({

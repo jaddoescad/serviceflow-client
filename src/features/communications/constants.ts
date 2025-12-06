@@ -36,7 +36,7 @@ export const COMMUNICATION_TEMPLATE_DEFINITIONS: Record<
     key: "proposal_quote",
     label: "Proposal Delivery",
     helpText:
-      "Templates used when emailing or texting a proposal to a customer. Include {proposal-button} where the proposal link/button should appear.",
+      "Templates used when emailing or texting a proposal to a customer. Use {proposal-button} or {invoice-button} for clickable buttons, or {proposal-url} and {invoice-url} for plain URLs.",
     defaultEmailSubject: "{company-name} proposal for {customer-name}",
     defaultEmailBody:
       "Hi {first-name},\n\nYour proposal from {company-name} is ready.\n{proposal-button}\n\nIf you have questions, call {company-phone} or visit {company-website}.\n\nThank you,\n{company-name}",

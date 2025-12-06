@@ -32,6 +32,7 @@ import { QUOTE_DEFAULT_CLIENT_MESSAGE, QUOTE_DEFAULT_DISCLAIMER, createQuote, de
 import { getInvoiceByQuoteId } from "@/features/invoices";
 import { parseUnitPrice, createClientId, formatQuoteId } from "@/lib/form-utils";
 import { getBrowserProposalShareUrl, getEmployeeProposalPreviewUrl } from "@/lib/proposal-share";
+import { getBrowserInvoiceShareUrl } from "@/lib/invoice-share";
 import {
   getBrowserSecretWorkOrderShareUrl,
   getBrowserWorkOrderShareUrl,
@@ -346,6 +347,7 @@ export function QuoteFormProvider({
   // ============================================================================
   const [isNavigatingBack, setIsNavigatingBack] = useState(false);
   const [invoiceUrl, setInvoiceUrl] = useState<string | null>(() => initialInvoiceUrl);
+  const [invoicePublicShareId, setInvoicePublicShareId] = useState<string | null>(null);
   const [isAcceptingWithoutSignature, setIsAcceptingWithoutSignature] = useState(false);
   const [acceptWithoutSignatureError, setAcceptWithoutSignatureError] = useState<string | null>(null);
 
@@ -471,6 +473,7 @@ export function QuoteFormProvider({
     // Only accepted quotes can have invoices - skip fetch for draft/sent/declined
     if (!quoteId || status !== "accepted") {
       setInvoiceUrl(null);
+      setInvoicePublicShareId(null);
       return;
     }
 
@@ -480,10 +483,12 @@ export function QuoteFormProvider({
         const invoice = await getInvoiceByQuoteId(quoteId);
         if (!cancelled) {
           setInvoiceUrl(invoice ? `/deals/${dealId}/invoices/${invoice.id}` : null);
+          setInvoicePublicShareId(invoice?.public_share_id ?? null);
         }
       } catch {
         if (!cancelled) {
           setInvoiceUrl(null);
+          setInvoicePublicShareId(null);
         }
       }
     };
@@ -977,6 +982,7 @@ export function QuoteFormProvider({
       const variant = options?.variant ?? "proposal";
       const template = variant === "change_order" ? changeOrderTemplate : proposalTemplate;
       const shareUrl = getBrowserProposalShareUrl(publicShareId, origin);
+      const invoiceShareUrl = invoicePublicShareId ? getBrowserInvoiceShareUrl(invoicePublicShareId) : null;
       const activeQuoteNumber = quoteNumber?.trim() || defaultQuoteNumber;
 
       const renderedDefaults = buildProposalTemplateDefaults(template, {
@@ -986,6 +992,7 @@ export function QuoteFormProvider({
         clientName,
         quoteNumber: activeQuoteNumber,
         proposalUrl: shareUrl,
+        invoiceUrl: invoiceShareUrl,
         changeOrderNumber: options?.changeOrderNumber ?? null,
       });
 
@@ -1001,7 +1008,7 @@ export function QuoteFormProvider({
       setSendSuccessMessage(null);
       setIsSendDialogOpen(true);
     },
-    [changeOrderTemplate, clientEmail, clientName, clientPhone, companyBranding?.phone, companyBranding?.website, companyName, defaultQuoteNumber, origin, proposalTemplate, publicShareId, quoteNumber, totals.total]
+    [changeOrderTemplate, clientEmail, clientName, clientPhone, companyBranding?.phone, companyBranding?.website, companyName, defaultQuoteNumber, invoicePublicShareId, origin, proposalTemplate, publicShareId, quoteNumber, totals.total]
   );
 
   const closeSendDialog = useCallback(() => {

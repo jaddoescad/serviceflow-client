@@ -74,6 +74,7 @@ export default function InvoicePage() {
           companyName={pageData.company.name ?? ""}
           companyEmail={pageData.company.email ?? null}
           companyPhone={pageData.company.phone_number ?? null}
+          companyWebsite={pageData.company.website ?? null}
           dealId={pageData.deal.id}
           invoice={pageData.invoice}
           paymentRequests={pageData.paymentRequests}

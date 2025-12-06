@@ -6,6 +6,7 @@
  */
 
 import { formatCurrency } from "@/lib/currency";
+import { formatButtonMarker } from "@/lib/template-variables";
 import type { MessageContent } from "./types";
 
 export type TemplateVariables = Record<string, string | null>;
@@ -74,6 +75,8 @@ export function buildClientVars(fullName: string): TemplateVariables {
 
 /**
  * Builds template variables for invoice-related messages.
+ * -button uses marker format for styled buttons in emails (plain URL in SMS).
+ * -url always shows plain URL.
  */
 export function buildInvoiceVars(invoice: {
   number: string;
@@ -82,7 +85,8 @@ export function buildInvoiceVars(invoice: {
 }): TemplateVariables {
   return {
     "invoice-number": invoice.number,
-    "invoice-button": invoice.url ?? "",
+    "invoice-button": formatButtonMarker(invoice.url, "View Invoice"),
+    "invoice-url": invoice.url ?? "",
     "payment-amount": invoice.paymentAmount != null
       ? formatCurrency(invoice.paymentAmount)
       : "",
@@ -91,6 +95,8 @@ export function buildInvoiceVars(invoice: {
 
 /**
  * Builds template variables for proposal-related messages.
+ * -button uses marker format for styled buttons in emails (plain URL in SMS).
+ * -url always shows plain URL.
  */
 export function buildProposalVars(proposal: {
   number: string;
@@ -98,12 +104,14 @@ export function buildProposalVars(proposal: {
 }): TemplateVariables {
   return {
     "quote-number": proposal.number,
-    "proposal-button": proposal.url ?? "",
+    "proposal-button": formatButtonMarker(proposal.url, "View Proposal"),
+    "proposal-url": proposal.url ?? "",
   };
 }
 
 /**
  * Builds template variables for change order messages.
+ * Button uses marker format for styled buttons in emails (plain URL in SMS).
  */
 export function buildChangeOrderVars(changeOrder: {
   number: string;
@@ -111,12 +119,13 @@ export function buildChangeOrderVars(changeOrder: {
 }): TemplateVariables {
   return {
     "change-order-number": changeOrder.number,
-    "change-order-button": changeOrder.url ?? "",
+    "change-order-button": formatButtonMarker(changeOrder.url, "View Change Order"),
   };
 }
 
 /**
  * Builds template variables for work order messages.
+ * Button uses marker format for styled buttons in emails (plain URL in SMS).
  */
 export function buildWorkOrderVars(workOrder: {
   address?: string | null;
@@ -124,7 +133,7 @@ export function buildWorkOrderVars(workOrder: {
 }): TemplateVariables {
   return {
     "work-order-address": workOrder.address ?? "",
-    "work-order-button": workOrder.url ?? "",
+    "work-order-button": formatButtonMarker(workOrder.url, "View Work Order"),
   };
 }
 

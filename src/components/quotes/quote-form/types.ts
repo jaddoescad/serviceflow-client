@@ -16,6 +16,7 @@ export type ProposalTemplateContext = {
   clientName: string;
   quoteNumber: string;
   proposalUrl?: string | null;
+  invoiceUrl?: string | null;
   changeOrderNumber?: string | null;
 };
 
