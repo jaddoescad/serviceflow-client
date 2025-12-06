@@ -244,6 +244,7 @@ export function InvoiceDetailProvider({
   companyId,
   companyName,
   companyEmail,
+  companyPhone,
   dealId,
   invoice,
   paymentRequests,
@@ -342,6 +343,7 @@ export function InvoiceDetailProvider({
     (request: InvoicePaymentRequestRecord) =>
       buildPaymentRequestTemplateDefaults(paymentRequestTemplateSnapshot, {
         companyName,
+        companyPhone,
         clientName,
         invoiceNumber: invoiceState.invoice_number,
         invoiceUrl: invoiceShareUrl,
@@ -350,6 +352,7 @@ export function InvoiceDetailProvider({
     [
       clientName,
       companyName,
+      companyPhone,
       invoiceShareUrl,
       invoiceState.invoice_number,
       paymentRequestTemplateSnapshot,
@@ -653,11 +656,18 @@ export function InvoiceDetailProvider({
       setActionError(null);
 
       try {
+        const [firstName, ...restName] = clientName.trim().split(" ");
+        const lastName = restName.join(" ");
+
         const templateVars = {
           company_name: companyName,
           companyName,
+          company_phone: companyPhone ?? "",
+          companyPhone: companyPhone ?? "",
           customer_name: clientName,
           client_name: clientName,
+          first_name: firstName || clientName || "Client",
+          last_name: lastName,
           invoice_number: invoiceState.invoice_number,
           invoice_button: invoiceShareUrl ?? "",
           payment_amount: formatCurrency(activePaymentRequest.amount),
@@ -709,6 +719,7 @@ export function InvoiceDetailProvider({
     [
       activePaymentRequest,
       companyName,
+      companyPhone,
       clientName,
       dealId,
       invoiceShareUrl,
@@ -766,6 +777,8 @@ export function InvoiceDetailProvider({
         const templateVars = {
           company_name: companyName,
           companyName,
+          company_phone: companyPhone ?? "",
+          companyPhone: companyPhone ?? "",
           customer_name: clientName,
           client_name: clientName,
           first_name: firstName || clientName || "Client",
@@ -820,6 +833,7 @@ export function InvoiceDetailProvider({
     [
       clientName,
       companyName,
+      companyPhone,
       dealId,
       invoiceShareUrl,
       invoiceState.id,
@@ -857,6 +871,8 @@ export function InvoiceDetailProvider({
         const templateVars = {
           company_name: companyName,
           companyName,
+          company_phone: companyPhone ?? "",
+          companyPhone: companyPhone ?? "",
           customer_name: clientName,
           client_name: clientName,
           first_name: firstName || clientName || "Client",
@@ -894,6 +910,7 @@ export function InvoiceDetailProvider({
       activeReceiptPayment,
       clientName,
       companyName,
+      companyPhone,
       dealId,
       invoiceShareUrl,
       invoiceState.id,

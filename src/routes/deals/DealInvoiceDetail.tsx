@@ -73,6 +73,7 @@ export default function InvoicePage() {
           companyId={pageData.company.id}
           companyName={pageData.company.name ?? ""}
           companyEmail={pageData.company.email ?? null}
+          companyPhone={pageData.company.phone_number ?? null}
           dealId={pageData.deal.id}
           invoice={pageData.invoice}
           paymentRequests={pageData.paymentRequests}

@@ -8,6 +8,7 @@ import type { InvoiceDeliveryMethod } from "@/types/invoice-delivery";
 
 export type TemplateContext = {
   companyName: string;
+  companyPhone?: string | null;
   clientName: string;
   invoiceNumber: string;
   invoiceUrl?: string | null;
@@ -18,6 +19,7 @@ export type InvoiceDetailProps = {
   companyId: string;
   companyName: string;
   companyEmail: string | null;
+  companyPhone: string | null;
   dealId: string;
   invoice: InvoiceRecord;
   paymentRequests: InvoicePaymentRequestRecord[];

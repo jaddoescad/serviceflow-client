@@ -54,11 +54,31 @@ export function buildInvoiceTemplateDefaults(
 
 export const buildPaymentRequestTemplateDefaults = (
   template: CommunicationTemplateSnapshot,
-  _context: TemplateContext
+  context: TemplateContext
 ) => {
+  const [firstName, ...restName] = (context.clientName || "").trim().split(" ");
+  const lastName = restName.join(" ");
+
+  const templateContext = {
+    companyName: context.companyName,
+    companyPhone: context.companyPhone ?? null,
+    clientName: context.clientName,
+    customerName: context.clientName,
+    firstName: firstName || context.clientName || "Client",
+    lastName,
+    invoiceNumber: context.invoiceNumber,
+    invoiceUrl: context.invoiceUrl ?? null,
+    invoiceButton: context.invoiceUrl ?? null,
+    paymentAmount: context.paymentAmount ?? null,
+  };
+
+  const smsBody = renderCommunicationTemplate(template.smsBody, templateContext);
+  const emailSubject = renderCommunicationTemplate(template.emailSubject, templateContext);
+  const emailBody = renderCommunicationTemplate(template.emailBody, templateContext);
+
   return {
-    smsBody: template.smsBody,
-    emailSubject: template.emailSubject,
-    emailBody: template.emailBody,
+    smsBody,
+    emailSubject,
+    emailBody,
   };
 };
