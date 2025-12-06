@@ -29,7 +29,8 @@ export default function ProposalSharePage() {
   const [pageData, setPageData] = useState<any>(null);
 
   // Check if user is authenticated (employee viewing customer view)
-  const { isAuthenticated } = useSessionContext();
+  // Wait for auth state to be determined before showing anything
+  const { isAuthenticated, isLoading: isAuthLoading } = useSessionContext();
   const isEmployeeView = isAuthenticated;
 
   useEffect(() => {
@@ -53,7 +54,8 @@ export default function ProposalSharePage() {
     loadData();
   }, [shareId, navigate]);
 
-  if (loading) {
+  // Wait for both auth check and data to load before rendering
+  if (loading || isAuthLoading) {
     return <LoadingPage message="Loading proposal..." />;
   }
 

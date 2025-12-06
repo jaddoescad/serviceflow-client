@@ -137,67 +137,54 @@ export function QuoteLineItemsEditor({
                                     </div>
                                 ) : null}
                             </div>
-                            <div className="space-y-3">
-                                {isEditing ? (
-                                    <>
-                                        {!isDiscount && (
-                                            <div>
-                                                <label className="text-xs font-medium text-slate-600">Choose Template</label>
-                                                <select
-                                                    className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                    value=""
-                                                    onChange={(event) => {
-                                                        onApplyTemplate(item.client_id, event.target.value);
-                                                        event.currentTarget.selectedIndex = 0;
-                                                    }}
-                                                >
-                                                    <option value="">Select a product template</option>
-                                                    {productTemplateOptions.map((template) => (
-                                                        <option key={template.id} value={template.id}>
-                                                            {template.name}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        )}
+                            {isEditing ? (
+                                <div className="space-y-3">
+                                    {!isDiscount && (
                                         <div>
-                                            <label className="text-xs font-medium text-slate-600">
-                                                {isDiscount ? "Discount Name" : "Item Name"}
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={item.name}
-                                                onChange={(event) => onLineItemChange(item.client_id, "name", event.target.value)}
-                                                className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                placeholder={isDiscount ? "e.g., Early payment discount" : "Service name"}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-xs font-medium text-slate-600">Description (optional)</label>
-                                            <textarea
-                                                value={item.description}
-                                                onChange={(event) => onLineItemChange(item.client_id, "description", event.target.value)}
-                                                rows={3}
+                                            <label className="text-xs font-medium text-slate-600">Choose Template</label>
+                                            <select
                                                 className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                placeholder="Describe the work that will be completed"
-                                            />
+                                                value=""
+                                                onChange={(event) => {
+                                                    onApplyTemplate(item.client_id, event.target.value);
+                                                    event.currentTarget.selectedIndex = 0;
+                                                }}
+                                            >
+                                                <option value="">Select a product template</option>
+                                                {productTemplateOptions.map((template) => (
+                                                    <option key={template.id} value={template.id}>
+                                                        {template.name}
+                                                    </option>
+                                                ))}
+                                            </select>
                                         </div>
-                                    </>
-                                ) : (
-                                    <>
-                                        <h3 className={`text-base font-semibold ${isDiscount ? "text-rose-700" : "text-slate-900"}`}>
-                                            {item.name || "Untitled Service"}
-                                        </h3>
-                                        {item.description && (
-                                            <p className="text-sm text-slate-600 whitespace-pre-line">{item.description}</p>
-                                        )}
-                                    </>
-                                )}
-                                <div className="space-y-1">
-                                    <label className="text-xs font-medium text-slate-600">
-                                        {isDiscount ? "Discount Amount" : "Price"}
-                                    </label>
-                                    {isEditing ? (
+                                    )}
+                                    <div>
+                                        <label className="text-xs font-medium text-slate-600">
+                                            {isDiscount ? "Discount Name" : "Item Name"}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={item.name}
+                                            onChange={(event) => onLineItemChange(item.client_id, "name", event.target.value)}
+                                            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder={isDiscount ? "e.g., Early payment discount" : "Service name"}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-slate-600">Description (optional)</label>
+                                        <textarea
+                                            value={item.description}
+                                            onChange={(event) => onLineItemChange(item.client_id, "description", event.target.value)}
+                                            rows={3}
+                                            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Describe the work that will be completed"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-medium text-slate-600">
+                                            {isDiscount ? "Discount Amount" : "Price"}
+                                        </label>
                                         <div className="flex items-center gap-2">
                                             <span className={`text-sm font-semibold ${isDiscount ? "text-rose-500" : "text-slate-500"}`}>
                                                 {isDiscount ? "-$" : "$"}
@@ -219,13 +206,7 @@ export function QuoteLineItemsEditor({
                                                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             />
                                         </div>
-                                    ) : (
-                                        <p className={`text-sm font-semibold ${isDiscount ? "text-rose-600" : "text-slate-900"}`}>
-                                            {formatCurrency(parseUnitPrice(item.unitPrice))}
-                                        </p>
-                                    )}
-                                </div>
-                                {isEditing && (
+                                    </div>
                                     <div className="flex gap-2 pt-2">
                                         <button
                                             type="button"
@@ -245,8 +226,27 @@ export function QuoteLineItemsEditor({
                                             Cancel
                                         </button>
                                     </div>
-                                )}
-                            </div>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                                    <div className="min-w-0 flex-1 space-y-2">
+                                        <h3 className={`text-base font-semibold ${isDiscount ? "text-rose-700" : "text-slate-900"}`}>
+                                            {item.name || "Untitled Service"}
+                                        </h3>
+                                        {item.description && (
+                                            <p className="text-sm text-slate-600 whitespace-pre-line">{item.description}</p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-1 sm:shrink-0 sm:text-right">
+                                        <label className="text-xs font-medium text-slate-600">
+                                            {isDiscount ? "Discount Amount" : "Price"}
+                                        </label>
+                                        <p className={`text-sm font-semibold ${isDiscount ? "text-rose-600" : "text-slate-900"}`}>
+                                            {formatCurrency(parseUnitPrice(item.unitPrice))}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     );
                 })}

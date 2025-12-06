@@ -1,7 +1,7 @@
 import { formatCurrency } from "@/lib/currency";
 import type { ChangeOrderCardProps } from "../types";
 import { computeTotals, formatAcceptedDate } from "../utils";
-import { ReadOnlyLineItemRow } from "@/components/shared/line-item-card";
+import { EditableLineItemCard } from "@/components/shared/line-item-card";
 
 export function ChangeOrderCard({
   order,
@@ -40,15 +40,16 @@ export function ChangeOrderCard({
         </div>
       </div>
 
-      <div className="mt-4 divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-200 bg-white px-3">
-        {order.items.map((item) => {
+      <div className="mt-4 space-y-3">
+        {order.items.map((item, index) => {
           const unit = Number.isFinite(item.unit_price) ? Number(item.unit_price) : 0;
           return (
-            <ReadOnlyLineItemRow
+            <EditableLineItemCard
               key={item.id}
               name={item.name}
               description={item.description}
               price={unit}
+              index={index}
             />
           );
         })}

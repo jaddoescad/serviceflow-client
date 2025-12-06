@@ -21,6 +21,16 @@ export type ReadOnlyLineItemRowProps = {
   price: number;
 };
 
+export type EditableLineItemCardProps = {
+  name: string;
+  description?: string | null;
+  price: number;
+  index?: number;
+  label?: string;
+  onEdit?: () => void;
+  onDelete?: () => void;
+};
+
 // ============================================================================
 // Read-Only Line Item Row Component (for proposals, change orders, etc.)
 // ============================================================================
@@ -45,6 +55,76 @@ export function ReadOnlyLineItemRow({ name, description, price }: ReadOnlyLineIt
         <p className={`text-sm font-semibold ${isDiscount ? "text-rose-600" : "text-slate-900"}`}>
           {formatCurrency(price)}
         </p>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Editable Line Item Card Component (for change orders with edit/delete)
+// ============================================================================
+
+export function EditableLineItemCard({
+  name,
+  description,
+  price,
+  index,
+  label,
+  onEdit,
+  onDelete
+}: EditableLineItemCardProps) {
+  const isDiscount = price < 0;
+  const showActions = onEdit || onDelete;
+  const headerLabel = label ?? (isDiscount ? "Discount" : (index !== undefined ? `Line Item #${index + 1}` : "Line Item"));
+
+  return (
+    <div className={`rounded-lg border p-4 ${isDiscount ? "border-rose-200 bg-rose-50" : "border-slate-200 bg-slate-50"}`}>
+      <div className="flex items-start justify-between mb-3">
+        <span className={`text-xs font-semibold uppercase tracking-wide ${isDiscount ? "text-rose-500" : "text-slate-500"}`}>
+          {headerLabel}
+        </span>
+        {showActions && (
+          <div className="flex gap-2">
+            {onEdit && (
+              <button
+                type="button"
+                onClick={onEdit}
+                className="cursor-pointer rounded p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+                title="Edit item"
+              >
+                <IconPencil />
+              </button>
+            )}
+            {onDelete && (
+              <button
+                type="button"
+                onClick={onDelete}
+                className="cursor-pointer rounded p-1 text-rose-400 hover:bg-rose-100 hover:text-rose-600"
+                title="Delete item"
+              >
+                <IconTrash />
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="min-w-0 flex-1 space-y-2">
+          <h3 className={`text-base font-semibold ${isDiscount ? "text-rose-700" : "text-slate-900"}`}>
+            {name || "Untitled Item"}
+          </h3>
+          {description && (
+            <p className="text-sm text-slate-600 whitespace-pre-line">{description}</p>
+          )}
+        </div>
+        <div className="space-y-1 sm:shrink-0 sm:text-right">
+          <label className="text-xs font-medium text-slate-600">
+            {isDiscount ? "Discount Amount" : "Price"}
+          </label>
+          <p className={`text-sm font-semibold ${isDiscount ? "text-rose-600" : "text-slate-900"}`}>
+            {formatCurrency(price)}
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -296,14 +376,16 @@ function DisplayCard({ item, index, readOnly = false, onEdit, onDelete }: Displa
           </div>
         )}
       </div>
-      <div className="space-y-3">
-        <h3 className={`text-base font-semibold ${isDiscount ? "text-rose-700" : "text-slate-900"}`}>
-          {item.name || "Untitled Item"}
-        </h3>
-        {item.description && (
-          <p className="text-sm text-slate-600 whitespace-pre-line">{item.description}</p>
-        )}
-        <div className="space-y-1">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="min-w-0 flex-1 space-y-2">
+          <h3 className={`text-base font-semibold ${isDiscount ? "text-rose-700" : "text-slate-900"}`}>
+            {item.name || "Untitled Item"}
+          </h3>
+          {item.description && (
+            <p className="text-sm text-slate-600 whitespace-pre-line">{item.description}</p>
+          )}
+        </div>
+        <div className="space-y-1 sm:shrink-0 sm:text-right">
           <label className="text-xs font-medium text-slate-600">
             {isDiscount ? "Discount Amount" : "Price"}
           </label>
