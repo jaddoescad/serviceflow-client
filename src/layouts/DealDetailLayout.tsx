@@ -23,6 +23,8 @@ type DealDetailHeaderContextValue = {
   setHeaderAction: (action: HeaderAction | null) => void;
   backAction: BackAction | null;
   setBackAction: (action: BackAction | null) => void;
+  constrainedWidth: boolean;
+  setConstrainedWidth: (constrained: boolean) => void;
 };
 
 const DealDetailHeaderContext = createContext<DealDetailHeaderContextValue | null>(null);
@@ -35,10 +37,10 @@ export function useDealDetailHeaderAction() {
   return context;
 }
 
-function DealDetailHeader({ action, backAction }: { action: HeaderAction | null; backAction: BackAction | null }) {
+function DealDetailHeader({ action, backAction, constrainedWidth }: { action: HeaderAction | null; backAction: BackAction | null; constrainedWidth: boolean }) {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white" role="banner">
-      <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between gap-3 px-4">
+      <div className={`flex h-14 w-full items-center justify-between gap-3 px-4 ${constrainedWidth ? "mx-auto max-w-5xl" : ""}`}>
         {backAction ? (
           <button
             type="button"
@@ -79,6 +81,7 @@ export default function DealDetailLayout() {
   const { company } = useCompanyContext();
   const [headerAction, setHeaderAction] = useState<HeaderAction | null>(null);
   const [backAction, setBackAction] = useState<BackAction | null>(null);
+  const [constrainedWidth, setConstrainedWidth] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -95,9 +98,9 @@ export default function DealDetailLayout() {
   }
 
   return (
-    <DealDetailHeaderContext.Provider value={{ headerAction, setHeaderAction, backAction, setBackAction }}>
+    <DealDetailHeaderContext.Provider value={{ headerAction, setHeaderAction, backAction, setBackAction, constrainedWidth, setConstrainedWidth }}>
       <div className="flex min-h-screen flex-col bg-slate-50">
-        <DealDetailHeader action={headerAction} backAction={backAction} />
+        <DealDetailHeader action={headerAction} backAction={backAction} constrainedWidth={constrainedWidth} />
         <main className="flex flex-1 flex-col">
           <Outlet />
         </main>

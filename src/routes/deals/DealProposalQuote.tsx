@@ -12,6 +12,7 @@ import type {
   CommunicationTemplateSnapshot,
 } from "@/types/communication-templates";
 import { toCommunicationTemplateSnapshot } from "@/lib/communication-templates";
+import { useDealDetailHeaderAction } from "@/layouts/DealDetailLayout";
 
 function mapTemplate(
   record: CommunicationTemplateRecord | null,
@@ -27,6 +28,7 @@ export default function QuoteBuilderPage() {
   const [searchParams] = useSearchParams();
   const { isLoading: authLoading } = useSessionContext();
   const { company } = useCompanyContext();
+  const { setConstrainedWidth } = useDealDetailHeaderAction();
 
   const dealId = params.dealId as string;
   const quoteId = searchParams.get("quoteId") ?? null;
@@ -102,6 +104,11 @@ export default function QuoteBuilderPage() {
       initialInvoiceUrl,
     };
   }, [payload, company]);
+
+  useEffect(() => {
+    setConstrainedWidth(true);
+    return () => setConstrainedWidth(false);
+  }, [setConstrainedWidth]);
 
   useEffect(() => {
     if (authLoading) return;
