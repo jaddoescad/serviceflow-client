@@ -1,5 +1,7 @@
 export type ChangeOrderStatus = "pending" | "accepted";
 
+export type SignatureType = "type" | "draw";
+
 export type ChangeOrderItemRecord = {
   id: string;
   change_order_id: string;
@@ -22,6 +24,7 @@ export type ChangeOrderRecord = {
   signer_name: string | null;
   signer_email: string | null;
   signature_text: string | null;
+  signature_type: SignatureType | null;
   created_at: string;
   updated_at: string;
   items: ChangeOrderItemRecord[];

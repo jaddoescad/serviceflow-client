@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { acceptChangeOrder } from "@/services/change-orders";
 import { formatCurrency } from "@/lib/currency";
-import { useEffect } from "react";
+import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/library";
+import { SignaturePad, type SignatureData } from "@/components/ui/signature-pad";
 
 type ChangeOrderItem = {
   id: string;
@@ -20,6 +21,7 @@ type ChangeOrder = {
   items: ChangeOrderItem[];
   signer_name?: string | null;
   signature_text?: string | null;
+  signature_type?: "type" | "draw" | null;
 };
 
 type ChangeOrderApprovalsProps = {
@@ -34,18 +36,29 @@ export function ChangeOrderApprovals({ changeOrders, invoiceId, customerName, cu
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [signatureModalId, setSignatureModalId] = useState<string | null>(null);
-  const [signature, setSignature] = useState<string>("");
+  const [signatureData, setSignatureData] = useState<SignatureData>({ mode: "type", value: "" });
   const [signatureError, setSignatureError] = useState<string | null>(null);
   const [changeOrdersState, setChangeOrdersState] = useState<ChangeOrder[]>(changeOrders ?? []);
 
   useEffect(() => {
     setChangeOrdersState(changeOrders ?? []);
-    setSignature("");
+    setSignatureData({ mode: "type", value: "" });
     setSignatureError(null);
   }, [changeOrders]);
 
   const pending = (changeOrdersState ?? []).filter((order) => order.status === "pending");
   const accepted = (changeOrdersState ?? []).filter((order) => order.status === "accepted");
+
+  const closeModal = useCallback(() => {
+    setSignatureModalId(null);
+    setSignatureData({ mode: "type", value: "" });
+    setSignatureError(null);
+  }, []);
+
+  const resetSignature = useCallback(() => {
+    setSignatureData((prev) => ({ ...prev, value: "" }));
+    setSignatureError(null);
+  }, []);
 
   const handleApprove = useCallback(
     async (id: string) => {
@@ -54,20 +67,29 @@ export function ChangeOrderApprovals({ changeOrders, invoiceId, customerName, cu
         return;
       }
 
-      const trimmedSignature = signature.trim();
-      if (!trimmedSignature) {
-        setSignatureError("Enter your name to sign and approve this change order.");
+      if (!signatureData.value.trim()) {
+        setSignatureError(
+          signatureData.mode === "type"
+            ? "Enter your name to sign and approve this change order."
+            : "Please draw your signature to approve this change order."
+        );
         return;
       }
 
       try {
         setAcceptingId(id);
         setError(null);
+        setSignatureError(null);
+
+        // For typed signatures, use the value as signer_name. For drawn, we still need a name.
+        const signerName = signatureData.mode === "type" ? signatureData.value.trim() : (customerName ?? "Customer");
+
         const saved = await acceptChangeOrder(id, {
           invoice_id: invoiceId,
-          signer_name: trimmedSignature,
-          signer_email: customerEmail ?? null,
-          signature_text: trimmedSignature,
+          signer_name: signerName,
+          signer_email: customerEmail ?? undefined,
+          signature_text: signatureData.value.trim(),
+          signature_type: signatureData.mode,
         });
         setChangeOrdersState((current) => {
           const existingIds = new Set(current.map((o) => o.id));
@@ -76,21 +98,22 @@ export function ChangeOrderApprovals({ changeOrders, invoiceId, customerName, cu
           }
           return current.map((order) => (order.id === saved.id ? saved : order));
         });
-        setSignature("");
-        setSignatureModalId(null);
-        setSignatureError(null);
+        closeModal();
       } catch (err) {
         setError(err instanceof Error ? err.message : "We couldn't approve this change order.");
       } finally {
         setAcceptingId(null);
       }
     },
-    [customerEmail, invoiceId, signature]
+    [customerEmail, customerName, invoiceId, signatureData, closeModal]
   );
 
   if ((!pending || pending.length === 0) && (!accepted || accepted.length === 0)) {
     return null;
   }
+
+  const isDrawnSignature = (order: ChangeOrder) =>
+    order.signature_type === "draw" && order.signature_text?.startsWith("data:image");
 
   return (
     <section className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
@@ -119,7 +142,7 @@ export function ChangeOrderApprovals({ changeOrders, invoiceId, customerName, cu
                       type="button"
                       onClick={() => {
                         setSignatureModalId(order.id);
-                        setSignature("");
+                        setSignatureData({ mode: "type", value: "" });
                         setSignatureError(null);
                       }}
                       disabled={acceptingId === order.id || !invoiceId}
@@ -216,87 +239,91 @@ export function ChangeOrderApprovals({ changeOrders, invoiceId, customerName, cu
                 </table>
               </div>
               {order.signature_text ? (
-                <p className="mt-2 text-[12px] font-medium text-slate-700">
-                  Signed by {order.signer_name ?? "Customer"}: “{order.signature_text}”
-                </p>
+                <div className="mt-2">
+                  {isDrawnSignature(order) ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[12px] font-medium text-slate-700">Signature:</span>
+                      <img
+                        src={order.signature_text}
+                        alt="Customer signature"
+                        className="h-10 w-auto max-w-[200px] object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <p className="text-[12px] font-medium text-slate-700">
+                      Signed by {order.signer_name ?? "Customer"}: "{order.signature_text}"
+                    </p>
+                  )}
+                </div>
               ) : null}
             </div>
           ))}
         </div>
       ) : null}
 
-      {signatureModalId ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 px-3 py-6">
-          <div className="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl">
-            <button
-              type="button"
-              onClick={() => {
-                setSignatureModalId(null);
-                setSignature("");
-                setSignatureError(null);
-              }}
-              aria-label="Close approve dialog"
-              className="absolute right-4 top-4 cursor-pointer rounded-full border border-slate-200 bg-white p-2 text-slate-500 transition hover:text-slate-700"
-            >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            <div className="flex flex-col gap-4 px-6 pb-6 pt-6">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Approve Change Order</p>
-                <h3 className="mt-1 text-lg font-semibold text-slate-900">
-                  #{(pending.concat(accepted).find((o) => o.id === signatureModalId)?.change_order_number) ?? ""}
-                </h3>
-                <p className="mt-2 text-sm text-slate-600">
-                  Please type your name to sign and approve this change order.
-                </p>
-              </div>
-              <div>
-                <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">
-                  Signature
-                </label>
-                <input
-                  type="text"
-                  value={signature}
-                  onChange={(event) => {
-                    setSignature(event.target.value);
-                    setSignatureError(null);
-                  }}
-                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-                  placeholder={customerName ? `${customerName} (type full name)` : "Type your full name"}
-                  disabled={acceptingId === signatureModalId}
-                />
-                {signatureError ? (
-                  <p className="mt-2 text-sm font-medium text-rose-600">{signatureError}</p>
-                ) : null}
-              </div>
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSignatureModalId(null);
-                    setSignature("");
-                    setSignatureError(null);
-                  }}
-                  className="inline-flex items-center justify-center rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-                  disabled={acceptingId === signatureModalId}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void handleApprove(signatureModalId)}
-                  disabled={acceptingId === signatureModalId}
-                  className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {acceptingId === signatureModalId ? "Approving..." : "Approve & Sign"}
-                </button>
-              </div>
-            </div>
+      <Modal
+        open={signatureModalId !== null}
+        onClose={closeModal}
+        ariaLabel="Approve Change Order"
+        size="lg"
+        align="top"
+      >
+        <ModalHeader title="Approve Change Order" onClose={closeModal}>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            #{pending.concat(accepted).find((o) => o.id === signatureModalId)?.change_order_number ?? ""}
+          </p>
+        </ModalHeader>
+
+        <ModalBody className="space-y-4 text-[13px]">
+          <p className="text-sm text-slate-600">
+            Please sign below to approve this change order.
+          </p>
+          <div className="space-y-2">
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              Approval Signature
+            </label>
+            <SignaturePad
+              value={signatureData}
+              onChange={setSignatureData}
+              disabled={acceptingId === signatureModalId}
+              placeholder={customerName ? `${customerName} (type full name)` : "Type your full name"}
+            />
+            <p className="text-[11px] text-slate-500">
+              By signing and confirming, you acknowledge this digital signature holds the same legal weight as a handwritten signature.
+            </p>
+            {signatureError ? (
+              <p className="text-[12px] font-semibold text-rose-600">{signatureError}</p>
+            ) : null}
           </div>
-        </div>
-      ) : null}
+        </ModalBody>
+
+        <ModalFooter className="flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={resetSignature}
+            disabled={acceptingId === signatureModalId}
+            className="rounded-md border border-slate-300 px-4 py-2 text-[12px] font-semibold text-slate-600 transition hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Reset
+          </button>
+          <button
+            type="button"
+            onClick={closeModal}
+            disabled={acceptingId === signatureModalId}
+            className="rounded-md border border-slate-200 px-4 py-2 text-[12px] font-semibold text-slate-500 transition hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => signatureModalId && void handleApprove(signatureModalId)}
+            disabled={acceptingId === signatureModalId || signatureData.value.trim() === ""}
+            className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {acceptingId === signatureModalId ? "Submitting..." : "Confirm Signature"}
+          </button>
+        </ModalFooter>
+      </Modal>
     </section>
   );
 }

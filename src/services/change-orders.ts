@@ -32,7 +32,13 @@ export const createChangeOrder = async (payload: CreateChangeOrderPayload) => {
 
 export const acceptChangeOrder = async (
   changeOrderId: string,
-  payload: { invoice_id?: string | null; signer_name?: string; signer_email?: string; signature_text?: string }
+  payload: {
+    invoice_id?: string | null;
+    signer_name?: string;
+    signer_email?: string;
+    signature_text?: string;
+    signature_type?: "type" | "draw";
+  }
 ) => {
   return apiClient<ChangeOrderRecord>(`/change-orders/${changeOrderId}/accept`, {
     method: "PATCH",
