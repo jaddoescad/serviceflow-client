@@ -153,32 +153,18 @@ export function ChangeOrderApprovals({ changeOrders, invoiceId, customerName, cu
                   )}
                 </div>
               </div>
-              <div className="mt-3 overflow-hidden rounded-lg border border-slate-200">
-                <table className="min-w-full divide-y divide-slate-200">
-                  <thead className="bg-slate-50">
-                    <tr className="text-left text-[12px] font-semibold text-slate-600">
-                      <th className="px-3 py-2">Item</th>
-                      <th className="px-3 py-2 text-right">Qty</th>
-                      <th className="px-3 py-2 text-right">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 bg-white">
-                    {order.items.map((item) => (
-                      <tr key={item.id} className="text-[13px] text-slate-800">
-                        <td className="px-3 py-2">
-                          <div className="font-semibold text-slate-900">{item.name}</div>
-                          {item.description ? (
-                            <p className="mt-1 whitespace-pre-line text-[12px] text-slate-600">{item.description}</p>
-                          ) : null}
-                        </td>
-                        <td className="px-3 py-2 text-right">{item.quantity}</td>
-                        <td className="px-3 py-2 text-right font-semibold">
-                          {formatCurrency(item.quantity * item.unit_price)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="mt-3 divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-200 bg-white">
+                {order.items.map((item) => (
+                  <div key={item.id} className="px-3 py-2">
+                    <div className="font-semibold text-[13px] text-slate-900">{item.name}</div>
+                    {item.description ? (
+                      <p className="mt-1 whitespace-pre-line text-[12px] text-slate-600">{item.description}</p>
+                    ) : null}
+                    <div className="mt-1 text-[13px] font-semibold text-slate-800">
+                      {formatCurrency(item.quantity * item.unit_price)}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           ))}
@@ -211,32 +197,18 @@ export function ChangeOrderApprovals({ changeOrders, invoiceId, customerName, cu
                   <span className="text-[11px] font-semibold uppercase tracking-wide text-emerald-800">Accepted</span>
                 </div>
               </div>
-              <div className="overflow-hidden rounded-md border border-slate-200 bg-white">
-                <table className="min-w-full divide-y divide-slate-200">
-                  <thead className="bg-slate-50">
-                    <tr className="text-left text-[12px] font-semibold text-slate-600">
-                      <th className="px-3 py-2">Item</th>
-                      <th className="px-3 py-2 text-right">Qty</th>
-                      <th className="px-3 py-2 text-right">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 bg-white">
-                    {order.items.map((item) => (
-                      <tr key={item.id} className="text-[13px] text-slate-800">
-                        <td className="px-3 py-2">
-                          <div className="font-semibold text-slate-900">{item.name}</div>
-                          {item.description ? (
-                            <p className="mt-1 whitespace-pre-line text-[12px] text-slate-600">{item.description}</p>
-                          ) : null}
-                        </td>
-                        <td className="px-3 py-2 text-right">{item.quantity}</td>
-                        <td className="px-3 py-2 text-right font-semibold">
-                          {formatCurrency(item.quantity * item.unit_price)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="divide-y divide-slate-100 overflow-hidden rounded-md border border-slate-200 bg-white">
+                {order.items.map((item) => (
+                  <div key={item.id} className="px-3 py-2">
+                    <div className="font-semibold text-[13px] text-slate-900">{item.name}</div>
+                    {item.description ? (
+                      <p className="mt-1 whitespace-pre-line text-[12px] text-slate-600">{item.description}</p>
+                    ) : null}
+                    <div className="mt-1 text-[13px] font-semibold text-slate-800">
+                      {formatCurrency(item.quantity * item.unit_price)}
+                    </div>
+                  </div>
+                ))}
               </div>
               {order.signature_text ? (
                 <div className="mt-2">

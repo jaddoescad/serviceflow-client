@@ -180,43 +180,27 @@ export default function CustomerProposalView() {
           </header>
 
           <section className="mt-6">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
-                <th className="pb-2 pr-4">Item</th>
-                <th className="pb-2 pr-4 text-right">Qty</th>
-                <th className="pb-2 text-right">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {quote.line_items.length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="py-6 text-center text-sm text-slate-500">
-                    No line items added yet.
-                  </td>
-                </tr>
-              ) : (
-                quote.line_items.map((item: any) => (
-                  <tr key={item.id} className="border-b border-slate-100">
-                    <td className="py-3 pr-4">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-sm font-semibold text-slate-800">{item.name}</span>
-                      {item.description ? (
-                        <span className="text-sm text-slate-600 whitespace-pre-line">
-                          {item.description}
-                        </span>
-                      ) : null}
-                      </div>
-                    </td>
-                    <td className="py-3 pr-4 text-sm text-right text-slate-600">{item.quantity}</td>
-                    <td className="py-3 text-sm text-right font-medium text-slate-900">
-                      {formatCurrency(item.quantity * item.unit_price)}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          <div className="divide-y divide-slate-100">
+            {quote.line_items.length === 0 ? (
+              <p className="py-6 text-center text-sm text-slate-500">
+                No line items added yet.
+              </p>
+            ) : (
+              quote.line_items.map((item: any) => (
+                <div key={item.id} className="py-3">
+                  <div className="text-sm font-semibold text-slate-800">{item.name}</div>
+                  {item.description ? (
+                    <p className="mt-1 text-sm text-slate-600 whitespace-pre-line">
+                      {item.description}
+                    </p>
+                  ) : null}
+                  <div className="mt-1 text-sm font-medium text-slate-900">
+                    {formatCurrency(item.quantity * item.unit_price)}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
 
           <div className="mt-6 flex justify-end">
             <div className="w-full max-w-xs space-y-1 text-right text-sm">
