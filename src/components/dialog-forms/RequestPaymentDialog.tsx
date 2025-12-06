@@ -11,7 +11,7 @@ import {
   Input,
   Textarea,
 } from "@/components/ui/library";
-import type { RequestPaymentDialogProps } from "./types";
+import type { RequestPaymentDialogProps } from "@/components/invoices/invoice-detail/types";
 
 export function RequestPaymentDialog({
   open,

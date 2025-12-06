@@ -9,13 +9,14 @@ import type { ProposalAttachmentAsset } from "@/types/proposal-attachments";
 import type { QuoteCompanyBranding } from "@/types/company-branding";
 import type { WorkOrderDeliveryMethod } from "@/types/work-order-delivery";
 
-export type TemplateContext = {
+export type ProposalTemplateContext = {
   companyName: string;
+  companyPhone?: string | null;
+  companyWebsite?: string | null;
   clientName: string;
   quoteNumber: string;
   proposalUrl?: string | null;
-  workOrderUrl?: string | null;
-  workOrderAddress?: string | null;
+  changeOrderNumber?: string | null;
 };
 
 export type WorkOrderTemplateContext = {

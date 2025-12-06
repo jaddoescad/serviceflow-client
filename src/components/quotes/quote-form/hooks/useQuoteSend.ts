@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import type {
   QuoteRecord,
   QuoteDeliveryMethod,
@@ -48,17 +48,15 @@ export function useQuoteSend({
   origin,
   handleSaveQuote,
 }: UseQuoteSendProps) {
-  const initialTemplateDefaults = useMemo(() => buildProposalTemplateDefaults(proposalTemplate), [proposalTemplate]);
-
   const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
   const [sendContext, setSendContext] = useState<"proposal" | "change_order">("proposal");
   const [sendMethod, setSendMethod] = useState<QuoteDeliveryMethod>("both");
   const [emailRecipient, setEmailRecipient] = useState("");
   const [emailCc, setEmailCc] = useState("");
-  const [emailSubject, setEmailSubject] = useState(() => initialTemplateDefaults.emailSubject);
-  const [emailBody, setEmailBody] = useState(() => initialTemplateDefaults.emailBody);
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
   const [textRecipient, setTextRecipient] = useState(() => clientPhone?.trim() || "");
-  const [textBody, setTextBody] = useState(() => initialTemplateDefaults.smsBody);
+  const [textBody, setTextBody] = useState("");
   const [activeChangeOrderNumber, setActiveChangeOrderNumber] = useState<string | null>(null);
   const [isSendingProposal, setIsSendingProposal] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
@@ -68,19 +66,32 @@ export function useQuoteSend({
     (options?: { variant?: "proposal" | "change_order"; changeOrderNumber?: string | null }) => {
       const variant = options?.variant ?? "proposal";
       const template = variant === "change_order" ? changeOrderTemplate : proposalTemplate;
+      const shareUrl = getBrowserProposalShareUrl(publicShareId, origin);
+      const activeQuoteNumber = quoteNumber?.trim() || defaultQuoteNumber;
+
+      const renderedDefaults = buildProposalTemplateDefaults(template, {
+        companyName,
+        companyPhone: companyBranding?.phone,
+        companyWebsite: companyBranding?.website,
+        clientName,
+        quoteNumber: activeQuoteNumber,
+        proposalUrl: shareUrl,
+        changeOrderNumber: options?.changeOrderNumber ?? null,
+      });
+
       setSendContext(variant);
       setActiveChangeOrderNumber(options?.changeOrderNumber ?? null);
       setEmailRecipient(clientEmail);
       setEmailCc("");
-      setEmailSubject(template.emailSubject || "");
-      setEmailBody(template.emailBody || "");
+      setEmailSubject(renderedDefaults.emailSubject || "");
+      setEmailBody(renderedDefaults.emailBody || "");
       setTextRecipient(clientPhone?.trim() || "");
-      setTextBody(template.smsBody || "");
+      setTextBody(renderedDefaults.smsBody || "");
       setSendError(null);
       setSendSuccessMessage(null);
       setIsSendDialogOpen(true);
     },
-    [changeOrderTemplate, clientEmail, clientPhone, proposalTemplate]
+    [changeOrderTemplate, clientEmail, clientName, clientPhone, companyBranding?.phone, companyBranding?.website, companyName, defaultQuoteNumber, origin, proposalTemplate, publicShareId, quoteNumber]
   );
 
   const handleCloseSendDialog = useCallback(() => {

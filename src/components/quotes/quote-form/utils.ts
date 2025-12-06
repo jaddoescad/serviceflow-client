@@ -1,7 +1,8 @@
 import type { EditableQuoteLineItem, QuoteRecord } from "@/features/quotes";
 import type { CommunicationTemplateSnapshot } from "@/features/communications";
+import { renderCommunicationTemplate } from "@/features/communications";
 import { createClientId } from "@/lib/form-utils";
-import type { WorkOrderTemplateContext } from "./types";
+import type { ProposalTemplateContext, WorkOrderTemplateContext } from "./types";
 
 export const mapRecordToEditable = (
   record: QuoteRecord["line_items"][number],
@@ -28,22 +29,56 @@ export const createEmptyLineItem = (isDiscount = false): EditableQuoteLineItem =
 export const formatDateTime = (value: Date) =>
   value.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 
-export const buildProposalTemplateDefaults = (template: CommunicationTemplateSnapshot) => {
+export const buildProposalTemplateDefaults = (
+  template: CommunicationTemplateSnapshot,
+  context: ProposalTemplateContext
+) => {
+  const [firstName, ...restName] = (context.clientName || "").trim().split(" ");
+  const lastName = restName.join(" ");
+
+  const templateVars = {
+    "company-name": context.companyName,
+    "company-phone": context.companyPhone ?? "",
+    "company-website": context.companyWebsite ?? "",
+    "customer-name": context.clientName,
+    "client-name": context.clientName,
+    "first-name": firstName || context.clientName || "Client",
+    "last-name": lastName,
+    "quote-number": context.quoteNumber,
+    "proposal-button": context.proposalUrl ?? "",
+    "change-order-number": context.changeOrderNumber ?? "",
+    "change-order-button": context.proposalUrl ?? "",
+  };
+
   return {
-    emailSubject: template.emailSubject,
-    emailBody: template.emailBody,
-    smsBody: template.smsBody,
+    emailSubject: renderCommunicationTemplate(template.emailSubject, templateVars),
+    emailBody: renderCommunicationTemplate(template.emailBody, templateVars),
+    smsBody: renderCommunicationTemplate(template.smsBody, templateVars),
   };
 };
 
 export const buildWorkOrderTemplateDefaults = (
   template: CommunicationTemplateSnapshot,
-  _context: WorkOrderTemplateContext
+  context: WorkOrderTemplateContext
 ) => {
+  const [firstName, ...restName] = (context.clientName || "").trim().split(" ");
+  const lastName = restName.join(" ");
+
+  const templateVars = {
+    "company-name": context.companyName,
+    "customer-name": context.clientName,
+    "client-name": context.clientName,
+    "first-name": firstName || context.clientName || "Client",
+    "last-name": lastName,
+    "quote-number": context.quoteNumber,
+    "work-order-button": context.workOrderUrl,
+    "work-order-address": context.workOrderAddress,
+  };
+
   return {
-    emailSubject: template.emailSubject,
-    emailBody: template.emailBody,
-    smsBody: template.smsBody,
+    emailSubject: renderCommunicationTemplate(template.emailSubject, templateVars),
+    emailBody: renderCommunicationTemplate(template.emailBody, templateVars),
+    smsBody: renderCommunicationTemplate(template.smsBody, templateVars),
   };
 };
 

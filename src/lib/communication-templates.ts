@@ -1,55 +1,24 @@
-import { COMMUNICATION_TEMPLATE_DEFINITIONS } from "@/constants/communication-templates";
+import { COMMUNICATION_TEMPLATE_DEFINITIONS } from "@/features/communications/constants";
 import type {
   CommunicationTemplateKey,
   CommunicationTemplateRecord,
   CommunicationTemplateSnapshot,
 } from "@/types/communication-templates";
 
-const toAliasKeys = (key: string) => {
-  const dashed = key
-    .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
-    .replace(/[_\s]+/g, "-")
-    .toLowerCase();
-  const snake = dashed.replace(/-/g, "_");
-
-  const aliases = new Set([key, dashed, snake]);
-
-  // Allow both *_url and *_button style placeholders to resolve from the same value
-  Array.from(aliases).forEach((alias) => {
-    if (/-?url$/.test(alias)) {
-      const base = alias.replace(/[-_]?url$/, "");
-      aliases.add(`${base}-button`);
-      aliases.add(`${base}_button`);
-    }
-  });
-
-  return Array.from(aliases);
-};
-
+/**
+ * Renders a communication template by replacing placeholders with values.
+ *
+ * All placeholders use kebab-case: {company-name}, {first-name}, {invoice-button}
+ * Variable keys must match exactly (kebab-case).
+ */
 export const renderCommunicationTemplate = (
   templateString: string,
   variables: Record<string, string | null>
 ): string => {
   let result = templateString;
 
-  const expanded = new Map<string, string | null>();
   Object.entries(variables).forEach(([key, value]) => {
-    toAliasKeys(key).forEach((alias) => {
-      if (!expanded.has(alias)) {
-        expanded.set(alias, value ?? "");
-      }
-    });
-  });
-
-  // Common synonyms
-  if (expanded.has("clientName") && !expanded.has("customer-name")) {
-    const value = expanded.get("clientName") ?? "";
-    ["customer-name", "customer_name", "customerName"].forEach((alias) => expanded.set(alias, value));
-  }
-
-  expanded.forEach((value, key) => {
-    const regex = new RegExp(`{{?${key}}}?`, "g");
-    result = result.replace(regex, value ?? "");
+    result = result.replace(new RegExp(`\\{${key}\\}`, "g"), value ?? "");
   });
 
   return result;

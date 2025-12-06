@@ -12,7 +12,7 @@ import {
   Textarea,
   Checkbox,
 } from "@/components/ui/library";
-import type { ReceivePaymentDialogProps } from "./types";
+import type { ReceivePaymentDialogProps } from "@/components/invoices/invoice-detail/types";
 
 export function ReceivePaymentDialog({
   open,

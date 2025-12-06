@@ -27,10 +27,10 @@ import type { ProductTemplateRecord } from "@/features/products";
 import type { CommunicationTemplateSnapshot } from "@/features/communications";
 import type { ProposalAttachmentAsset } from "@/types/proposal-attachments";
 import type { WorkOrderDeliveryMethod, WorkOrderDeliveryRequestPayload } from "@/types/work-order-delivery";
+import type { MessagePayload } from "@/lib/messaging";
 import { QUOTE_DEFAULT_CLIENT_MESSAGE, QUOTE_DEFAULT_DISCLAIMER, createQuote, deleteQuote, sendQuoteDelivery, acceptQuoteWithoutSignature, useInvalidateQuotes } from "@/features/quotes";
 import { getInvoiceByQuoteId } from "@/features/invoices";
 import { parseUnitPrice, createClientId, formatQuoteId } from "@/lib/form-utils";
-import { renderCommunicationTemplate } from "@/features/communications";
 import { getBrowserProposalShareUrl, getEmployeeProposalPreviewUrl } from "@/lib/proposal-share";
 import {
   getBrowserSecretWorkOrderShareUrl,
@@ -167,14 +167,7 @@ type QuoteFormContextValue = {
   // Actions - Send Dialog
   openSendDialog: (options?: { variant?: "proposal" | "change_order"; changeOrderNumber?: string | null }) => void;
   closeSendDialog: () => void;
-  setSendMethod: (method: QuoteDeliveryMethod) => void;
-  setSendEmailRecipient: (value: string) => void;
-  setSendEmailCc: (value: string) => void;
-  setSendEmailSubject: (value: string) => void;
-  setSendEmailBody: (value: string) => void;
-  setSendTextRecipient: (value: string) => void;
-  setSendTextBody: (value: string) => void;
-  handleSendProposal: () => Promise<void>;
+  handleSendProposal: (payload: MessagePayload) => Promise<void>;
 
   // Actions - Work Order
   handleWorkOrderSendRequest: (options: { method: WorkOrderDeliveryMethod; variant: "standard" | "secret" }) => void;
@@ -326,17 +319,15 @@ export function QuoteFormProvider({
   // ============================================================================
   // Send Dialog State
   // ============================================================================
-  const initialTemplateDefaults = useMemo(() => buildProposalTemplateDefaults(proposalTemplate), [proposalTemplate]);
-
   const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
   const [sendContext, setSendContext] = useState<"proposal" | "change_order">("proposal");
   const [sendMethod, setSendMethod] = useState<QuoteDeliveryMethod>("both");
   const [emailRecipient, setEmailRecipient] = useState("");
   const [emailCc, setEmailCc] = useState("");
-  const [emailSubject, setEmailSubject] = useState(() => initialTemplateDefaults.emailSubject);
-  const [emailBody, setEmailBody] = useState(() => initialTemplateDefaults.emailBody);
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailBody, setEmailBody] = useState("");
   const [textRecipient, setTextRecipient] = useState(() => clientPhone?.trim() || "");
-  const [textBody, setTextBody] = useState(() => initialTemplateDefaults.smsBody);
+  const [textBody, setTextBody] = useState("");
   const [activeChangeOrderNumber, setActiveChangeOrderNumber] = useState<string | null>(null);
   const [isSendingProposal, setIsSendingProposal] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
@@ -985,19 +976,32 @@ export function QuoteFormProvider({
 
       const variant = options?.variant ?? "proposal";
       const template = variant === "change_order" ? changeOrderTemplate : proposalTemplate;
+      const shareUrl = getBrowserProposalShareUrl(publicShareId, origin);
+      const activeQuoteNumber = quoteNumber?.trim() || defaultQuoteNumber;
+
+      const renderedDefaults = buildProposalTemplateDefaults(template, {
+        companyName,
+        companyPhone: companyBranding?.phone,
+        companyWebsite: companyBranding?.website,
+        clientName,
+        quoteNumber: activeQuoteNumber,
+        proposalUrl: shareUrl,
+        changeOrderNumber: options?.changeOrderNumber ?? null,
+      });
+
       setSendContext(variant);
       setActiveChangeOrderNumber(options?.changeOrderNumber ?? null);
       setEmailRecipient(clientEmail);
       setEmailCc("");
-      setEmailSubject(template.emailSubject || "");
-      setEmailBody(template.emailBody || "");
+      setEmailSubject(renderedDefaults.emailSubject || "");
+      setEmailBody(renderedDefaults.emailBody || "");
       setTextRecipient(clientPhone?.trim() || "");
-      setTextBody(template.smsBody || "");
+      setTextBody(renderedDefaults.smsBody || "");
       setSendError(null);
       setSendSuccessMessage(null);
       setIsSendDialogOpen(true);
     },
-    [changeOrderTemplate, clientEmail, clientPhone, proposalTemplate, totals.total]
+    [changeOrderTemplate, clientEmail, clientName, clientPhone, companyBranding?.phone, companyBranding?.website, companyName, defaultQuoteNumber, origin, proposalTemplate, publicShareId, quoteNumber, totals.total]
   );
 
   const closeSendDialog = useCallback(() => {
@@ -1008,150 +1012,85 @@ export function QuoteFormProvider({
     setSendError(null);
   }, []);
 
-  const handleSendProposal = useCallback(async () => {
-    setIsSendingProposal(true);
-    setSendError(null);
-    setSendSuccessMessage(null);
-
-    try {
-      let effectiveQuoteId = quoteId;
-
-      if (!effectiveQuoteId) {
-        const saved = await handleSaveQuote();
-        effectiveQuoteId = saved?.id;
-      }
-
-      if (!effectiveQuoteId) {
-        setSendError("Save the quote before sending it.");
-        setIsSendingProposal(false);
-        return;
-      }
-
-      const shouldSendEmail = sendMethod === "email" || sendMethod === "both";
-      const shouldSendText = sendMethod === "text" || sendMethod === "both";
-
-      if (shouldSendEmail && (!emailRecipient.trim() || !emailSubject.trim() || !emailBody.trim())) {
-        setSendError("Email delivery requires recipient, subject, and body.");
-        setIsSendingProposal(false);
-        return;
-      }
-
-      if (shouldSendText && (!textRecipient.trim() || !textBody.trim())) {
-        setSendError("SMS delivery requires recipient phone and message.");
-        setIsSendingProposal(false);
-        return;
-      }
-
-      if (!shouldSendEmail && !shouldSendText) {
-        setSendError("Select at least one delivery method.");
-        setIsSendingProposal(false);
-        return;
-      }
-
-      const shareUrl = getBrowserProposalShareUrl(publicShareId, origin);
-      const [firstName, ...restName] = clientName.trim().split(" ");
-      const lastName = restName.join(" ");
-      const activeQuoteNumber = quoteNumber?.trim() || defaultQuoteNumber;
-      const activeTemplate = sendContext === "change_order" ? changeOrderTemplate : proposalTemplate;
-
-      const templateVars = {
-        company_name: companyName,
-        companyName,
-        company_phone: companyBranding?.phone ?? "",
-        companyPhone: companyBranding?.phone ?? "",
-        company_website: companyBranding?.website ?? "",
-        companyWebsite: companyBranding?.website ?? "",
-        customer_name: clientName,
-        client_name: clientName,
-        first_name: firstName || clientName || "Client",
-        last_name: lastName,
-        quote_number: activeQuoteNumber,
-        proposal_button: shareUrl ?? "",
-        change_order_number: activeChangeOrderNumber ?? "",
-        change_order_button: shareUrl ?? "",
-      };
-
-      const renderedEmailSubject = shouldSendEmail
-        ? renderCommunicationTemplate(emailSubject.trim() || activeTemplate.emailSubject || "", templateVars)
-        : "";
-      const renderedEmailBody = shouldSendEmail
-        ? renderCommunicationTemplate(emailBody || activeTemplate.emailBody || "", templateVars)
-        : "";
-      const renderedSmsBody = shouldSendText
-        ? renderCommunicationTemplate(textBody || activeTemplate.smsBody || "", templateVars)
-        : "";
-
-      const payload: QuoteDeliveryRequestPayload = {
-        method: sendMethod,
-        email: shouldSendEmail
-          ? {
-              to: emailRecipient.trim(),
-              cc: emailCc.trim() || null,
-              subject: renderedEmailSubject.trim(),
-              body: renderedEmailBody,
-            }
-          : undefined,
-        text: shouldSendText
-          ? {
-              to: textRecipient.trim(),
-              body: renderedSmsBody,
-            }
-          : undefined,
-      };
-
-      const data = await sendQuoteDelivery(dealId, effectiveQuoteId, payload);
-
-      if (data && "quoteStatus" in data && typeof data.quoteStatus === "string" && data.quoteStatus !== status) {
-        setStatus(data.quoteStatus as QuoteRecord["status"]);
-      } else if (status === "draft") {
-        setStatus("sent");
-      }
-
-      const sentEmail = Boolean(data && "sentEmail" in data && data.sentEmail);
-      const sentText = Boolean(data && "sentText" in data && data.sentText);
-
-      const successLabel = sendContext === "change_order" ? "Change order" : "Proposal";
-      const successMessage =
-        sentEmail && sentText
-          ? `${successLabel} emailed and texted to the customer.`
-          : sentText
-            ? `${successLabel} texted to the customer.`
-            : `${successLabel} emailed to the customer.`;
-
-      setSendSuccessMessage(successMessage);
-      setIsSendDialogOpen(false);
-    } catch (error) {
-      console.error("Failed to send proposal", error);
+  const handleSendProposal = useCallback(
+    async (messagePayload: MessagePayload) => {
+      setIsSendingProposal(true);
+      setSendError(null);
       setSendSuccessMessage(null);
-      setSendError(error instanceof Error ? error.message : "We couldn't send this proposal. Please try again.");
-    } finally {
-      setIsSendingProposal(false);
-    }
-  }, [
-    activeChangeOrderNumber,
-    changeOrderTemplate,
-    companyBranding?.phone,
-    companyBranding?.website,
-    companyName,
-    clientName,
-    defaultQuoteNumber,
-    dealId,
-    emailBody,
-    emailCc,
-    emailRecipient,
-    emailSubject,
-    handleSaveQuote,
-    proposalTemplate,
-    origin,
-    publicShareId,
-    sendContext,
-    quoteNumber,
-    quoteId,
-    sendMethod,
-    status,
-    textBody,
-    textRecipient,
-  ]);
+
+      try {
+        let effectiveQuoteId = quoteId;
+
+        if (!effectiveQuoteId) {
+          const saved = await handleSaveQuote();
+          effectiveQuoteId = saved?.id;
+        }
+
+        if (!effectiveQuoteId) {
+          setSendError("Save the quote before sending it.");
+          setIsSendingProposal(false);
+          return;
+        }
+
+        const shouldSendEmail = messagePayload.method === "email" || messagePayload.method === "both";
+        const shouldSendText = messagePayload.method === "text" || messagePayload.method === "both";
+
+        // Templates are already rendered in openSendDialog, so we pass them directly
+        const payload: QuoteDeliveryRequestPayload = {
+          method: messagePayload.method as QuoteDeliveryMethod,
+          email: shouldSendEmail && messagePayload.email
+            ? {
+                to: messagePayload.email.to,
+                cc: messagePayload.email.cc ?? null,
+                subject: messagePayload.email.subject.trim(),
+                body: messagePayload.email.body,
+              }
+            : undefined,
+          text: shouldSendText && messagePayload.text
+            ? {
+                to: messagePayload.text.to,
+                body: messagePayload.text.body,
+              }
+            : undefined,
+        };
+
+        const data = await sendQuoteDelivery(dealId, effectiveQuoteId, payload);
+
+        if (data && "quoteStatus" in data && typeof data.quoteStatus === "string" && data.quoteStatus !== status) {
+          setStatus(data.quoteStatus as QuoteRecord["status"]);
+        } else if (status === "draft") {
+          setStatus("sent");
+        }
+
+        const sentEmail = Boolean(data && "sentEmail" in data && data.sentEmail);
+        const sentText = Boolean(data && "sentText" in data && data.sentText);
+
+        const successLabel = sendContext === "change_order" ? "Change order" : "Proposal";
+        const successMessage =
+          sentEmail && sentText
+            ? `${successLabel} emailed and texted to the customer.`
+            : sentText
+              ? `${successLabel} texted to the customer.`
+              : `${successLabel} emailed to the customer.`;
+
+        setSendSuccessMessage(successMessage);
+        setIsSendDialogOpen(false);
+      } catch (error) {
+        console.error("Failed to send proposal", error);
+        setSendSuccessMessage(null);
+        setSendError(error instanceof Error ? error.message : "We couldn't send this proposal. Please try again.");
+      } finally {
+        setIsSendingProposal(false);
+      }
+    },
+    [
+      dealId,
+      handleSaveQuote,
+      sendContext,
+      quoteId,
+      status,
+    ]
+  );
 
   // ============================================================================
   // Work Order Handlers
@@ -1353,13 +1292,6 @@ export function QuoteFormProvider({
       // Actions - Send Dialog
       openSendDialog,
       closeSendDialog,
-      setSendMethod,
-      setSendEmailRecipient: setEmailRecipient,
-      setSendEmailCc: setEmailCc,
-      setSendEmailSubject: setEmailSubject,
-      setSendEmailBody: setEmailBody,
-      setSendTextRecipient: setTextRecipient,
-      setSendTextBody: setTextBody,
       handleSendProposal,
 
       // Actions - Work Order

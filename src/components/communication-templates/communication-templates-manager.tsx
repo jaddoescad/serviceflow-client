@@ -1,7 +1,7 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useMemo, useState } from "react";
-import { COMMUNICATION_TEMPLATE_DEFINITIONS, COMMUNICATION_TEMPLATE_KEYS } from "@/constants/communication-templates";
+import { COMMUNICATION_TEMPLATE_DEFINITIONS, COMMUNICATION_TEMPLATE_KEYS } from "@/features/communications/constants";
 import { upsertTemplate } from "@/features/communications";
 import type {
   CommunicationTemplateKey,

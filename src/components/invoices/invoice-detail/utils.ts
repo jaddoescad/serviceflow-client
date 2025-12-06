@@ -27,23 +27,30 @@ export function buildInvoiceTemplateDefaults(
       ? `${context.companyName} Invoice`
       : "Invoice";
 
-  const templateContext = {
-    companyName: context.companyName,
-    clientName: context.clientName,
-    invoiceNumber: context.invoiceNumber,
-    invoiceUrl: context.invoiceUrl ?? null,
-  } satisfies TemplateContext;
+  const [firstName, ...restName] = (context.clientName || "").trim().split(" ");
+  const lastName = restName.join(" ");
+
+  const templateVars = {
+    "company-name": context.companyName,
+    "company-phone": context.companyPhone ?? "",
+    "client-name": context.clientName,
+    "customer-name": context.clientName,
+    "first-name": firstName || context.clientName || "Client",
+    "last-name": lastName,
+    "invoice-number": context.invoiceNumber,
+    "invoice-button": context.invoiceUrl ?? "",
+  };
 
   const smsBody =
-    renderCommunicationTemplate(template.smsBody, templateContext) ||
-    renderCommunicationTemplate(INVOICE_DELIVERY_DEFAULT_TEXT_MESSAGE, templateContext);
+    renderCommunicationTemplate(template.smsBody, templateVars) ||
+    renderCommunicationTemplate(INVOICE_DELIVERY_DEFAULT_TEXT_MESSAGE, templateVars);
 
   const emailSubject =
-    renderCommunicationTemplate(template.emailSubject, templateContext) || fallbackSubject;
+    renderCommunicationTemplate(template.emailSubject, templateVars) || fallbackSubject;
 
   const emailBody =
-    renderCommunicationTemplate(template.emailBody, templateContext) ||
-    renderCommunicationTemplate(INVOICE_DELIVERY_DEFAULT_EMAIL_BODY, templateContext);
+    renderCommunicationTemplate(template.emailBody, templateVars) ||
+    renderCommunicationTemplate(INVOICE_DELIVERY_DEFAULT_EMAIL_BODY, templateVars);
 
   return {
     smsBody,
@@ -59,25 +66,52 @@ export const buildPaymentRequestTemplateDefaults = (
   const [firstName, ...restName] = (context.clientName || "").trim().split(" ");
   const lastName = restName.join(" ");
 
-  const templateContext = {
-    companyName: context.companyName,
-    companyPhone: context.companyPhone ?? null,
-    clientName: context.clientName,
-    customerName: context.clientName,
-    firstName: firstName || context.clientName || "Client",
-    lastName,
-    invoiceNumber: context.invoiceNumber,
-    invoiceUrl: context.invoiceUrl ?? null,
-    invoiceButton: context.invoiceUrl ?? null,
-    paymentAmount: context.paymentAmount ?? null,
+  const templateVars = {
+    "company-name": context.companyName,
+    "company-phone": context.companyPhone ?? "",
+    "client-name": context.clientName,
+    "customer-name": context.clientName,
+    "first-name": firstName || context.clientName || "Client",
+    "last-name": lastName,
+    "invoice-number": context.invoiceNumber,
+    "invoice-button": context.invoiceUrl ?? "",
+    "payment-amount": context.paymentAmount ?? "",
   };
 
-  const smsBody = renderCommunicationTemplate(template.smsBody, templateContext);
-  const emailSubject = renderCommunicationTemplate(template.emailSubject, templateContext);
-  const emailBody = renderCommunicationTemplate(template.emailBody, templateContext);
+  const smsBody = renderCommunicationTemplate(template.smsBody, templateVars);
+  const emailSubject = renderCommunicationTemplate(template.emailSubject, templateVars);
+  const emailBody = renderCommunicationTemplate(template.emailBody, templateVars);
 
   return {
     smsBody,
+    emailSubject,
+    emailBody,
+  };
+};
+
+export const buildPaymentReceiptTemplateDefaults = (
+  template: CommunicationTemplateSnapshot,
+  context: TemplateContext
+) => {
+  const [firstName, ...restName] = (context.clientName || "").trim().split(" ");
+  const lastName = restName.join(" ");
+
+  const templateVars = {
+    "company-name": context.companyName,
+    "company-phone": context.companyPhone ?? "",
+    "client-name": context.clientName,
+    "customer-name": context.clientName,
+    "first-name": firstName || context.clientName || "Client",
+    "last-name": lastName,
+    "invoice-number": context.invoiceNumber,
+    "invoice-button": context.invoiceUrl ?? "",
+    "payment-amount": context.paymentAmount ?? "",
+  };
+
+  const emailSubject = renderCommunicationTemplate(template.emailSubject, templateVars);
+  const emailBody = renderCommunicationTemplate(template.emailBody, templateVars);
+
+  return {
     emailSubject,
     emailBody,
   };

@@ -36,6 +36,8 @@ function InvoiceDetailContent() {
     lineItemDialog,
   } = ctx;
 
+  const { invoiceTemplateDefaults, buildPaymentRequestDefaults } = templates;
+
   return (
     <div className="space-y-6">
       {state.flashMessage ? (
@@ -65,20 +67,14 @@ function InvoiceDetailContent() {
         onClose={ctx.closeSendInvoiceDialog}
         onSend={ctx.handleSendInvoice}
         invoiceNumber={state.invoice.invoice_number}
-        sendMethod={sendInvoiceDialog.method}
-        onSendMethodChange={ctx.setSendMethod}
-        emailRecipient={sendInvoiceDialog.emailRecipient}
-        onEmailRecipientChange={ctx.setEmailRecipient}
-        emailCc={sendInvoiceDialog.emailCc}
-        onEmailCcChange={ctx.setEmailCc}
-        emailSubject={sendInvoiceDialog.emailSubject}
-        onEmailSubjectChange={ctx.setEmailSubject}
-        emailBody={sendInvoiceDialog.emailBody}
-        onEmailBodyChange={ctx.setEmailBody}
-        textRecipient={sendInvoiceDialog.textRecipient}
-        onTextRecipientChange={ctx.setTextRecipient}
-        textBody={sendInvoiceDialog.textBody}
-        onTextBodyChange={ctx.setTextBody}
+        defaults={{
+          emailRecipient: clientEmail,
+          emailSubject: invoiceTemplateDefaults.emailSubject,
+          emailBody: invoiceTemplateDefaults.emailBody,
+          textRecipient: clientPhone,
+          textBody: invoiceTemplateDefaults.smsBody,
+        }}
+        companyEmail={companyEmail}
         isSubmitting={sendInvoiceDialog.isSending}
         errorMessage={sendInvoiceDialog.error}
       />
@@ -100,7 +96,7 @@ function InvoiceDetailContent() {
         request={paymentRequestDialog.activeRequest}
         templateDefaults={
           paymentRequestDialog.activeRequest
-            ? templates.buildPaymentRequestDefaults(paymentRequestDialog.activeRequest)
+            ? buildPaymentRequestDefaults(paymentRequestDialog.activeRequest)
             : null
         }
         clientPhone={clientPhone}
@@ -125,7 +121,7 @@ function InvoiceDetailContent() {
         defaultDate={new Date().toISOString().split("T")[0]}
         clientEmail={clientEmail}
         defaultReceiptBody={receivePaymentDialog.defaultReceiptBody}
-        defaultReceiptSubject={templates.paymentReceiptTemplate.emailSubject}
+        defaultReceiptSubject={receivePaymentDialog.defaultReceiptSubject}
         paymentRequestId={receivePaymentDialog.defaults.paymentRequestId}
       />
 
@@ -136,7 +132,7 @@ function InvoiceDetailContent() {
         submitting={sendReceiptDialog.isSending}
         payment={sendReceiptDialog.activePayment}
         defaultBody={sendReceiptDialog.defaultBody}
-        defaultSubject={templates.paymentReceiptTemplate.emailSubject}
+        defaultSubject={sendReceiptDialog.defaultSubject}
         clientEmail={clientEmail}
       />
 

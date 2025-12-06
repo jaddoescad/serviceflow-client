@@ -1,21 +1,10 @@
 import type { DealStageOption } from "@/features/deals";
+import { DRIP_KEYWORDS } from "@/lib/template-keywords";
 
-export const DRIP_TEMPLATE_HINTS = [
-  "{first_name}",
-  "{last_name}",
-  "{client_name}",
-  "{company_name}",
-  "{company_phone}",
-  "{company_website}",
-  "{deal_stage}",
-  "{deal_name}",
-  "{deal_address}",
-  "{sales_person}",
-  "{appointment_date}",
-  "{appointment_time}",
-  "{appointment_location}",
-  "{review_button}",
-] as const;
+/**
+ * @deprecated Use DRIP_KEYWORDS from @/lib/template-keywords instead
+ */
+export const DRIP_TEMPLATE_HINTS = DRIP_KEYWORDS;
 
 export const formatDefaultSequenceName = (stage: DealStageOption | null): string => {
   if (!stage) {

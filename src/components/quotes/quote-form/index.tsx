@@ -178,26 +178,18 @@ function QuoteFormContent() {
       <QuoteSendDialog
         open={sendDialog.isOpen}
         onClose={ctx.closeSendDialog}
-        onSend={() => {
-          void ctx.handleSendProposal();
-        }}
+        onSend={ctx.handleSendProposal}
         quoteNumber={computed.displayQuoteNumber}
         variant={sendDialog.context}
         changeOrderNumber={sendDialog.activeChangeOrderNumber}
-        sendMethod={sendDialog.method}
-        onSendMethodChange={(method) => ctx.setSendMethod(method)}
-        emailRecipient={sendDialog.emailRecipient}
-        onEmailRecipientChange={(value) => ctx.setSendEmailRecipient(value)}
-        emailCc={sendDialog.emailCc}
-        onEmailCcChange={(value) => ctx.setSendEmailCc(value)}
-        emailSubject={sendDialog.emailSubject}
-        onEmailSubjectChange={(value) => ctx.setSendEmailSubject(value)}
-        emailBody={sendDialog.emailBody}
-        onEmailBodyChange={(value) => ctx.setSendEmailBody(value)}
-        textRecipient={sendDialog.textRecipient}
-        onTextRecipientChange={(value) => ctx.setSendTextRecipient(value)}
-        textBody={sendDialog.textBody}
-        onTextBodyChange={(value) => ctx.setSendTextBody(value)}
+        defaults={{
+          emailRecipient: sendDialog.emailRecipient,
+          emailCc: sendDialog.emailCc,
+          emailSubject: sendDialog.emailSubject,
+          emailBody: sendDialog.emailBody,
+          textRecipient: sendDialog.textRecipient,
+          textBody: sendDialog.textBody,
+        }}
         isSubmitting={sendDialog.isSending}
         errorMessage={sendDialog.error}
       />

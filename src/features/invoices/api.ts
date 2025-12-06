@@ -66,7 +66,7 @@ export const createInvoiceDeliveryRepository = () => {
       invoiceId: string;
       method: string;
       text?: { to: string; body: string };
-      email?: { to: string; subject: string; body: string };
+      email?: { to: string; cc?: string | null; subject: string; body: string };
     }) => {
       return apiClient<Record<string, unknown>>(
         `/deals/${data.dealId}/invoices/${data.invoiceId}/send`,

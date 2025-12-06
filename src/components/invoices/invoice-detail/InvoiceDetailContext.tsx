@@ -28,6 +28,7 @@ import {
 } from "@/features/invoices";
 import type { CommunicationTemplateSnapshot } from "@/features/communications";
 import type { InvoiceDeliveryMethod } from "@/types/invoice-delivery";
+import type { MessagePayload } from "@/lib/messaging";
 import { createInvoicePaymentRequest as createInvoicePaymentRequestApi } from "@/features/invoices";
 import { apiClient } from "@/services/api";
 import { createSupabaseBrowserClient } from "@/supabase/clients/browser";
@@ -60,13 +61,6 @@ type InvoiceComputed = {
 
 type SendInvoiceDialogState = {
   isOpen: boolean;
-  method: InvoiceDeliveryMethod;
-  textRecipient: string;
-  textBody: string;
-  emailRecipient: string;
-  emailCc: string;
-  emailSubject: string;
-  emailBody: string;
   isSending: boolean;
   error: string | null;
 };
@@ -84,12 +78,14 @@ type ReceivePaymentDialogState = {
   isSubmitting: boolean;
   defaults: { amount: number; paymentRequestId?: string | null };
   defaultReceiptBody: string;
+  defaultReceiptSubject: string;
 };
 
 type SendReceiptDialogState = {
   isOpen: boolean;
   activePayment: InvoicePaymentRecord | null;
   defaultBody: string;
+  defaultSubject: string;
   isSending: boolean;
 };
 
@@ -144,14 +140,7 @@ type InvoiceDetailContextValue = {
   // Actions - Send Invoice
   openSendInvoiceDialog: () => void;
   closeSendInvoiceDialog: () => void;
-  setSendMethod: (method: InvoiceDeliveryMethod) => void;
-  setTextRecipient: (value: string) => void;
-  setTextBody: (value: string) => void;
-  setEmailRecipient: (value: string) => void;
-  setEmailCc: (value: string) => void;
-  setEmailSubject: (value: string) => void;
-  setEmailBody: (value: string) => void;
-  handleSendInvoice: () => Promise<void>;
+  handleSendInvoice: (payload: MessagePayload) => Promise<void>;
 
   // Actions - Payment Requests
   openRequestPaymentDialog: () => void;
@@ -294,6 +283,9 @@ export function InvoiceDetailProvider({
   const [defaultReceiptBody, setDefaultReceiptBody] = useState<string>(
     paymentReceiptTemplateSnapshot.emailBody
   );
+  const [defaultReceiptSubject, setDefaultReceiptSubject] = useState<string>(
+    paymentReceiptTemplateSnapshot.emailSubject
+  );
 
   // ============================================================================
   // Computed Values
@@ -359,12 +351,6 @@ export function InvoiceDetailProvider({
     ]
   );
 
-  const initialSendMethod: InvoiceDeliveryMethod = useMemo(() => {
-    if (clientEmail && clientPhone) return "both";
-    if (clientPhone) return "text";
-    return "email";
-  }, [clientEmail, clientPhone]);
-
   const totals = useMemo(() => {
     const lineTotal = invoiceState.line_items.reduce(
       (sum, item) => sum + item.quantity * item.unit_price,
@@ -381,17 +367,6 @@ export function InvoiceDetailProvider({
   // Send Invoice Dialog State
   // ============================================================================
   const [isSendInvoiceDialogOpen, setIsSendInvoiceDialogOpen] = useState(false);
-  const [invoiceSendMethod, setInvoiceSendMethod] =
-    useState<InvoiceDeliveryMethod>(initialSendMethod);
-  const [textRecipient, setTextRecipient] = useState(clientPhone);
-  const [textBody, setTextBody] = useState(invoiceTemplateDefaults.smsBody);
-  const [emailRecipient, setEmailRecipient] = useState(clientEmail);
-  const [emailCc, setEmailCc] = useState<string>("");
-  const [emailSubject, setEmailSubject] = useState(invoiceTemplateDefaults.emailSubject);
-  const [emailBody, setEmailBody] = useState(invoiceTemplateDefaults.emailBody);
-  const [textBodyEdited, setTextBodyEdited] = useState(false);
-  const [emailSubjectEdited, setEmailSubjectEdited] = useState(false);
-  const [emailBodyEdited, setEmailBodyEdited] = useState(false);
   const [isSendingInvoice, setIsSendingInvoice] = useState(false);
   const [sendInvoiceError, setSendInvoiceError] = useState<string | null>(null);
 
@@ -424,6 +399,9 @@ export function InvoiceDetailProvider({
   );
   const [sendReceiptDefaultBody, setSendReceiptDefaultBody] = useState<string>(
     paymentReceiptTemplateSnapshot.emailBody
+  );
+  const [sendReceiptDefaultSubject, setSendReceiptDefaultSubject] = useState<string>(
+    paymentReceiptTemplateSnapshot.emailSubject
   );
   const [isSendingReceipt, setIsSendingReceipt] = useState(false);
 
@@ -498,106 +476,81 @@ export function InvoiceDetailProvider({
     };
   }, [companyId, isReceivePaymentDialogOpen, isSendReceiptDialogOpen]);
 
-  useEffect(() => {
-    if (isSendInvoiceDialogOpen) {
-      if (!textBodyEdited) setTextBody(invoiceTemplateDefaults.smsBody);
-      if (!emailSubjectEdited) setEmailSubject(invoiceTemplateDefaults.emailSubject);
-      if (!emailBodyEdited) setEmailBody(invoiceTemplateDefaults.emailBody);
-    }
-  }, [
-    emailBodyEdited,
-    emailSubjectEdited,
-    invoiceTemplateDefaults,
-    isSendInvoiceDialogOpen,
-    textBodyEdited,
-  ]);
-
   // ============================================================================
   // Send Invoice Handlers
   // ============================================================================
-  const handleTextBodyChange = useCallback((value: string) => {
-    setTextBodyEdited(true);
-    setTextBody(value);
-  }, []);
-
-  const handleEmailSubjectChange = useCallback((value: string) => {
-    setEmailSubjectEdited(true);
-    setEmailSubject(value);
-  }, []);
-
-  const handleEmailBodyChange = useCallback((value: string) => {
-    setEmailBodyEdited(true);
-    setEmailBody(value);
-  }, []);
-
   const openSendInvoiceDialog = useCallback(() => {
     setIsSendInvoiceDialogOpen(true);
   }, []);
 
   const closeSendInvoiceDialog = useCallback(() => {
     setIsSendInvoiceDialogOpen(false);
+    setSendInvoiceError(null);
   }, []);
 
-  const handleSendInvoice = useCallback(async () => {
-    if (isSendingInvoice) return;
+  const handleSendInvoice = useCallback(
+    async (payload: MessagePayload) => {
+      if (isSendingInvoice) return;
 
-    setIsSendingInvoice(true);
-    setSendInvoiceError(null);
-    setFlashMessage(null);
+      setIsSendingInvoice(true);
+      setSendInvoiceError(null);
+      setFlashMessage(null);
 
-    try {
-      const response = await invoiceDeliveryRepository.sendInvoice({
-        dealId,
-        invoiceId: invoiceState.id,
-        method: invoiceSendMethod,
-        text:
-          invoiceSendMethod === "both" || invoiceSendMethod === "text"
-            ? { to: textRecipient, body: textBody }
+      try {
+        // Templates are already rendered in buildInvoiceTemplateDefaults, so we pass them directly
+        const response = await invoiceDeliveryRepository.sendInvoice({
+          dealId,
+          invoiceId: invoiceState.id,
+          method: payload.method as InvoiceDeliveryMethod,
+          text: payload.text
+            ? {
+                to: payload.text.to,
+                body: payload.text.body,
+              }
             : undefined,
-        email:
-          invoiceSendMethod === "both" || invoiceSendMethod === "email"
-            ? { to: emailRecipient, cc: emailCc || null, subject: emailSubject, body: emailBody }
+          email: payload.email
+            ? {
+                to: payload.email.to,
+                cc: payload.email.cc ?? null,
+                subject: payload.email.subject.trim(),
+                body: payload.email.body,
+              }
             : undefined,
-      });
+        });
 
-      if (response.invoiceStatus) {
-        setInvoiceState((prev) => ({
-          ...prev,
-          status: response.invoiceStatus as InvoiceRecord["status"],
-        }));
+        if (response.invoiceStatus) {
+          setInvoiceState((prev) => ({
+            ...prev,
+            status: response.invoiceStatus as InvoiceRecord["status"],
+          }));
+        }
+
+        setFlashMessage(
+          response.sentEmail && response.sentText
+            ? "Invoice sent by email and text."
+            : response.sentEmail
+              ? "Invoice emailed to the customer."
+              : response.sentText
+                ? "Invoice text message sent."
+                : "Invoice delivery complete."
+        );
+        setIsSendInvoiceDialogOpen(false);
+      } catch (error) {
+        console.error("Failed to send invoice", error);
+        setSendInvoiceError(
+          (error as { message?: string })?.message ?? "We couldn't send the invoice."
+        );
+      } finally {
+        setIsSendingInvoice(false);
       }
-
-      setFlashMessage(
-        response.sentEmail && response.sentText
-          ? "Invoice sent by email and text."
-          : response.sentEmail
-            ? "Invoice emailed to the customer."
-            : response.sentText
-              ? "Invoice text message sent."
-              : "Invoice delivery complete."
-      );
-      setIsSendInvoiceDialogOpen(false);
-    } catch (error) {
-      console.error("Failed to send invoice", error);
-      setSendInvoiceError(
-        (error as { message?: string })?.message ?? "We couldn't send the invoice."
-      );
-    } finally {
-      setIsSendingInvoice(false);
-    }
-  }, [
-    dealId,
-    emailBody,
-    emailCc,
-    emailRecipient,
-    emailSubject,
-    invoiceDeliveryRepository,
-    invoiceSendMethod,
-    invoiceState.id,
-    isSendingInvoice,
-    textBody,
-    textRecipient,
-  ]);
+    },
+    [
+      dealId,
+      invoiceDeliveryRepository,
+      invoiceState.id,
+      isSendingInvoice,
+    ]
+  );
 
   // ============================================================================
   // Payment Request Handlers
@@ -660,17 +613,15 @@ export function InvoiceDetailProvider({
         const lastName = restName.join(" ");
 
         const templateVars = {
-          company_name: companyName,
-          companyName,
-          company_phone: companyPhone ?? "",
-          companyPhone: companyPhone ?? "",
-          customer_name: clientName,
-          client_name: clientName,
-          first_name: firstName || clientName || "Client",
-          last_name: lastName,
-          invoice_number: invoiceState.invoice_number,
-          invoice_button: invoiceShareUrl ?? "",
-          payment_amount: formatCurrency(activePaymentRequest.amount),
+          "company-name": companyName,
+          "company-phone": companyPhone ?? "",
+          "client-name": clientName,
+          "customer-name": clientName,
+          "first-name": firstName || clientName || "Client",
+          "last-name": lastName,
+          "invoice-number": invoiceState.invoice_number,
+          "invoice-button": invoiceShareUrl ?? "",
+          "payment-amount": formatCurrency(activePaymentRequest.amount),
         };
 
         const renderedPayload: typeof payload = {
@@ -733,14 +684,34 @@ export function InvoiceDetailProvider({
   // ============================================================================
   const openReceivePaymentDialog = useCallback(
     (defaults?: { amount: number; paymentRequestId?: string | null }) => {
+      const paymentAmount = defaults?.amount ?? invoiceState.balance_due;
+      const [firstName, ...restName] = clientName.trim().split(" ");
+      const lastName = restName.join(" ");
+
+      const templateVars = {
+        "company-name": companyName,
+        "company-phone": companyPhone ?? "",
+        "client-name": clientName,
+        "customer-name": clientName,
+        "first-name": firstName || clientName || "Client",
+        "last-name": lastName,
+        "invoice-number": invoiceState.invoice_number,
+        "invoice-button": invoiceShareUrl ?? "",
+        "payment-amount": formatCurrency(paymentAmount),
+      };
+
+      const renderedBody = renderCommunicationTemplate(paymentReceiptTemplateSnapshot.emailBody, templateVars);
+      const renderedSubject = renderCommunicationTemplate(paymentReceiptTemplateSnapshot.emailSubject, templateVars);
+
       setReceivePaymentDefaults({
-        amount: defaults?.amount ?? invoiceState.balance_due,
+        amount: paymentAmount,
         paymentRequestId: defaults?.paymentRequestId ?? null,
       });
-      setDefaultReceiptBody(paymentReceiptTemplate.emailBody);
+      setDefaultReceiptBody(renderedBody);
+      setDefaultReceiptSubject(renderedSubject);
       setIsReceivePaymentDialogOpen(true);
     },
-    [invoiceState.balance_due, paymentReceiptTemplate.emailBody]
+    [clientName, companyName, companyPhone, invoiceShareUrl, invoiceState.balance_due, invoiceState.invoice_number, paymentReceiptTemplateSnapshot]
   );
 
   const closeReceivePaymentDialog = useCallback(() => {
@@ -773,40 +744,14 @@ export function InvoiceDetailProvider({
       setReceivePaymentSubmitting(true);
 
       try {
-        const [firstName, ...restName] = clientName.trim().split(" ");
-        const templateVars = {
-          company_name: companyName,
-          companyName,
-          company_phone: companyPhone ?? "",
-          companyPhone: companyPhone ?? "",
-          customer_name: clientName,
-          client_name: clientName,
-          first_name: firstName || clientName || "Client",
-          last_name: restName.join(" "),
-          invoice_number: invoiceState.invoice_number,
-          invoice_button: invoiceShareUrl ?? "",
-          payment_amount: formatCurrency(input.amount),
-        };
-
-        const renderedInput = {
-          ...input,
-          receiptSubject:
-            input.sendReceipt && input.receiptSubject
-              ? renderCommunicationTemplate(input.receiptSubject, templateVars).trim()
-              : input.receiptSubject,
-          receiptBody:
-            input.sendReceipt && input.receiptBody
-              ? renderCommunicationTemplate(input.receiptBody, templateVars)
-              : input.receiptBody,
-        };
-
+        // Templates are already rendered in openReceivePaymentDialog, so we pass them directly
         const data = await apiClient<{
           invoice: InvoiceRecord | null;
           payments: InvoicePaymentRecord[];
           paymentRequests: InvoicePaymentRequestRecord[];
         }>(`/deals/${dealId}/invoices/${invoiceState.id}/payments`, {
           method: "POST",
-          body: JSON.stringify(renderedInput),
+          body: JSON.stringify(input),
         });
 
         if (data.invoice) {
@@ -830,16 +775,7 @@ export function InvoiceDetailProvider({
         setReceivePaymentSubmitting(false);
       }
     },
-    [
-      clientName,
-      companyName,
-      companyPhone,
-      dealId,
-      invoiceShareUrl,
-      invoiceState.id,
-      invoiceState.invoice_number,
-      supabaseBrowserClient,
-    ]
+    [dealId, invoiceState.id, supabaseBrowserClient]
   );
 
   // ============================================================================
@@ -847,11 +783,30 @@ export function InvoiceDetailProvider({
   // ============================================================================
   const openSendReceiptDialog = useCallback(
     (payment: InvoicePaymentRecord) => {
+      const [firstName, ...restName] = clientName.trim().split(" ");
+      const lastName = restName.join(" ");
+
+      const templateVars = {
+        "company-name": companyName,
+        "company-phone": companyPhone ?? "",
+        "client-name": clientName,
+        "customer-name": clientName,
+        "first-name": firstName || clientName || "Client",
+        "last-name": lastName,
+        "invoice-number": invoiceState.invoice_number,
+        "invoice-button": invoiceShareUrl ?? "",
+        "payment-amount": formatCurrency(payment.amount),
+      };
+
+      const renderedBody = renderCommunicationTemplate(paymentReceiptTemplateSnapshot.emailBody, templateVars);
+      const renderedSubject = renderCommunicationTemplate(paymentReceiptTemplateSnapshot.emailSubject, templateVars);
+
       setActiveReceiptPayment(payment);
-      setSendReceiptDefaultBody(paymentReceiptTemplate.emailBody);
+      setSendReceiptDefaultBody(renderedBody);
+      setSendReceiptDefaultSubject(renderedSubject);
       setIsSendReceiptDialogOpen(true);
     },
-    [paymentReceiptTemplate.emailBody]
+    [clientName, companyName, companyPhone, invoiceShareUrl, invoiceState.invoice_number, paymentReceiptTemplateSnapshot]
   );
 
   const closeSendReceiptDialog = useCallback(() => {
@@ -867,29 +822,15 @@ export function InvoiceDetailProvider({
       setActionError(null);
 
       try {
-        const [firstName, ...restName] = clientName.trim().split(" ");
-        const templateVars = {
-          company_name: companyName,
-          companyName,
-          company_phone: companyPhone ?? "",
-          companyPhone: companyPhone ?? "",
-          customer_name: clientName,
-          client_name: clientName,
-          first_name: firstName || clientName || "Client",
-          last_name: restName.join(" "),
-          invoice_number: invoiceState.invoice_number,
-          invoice_button: invoiceShareUrl ?? "",
-          payment_amount: formatCurrency(activeReceiptPayment.amount),
-        };
-
+        // Templates are already rendered in openSendReceiptDialog, so we pass them directly
         await apiClient(
           `/deals/${dealId}/invoices/${invoiceState.id}/payments/${activeReceiptPayment.id}/send`,
           {
             method: "POST",
             body: JSON.stringify({
               receiptEmail: input.receiptEmail.trim(),
-              receiptSubject: renderCommunicationTemplate(input.receiptSubject, templateVars).trim(),
-              receiptBody: renderCommunicationTemplate(input.receiptBody, templateVars),
+              receiptSubject: input.receiptSubject.trim(),
+              receiptBody: input.receiptBody,
             }),
           }
         );
@@ -906,16 +847,7 @@ export function InvoiceDetailProvider({
         setIsSendingReceipt(false);
       }
     },
-    [
-      activeReceiptPayment,
-      clientName,
-      companyName,
-      companyPhone,
-      dealId,
-      invoiceShareUrl,
-      invoiceState.id,
-      invoiceState.invoice_number,
-    ]
+    [activeReceiptPayment, dealId, invoiceState.id]
   );
 
   // ============================================================================
@@ -1111,13 +1043,6 @@ export function InvoiceDetailProvider({
       // Dialog states
       sendInvoiceDialog: {
         isOpen: isSendInvoiceDialogOpen,
-        method: invoiceSendMethod,
-        textRecipient,
-        textBody,
-        emailRecipient,
-        emailCc,
-        emailSubject,
-        emailBody,
         isSending: isSendingInvoice,
         error: sendInvoiceError,
       },
@@ -1133,11 +1058,13 @@ export function InvoiceDetailProvider({
         isSubmitting: receivePaymentSubmitting,
         defaults: receivePaymentDefaults,
         defaultReceiptBody,
+        defaultReceiptSubject,
       },
       sendReceiptDialog: {
         isOpen: isSendReceiptDialogOpen,
         activePayment: activeReceiptPayment,
         defaultBody: sendReceiptDefaultBody,
+        defaultSubject: sendReceiptDefaultSubject,
         isSending: isSendingReceipt,
       },
       cancelRequestDialog: {
@@ -1155,13 +1082,6 @@ export function InvoiceDetailProvider({
       // Actions - Send Invoice
       openSendInvoiceDialog,
       closeSendInvoiceDialog,
-      setSendMethod: setInvoiceSendMethod,
-      setTextRecipient,
-      setTextBody: handleTextBodyChange,
-      setEmailRecipient,
-      setEmailCc,
-      setEmailSubject: handleEmailSubjectChange,
-      setEmailBody: handleEmailBodyChange,
       handleSendInvoice,
 
       // Actions - Payment Requests
@@ -1223,13 +1143,6 @@ export function InvoiceDetailProvider({
       invoiceTemplateDefaults,
       buildPaymentRequestDefaults,
       isSendInvoiceDialogOpen,
-      invoiceSendMethod,
-      textRecipient,
-      textBody,
-      emailRecipient,
-      emailCc,
-      emailSubject,
-      emailBody,
       isSendingInvoice,
       sendInvoiceError,
       isRequestPaymentDialogOpen,
@@ -1241,9 +1154,11 @@ export function InvoiceDetailProvider({
       receivePaymentSubmitting,
       receivePaymentDefaults,
       defaultReceiptBody,
+      defaultReceiptSubject,
       isSendReceiptDialogOpen,
       activeReceiptPayment,
       sendReceiptDefaultBody,
+      sendReceiptDefaultSubject,
       isSendingReceipt,
       requestToCancel,
       isCancelling,
@@ -1254,9 +1169,6 @@ export function InvoiceDetailProvider({
       isDeletingLineItem,
       openSendInvoiceDialog,
       closeSendInvoiceDialog,
-      handleTextBodyChange,
-      handleEmailSubjectChange,
-      handleEmailBodyChange,
       handleSendInvoice,
       openRequestPaymentDialog,
       closeRequestPaymentDialog,
