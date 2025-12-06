@@ -15,6 +15,41 @@ export type LineItemData = {
   unitPrice: number;
 };
 
+export type ReadOnlyLineItemRowProps = {
+  name: string;
+  description?: string | null;
+  price: number;
+};
+
+// ============================================================================
+// Read-Only Line Item Row Component (for proposals, change orders, etc.)
+// ============================================================================
+
+export function ReadOnlyLineItemRow({ name, description, price }: ReadOnlyLineItemRowProps) {
+  const isDiscount = price < 0;
+
+  return (
+    <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+      <div className="min-w-0 flex-1 space-y-2">
+        <h3 className={`text-base font-semibold ${isDiscount ? "text-rose-700" : "text-slate-900"}`}>
+          {name}
+        </h3>
+        {description ? (
+          <p className="text-sm text-slate-600 whitespace-pre-line">{description}</p>
+        ) : null}
+      </div>
+      <div className="space-y-1 sm:shrink-0 sm:text-right">
+        <label className="text-xs font-medium text-slate-600">
+          {isDiscount ? "Discount Amount" : "Price"}
+        </label>
+        <p className={`text-sm font-semibold ${isDiscount ? "text-rose-600" : "text-slate-900"}`}>
+          {formatCurrency(price)}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 type ProductTemplate = {
   id: string;
   name: string;

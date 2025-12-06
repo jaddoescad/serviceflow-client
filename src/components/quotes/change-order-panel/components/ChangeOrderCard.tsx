@@ -1,6 +1,7 @@
 import { formatCurrency } from "@/lib/currency";
 import type { ChangeOrderCardProps } from "../types";
 import { computeTotals, formatAcceptedDate } from "../utils";
+import { ReadOnlyLineItemRow } from "@/components/shared/line-item-card";
 
 export function ChangeOrderCard({
   order,
@@ -39,52 +40,37 @@ export function ChangeOrderCard({
         </div>
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-lg border border-slate-200 bg-white">
-        <table className="min-w-full divide-y divide-slate-200">
-          <thead className="bg-slate-50">
-            <tr className="text-left text-[13px] font-semibold text-slate-600">
-              <th className="px-4 py-3">Product / Service</th>
-              <th className="px-4 py-3 text-right">Qty</th>
-              <th className="px-4 py-3 text-right">Price</th>
-              <th className="px-4 py-3 text-right">Tax</th>
-              <th className="px-4 py-3 text-right">Total</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 bg-white">
-            {order.items.map((item) => {
-              const qty = Number.isFinite(item.quantity) ? Number(item.quantity) : 1;
-              const unit = Number.isFinite(item.unit_price) ? Number(item.unit_price) : 0;
-              const lineSubtotal = qty * unit;
-              const lineTax = lineSubtotal * ((taxRate ?? 0) / 100);
-              const lineTotal = lineSubtotal + lineTax;
-              return (
-                <tr key={item.id} className="text-[13px] text-slate-800">
-                  <td className="px-4 py-3">
-                    <div className="font-semibold text-slate-900">{item.name}</div>
-                    {item.description ? (
-                      <p className="mt-1 whitespace-pre-line text-[12px] text-slate-600">
-                        {item.description}
-                      </p>
-                    ) : null}
-                  </td>
-                  <td className="px-4 py-3 text-right">{qty}</td>
-                  <td className="px-4 py-3 text-right">{formatCurrency(unit)}</td>
-                  <td className="px-4 py-3 text-right">{formatCurrency(lineTax)}</td>
-                  <td className="px-4 py-3 text-right font-semibold">{formatCurrency(lineTotal)}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-          <tfoot className="bg-slate-50 text-[13px] font-semibold text-slate-900">
-            <tr>
-              <td className="px-4 py-3">Total</td>
-              <td className="px-4 py-3 text-right">—</td>
-              <td className="px-4 py-3 text-right">{formatCurrency(totals.subtotal)}</td>
-              <td className="px-4 py-3 text-right">{formatCurrency(totals.taxAmount)}</td>
-              <td className="px-4 py-3 text-right">{formatCurrency(totals.total)}</td>
-            </tr>
-          </tfoot>
-        </table>
+      <div className="mt-4 divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-200 bg-white px-3">
+        {order.items.map((item) => {
+          const unit = Number.isFinite(item.unit_price) ? Number(item.unit_price) : 0;
+          return (
+            <ReadOnlyLineItemRow
+              key={item.id}
+              name={item.name}
+              description={item.description}
+              price={unit}
+            />
+          );
+        })}
+      </div>
+
+      <div className="mt-4 flex justify-end">
+        <div className="w-full max-w-xs space-y-1 text-right text-sm">
+          <div className="flex items-center justify-between text-slate-600">
+            <span>Subtotal</span>
+            <span>{formatCurrency(totals.subtotal)}</span>
+          </div>
+          {(taxRate ?? 0) > 0 && (
+            <div className="flex items-center justify-between text-slate-600">
+              <span>Tax ({taxRate}%)</span>
+              <span>{formatCurrency(totals.taxAmount)}</span>
+            </div>
+          )}
+          <div className="flex items-center justify-between border-t border-slate-200 pt-1 text-base font-semibold text-slate-900">
+            <span>Total</span>
+            <span>{formatCurrency(totals.total)}</span>
+          </div>
+        </div>
       </div>
 
       {isPending ? (

@@ -8,6 +8,7 @@ import { DEFAULT_PROPOSAL_TERMS_TEMPLATE_CONTENT } from "@/constants/proposal-te
 import { ChangeOrderApprovals } from "@/components/proposals/change-order-approvals";
 import { LoadingPage } from "@/components/ui/loading-spinner";
 import { SignatureDisplay } from "@/components/ui/signature-display";
+import { ReadOnlyLineItemRow } from "@/components/shared/line-item-card";
 import { useSessionContext } from "@/contexts/AuthContext";
 
 const DATE_TIME_FORMATTER = new Intl.DateTimeFormat(undefined, {
@@ -124,6 +125,7 @@ export default function ProposalSharePage() {
           customerName={customer.name}
           customerEmail={customer.email ?? null}
           readOnly={isEmployeeView}
+          taxRate={taxRate}
         />
         <div className="rounded-2xl bg-white px-6 py-8 shadow-xl">
           <header className="border-b border-slate-200 pb-6">
@@ -199,17 +201,12 @@ export default function ProposalSharePage() {
               </p>
             ) : (
               quote.line_items.map((item: any) => (
-                <div key={item.id} className="py-3">
-                  <div className="text-sm font-semibold text-slate-800">{item.name}</div>
-                  {item.description ? (
-                    <p className="mt-1 text-sm text-slate-600 whitespace-pre-line">
-                      {item.description}
-                    </p>
-                  ) : null}
-                  <div className="mt-1 text-sm font-medium text-slate-900">
-                    {formatCurrency(item.quantity * item.unit_price)}
-                  </div>
-                </div>
+                <ReadOnlyLineItemRow
+                  key={item.id}
+                  name={item.name}
+                  description={item.description}
+                  price={item.quantity * item.unit_price}
+                />
               ))
             )}
           </div>

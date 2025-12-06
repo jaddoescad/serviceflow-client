@@ -5,6 +5,7 @@ import { acceptChangeOrder } from "@/services/change-orders";
 import { formatCurrency } from "@/lib/currency";
 import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/library";
 import { SignaturePad, type SignatureData } from "@/components/ui/signature-pad";
+import { ReadOnlyLineItemRow } from "@/components/shared/line-item-card";
 
 type ChangeOrderItem = {
   id: string;
@@ -30,9 +31,17 @@ type ChangeOrderApprovalsProps = {
   customerName?: string | null;
   customerEmail?: string | null;
   readOnly?: boolean;
+  taxRate?: number;
 };
 
-export function ChangeOrderApprovals({ changeOrders, invoiceId, customerName, customerEmail, readOnly = false }: ChangeOrderApprovalsProps) {
+function computeOrderTotals(items: ChangeOrderItem[], taxRate: number) {
+  const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
+  const taxAmount = subtotal * (taxRate / 100);
+  const total = subtotal + taxAmount;
+  return { subtotal, taxAmount, total };
+}
+
+export function ChangeOrderApprovals({ changeOrders, invoiceId, customerName, customerEmail, readOnly = false, taxRate = 0 }: ChangeOrderApprovalsProps) {
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [signatureModalId, setSignatureModalId] = useState<string | null>(null);
@@ -153,19 +162,40 @@ export function ChangeOrderApprovals({ changeOrders, invoiceId, customerName, cu
                   )}
                 </div>
               </div>
-              <div className="mt-3 divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-200 bg-white">
+              <div className="mt-3 divide-y divide-slate-100 overflow-hidden rounded-lg border border-slate-200 bg-white px-3">
                 {order.items.map((item) => (
-                  <div key={item.id} className="px-3 py-2">
-                    <div className="font-semibold text-[13px] text-slate-900">{item.name}</div>
-                    {item.description ? (
-                      <p className="mt-1 whitespace-pre-line text-[12px] text-slate-600">{item.description}</p>
-                    ) : null}
-                    <div className="mt-1 text-[13px] font-semibold text-slate-800">
-                      {formatCurrency(item.quantity * item.unit_price)}
-                    </div>
-                  </div>
+                  <ReadOnlyLineItemRow
+                    key={item.id}
+                    name={item.name}
+                    description={item.description}
+                    price={item.quantity * item.unit_price}
+                  />
                 ))}
               </div>
+
+              {(() => {
+                const totals = computeOrderTotals(order.items, taxRate);
+                return (
+                  <div className="mt-4 flex justify-end">
+                    <div className="w-full max-w-xs space-y-1 text-right text-sm">
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span>Subtotal</span>
+                        <span>{formatCurrency(totals.subtotal)}</span>
+                      </div>
+                      {taxRate > 0 && (
+                        <div className="flex items-center justify-between text-slate-600">
+                          <span>Tax ({taxRate}%)</span>
+                          <span>{formatCurrency(totals.taxAmount)}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between border-t border-slate-200 pt-1 text-base font-semibold text-slate-900">
+                        <span>Total</span>
+                        <span>{formatCurrency(totals.total)}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           ))}
         </div>
@@ -197,19 +227,41 @@ export function ChangeOrderApprovals({ changeOrders, invoiceId, customerName, cu
                   <span className="text-[11px] font-semibold uppercase tracking-wide text-emerald-800">Accepted</span>
                 </div>
               </div>
-              <div className="divide-y divide-slate-100 overflow-hidden rounded-md border border-slate-200 bg-white">
+              <div className="divide-y divide-slate-100 overflow-hidden rounded-md border border-slate-200 bg-white px-3">
                 {order.items.map((item) => (
-                  <div key={item.id} className="px-3 py-2">
-                    <div className="font-semibold text-[13px] text-slate-900">{item.name}</div>
-                    {item.description ? (
-                      <p className="mt-1 whitespace-pre-line text-[12px] text-slate-600">{item.description}</p>
-                    ) : null}
-                    <div className="mt-1 text-[13px] font-semibold text-slate-800">
-                      {formatCurrency(item.quantity * item.unit_price)}
-                    </div>
-                  </div>
+                  <ReadOnlyLineItemRow
+                    key={item.id}
+                    name={item.name}
+                    description={item.description}
+                    price={item.quantity * item.unit_price}
+                  />
                 ))}
               </div>
+
+              {(() => {
+                const totals = computeOrderTotals(order.items, taxRate);
+                return (
+                  <div className="mt-4 flex justify-end">
+                    <div className="w-full max-w-xs space-y-1 text-right text-sm">
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span>Subtotal</span>
+                        <span>{formatCurrency(totals.subtotal)}</span>
+                      </div>
+                      {taxRate > 0 && (
+                        <div className="flex items-center justify-between text-slate-600">
+                          <span>Tax ({taxRate}%)</span>
+                          <span>{formatCurrency(totals.taxAmount)}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between border-t border-slate-200 pt-1 text-base font-semibold text-slate-900">
+                        <span>Total</span>
+                        <span>{formatCurrency(totals.total)}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
               {order.signature_text ? (
                 <div className="mt-2">
                   {isDrawnSignature(order) ? (
