@@ -38,7 +38,7 @@ export function useDealDetailHeaderAction() {
 function DealDetailHeader({ action, backAction }: { action: HeaderAction | null; backAction: BackAction | null }) {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white" role="banner">
-      <div className="flex h-14 w-full items-center justify-between gap-3 px-4">
+      <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between gap-3 px-4">
         {backAction ? (
           <button
             type="button"
