@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { formatCurrency } from "@/lib/currency";
 import { apiClient } from "@/services/api";
 import { LoadingPage } from "@/components/ui/loading-spinner";
+import { ReadOnlyLineItemRow } from "@/components/shared/line-item-card";
 import type { InvoiceShareSnapshot } from "@/types/invoice-shares";
 
 function formatAddress(address: {
@@ -116,49 +117,55 @@ export default function InvoiceSharePage() {
 
   return (
     <div className="min-h-screen bg-slate-100">
-      <div className="mx-auto w-full max-w-3xl px-6 py-10">
-        <header className="border-b border-slate-200 pb-6">
-          <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      {/* Sticky header with balance due */}
+      <div className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Balance Due</p>
+            <p className="text-2xl font-semibold text-slate-900">{formatCurrency(balanceDue)}</p>
+          </div>
+          <div className="self-end sm:self-auto">
+            <div className="flex items-center gap-3 text-sm text-slate-600">
+              {dueDate ? (
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Due </span>
+                  <span className="font-medium text-slate-900">{dueDate}</span>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto w-full max-w-3xl px-6 pb-12 pt-10">
+        <div className="rounded-2xl bg-white px-6 py-8 shadow-xl">
+          <header className="border-b border-slate-200 pb-6">
+            <div className="grid gap-6 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Invoice</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Invoice #{invoice.invoice_number}
+                </p>
                 <h1 className="mt-1 text-2xl font-semibold text-slate-900">
-                  {invoice.title.trim() || `Invoice ${invoice.invoice_number}`}
+                  Invoice
                 </h1>
-                <dl className="mt-3 space-y-1 text-[13px] text-slate-600">
-                  <div className="flex items-center gap-2">
-                    <dt className="font-medium text-slate-500">Invoice #</dt>
-                    <dd>{invoice.invoice_number}</dd>
-                  </div>
-                  {issueDate ? (
-                    <div className="flex items-center gap-2">
-                      <dt className="font-medium text-slate-500">Issued</dt>
-                      <dd>{issueDate}</dd>
-                    </div>
-                  ) : null}
-                  {dueDate ? (
-                    <div className="flex items-center gap-2">
-                      <dt className="font-medium text-slate-500">Due</dt>
-                      <dd>{dueDate}</dd>
-                    </div>
-                  ) : null}
-                </dl>
+                <p className="mt-2 text-sm text-slate-600">Prepared for {customer.name}</p>
+                {issueDate ? (
+                  <p className="mt-3 text-xs font-medium uppercase tracking-wide text-slate-400">
+                    Issued {issueDate}
+                  </p>
+                ) : null}
               </div>
-              <div className="flex flex-col items-start gap-3 lg:items-end">
-                <div className="flex items-center justify-center">
+              <div className="text-sm text-slate-600">
+                <div className="flex items-center justify-end">
                   {companyLogoUrl ? (
                     <img
                       src={companyLogoUrl}
                       alt={`${companyDisplayName || "Company"} logo`}
                       className="h-12 w-auto max-w-[140px] object-contain"
                     />
-                  ) : (
-                    <span className="inline-flex h-12 w-12 items-center justify-center rounded-md bg-slate-900 text-sm font-semibold uppercase text-white">
-                      {(companyDisplayName || "Company").slice(0, 2).toUpperCase()}
-                    </span>
-                  )}
+                  ) : null}
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                <div className="mt-4 space-y-1 text-right">
                   {companyDisplayName ? (
                     <p className="font-semibold text-slate-900">{companyDisplayName}</p>
                   ) : null}
@@ -169,7 +176,7 @@ export default function InvoiceSharePage() {
                       href={companyWebsite}
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-1 inline-flex items-center gap-1 text-blue-600 underline underline-offset-2"
+                      className="inline-flex items-center justify-end gap-1 text-blue-600 underline underline-offset-2"
                     >
                       <span>Website</span>
                       {companyWebsiteDisplay ? (
@@ -178,111 +185,102 @@ export default function InvoiceSharePage() {
                     </a>
                   ) : null}
                 </div>
-                <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-right">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Balance Due</p>
-                  <p className="text-2xl font-semibold text-slate-900">{formatCurrency(balanceDue)}</p>
+              </div>
+
+              <div className="col-span-full grid gap-4 sm:grid-cols-2">
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                  <p className="font-semibold text-slate-900">Bill To</p>
+                  <p>{customer.name}</p>
+                  <div className="mt-2 space-y-1">
+                    <p>{customer.email ?? "No email provided"}</p>
+                    <p>{customer.phone ?? "No phone provided"}</p>
+                  </div>
+                  {propertyAddress ? (
+                    <p className="mt-2 whitespace-pre-line text-slate-500">{propertyAddress}</p>
+                  ) : null}
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                  <p className="font-semibold text-slate-900">From</p>
+                  <p>{companyDisplayName}</p>
+                  <div className="mt-2 space-y-1">
+                    <p>{companyContactEmail ?? ""}</p>
+                    <p>{companyContactPhone ?? ""}</p>
+                  </div>
+                  {companyAddress ? (
+                    <p className="mt-2 whitespace-pre-line text-slate-500">{companyAddress}</p>
+                  ) : null}
                 </div>
               </div>
             </div>
-          </div>
-        </header>
+          </header>
 
-        <section className="mt-8 grid gap-4 rounded-lg border border-slate-200 bg-white p-6 sm:grid-cols-2">
-          <div>
-            <h2 className="text-sm font-semibold text-slate-900">Bill To</h2>
-            <p className="mt-2 text-[13px] text-slate-700">{customer.name}</p>
-            {customer.email ? <p className="text-[12px] text-slate-500">{customer.email}</p> : null}
-            {customer.phone ? <p className="text-[12px] text-slate-500">{customer.phone}</p> : null}
-            {propertyAddress ? (
-              <pre className="mt-3 whitespace-pre-wrap text-[12px] text-slate-500">{propertyAddress}</pre>
-            ) : null}
-          </div>
-          <div>
-            <h2 className="text-sm font-semibold text-slate-900">From</h2>
-            <p className="mt-2 text-[13px] text-slate-700">{companyDisplayName}</p>
-            {companyContactEmail ? <p className="text-[12px] text-slate-500">{companyContactEmail}</p> : null}
-            {companyContactPhone ? <p className="text-[12px] text-slate-500">{companyContactPhone}</p> : null}
-            {companyAddress ? (
-              <pre className="mt-3 whitespace-pre-wrap text-[12px] text-slate-500">{companyAddress}</pre>
-            ) : null}
-          </div>
-        </section>
-
-        <section className="mt-8 overflow-hidden rounded-lg border border-slate-200 bg-white">
-          <table className="w-full table-fixed">
-            <thead className="bg-slate-50 text-left text-[12px] font-semibold uppercase tracking-wide text-slate-500">
-              <tr>
-                <th className="px-4 py-3">Description</th>
-                <th className="w-16 px-4 py-3 text-right">Qty</th>
-                <th className="w-24 px-4 py-3 text-right">Unit</th>
-                <th className="w-24 px-4 py-3 text-right">Amount</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 text-[12px] text-slate-700">
+          <section className="mt-6">
+            <div className="divide-y divide-slate-100">
               {invoice.line_items.length === 0 ? (
-                <tr>
-                  <td className="px-4 py-4 text-center text-slate-500" colSpan={4}>
-                    No line items yet.
-                  </td>
-                </tr>
+                <p className="py-6 text-center text-sm text-slate-500">
+                  No line items added yet.
+                </p>
               ) : (
-                invoice.line_items.map((item) => {
-                  const lineTotal = item.quantity * item.unit_price;
-                  return (
-                    <tr key={item.id}>
-                      <td className="px-4 py-3 align-top">
-                        <p className="font-medium text-slate-900">{item.name}</p>
-                        {item.description ? (
-                          <p className="mt-1 text-[12px] text-slate-500">{item.description}</p>
-                        ) : null}
-                      </td>
-                      <td className="px-4 py-3 text-right align-top">{item.quantity.toFixed(2)}</td>
-                      <td className="px-4 py-3 text-right align-top">{formatCurrency(item.unit_price)}</td>
-                      <td className="px-4 py-3 text-right align-top">{formatCurrency(lineTotal)}</td>
-                    </tr>
-                  );
-                })
+                invoice.line_items.map((item) => (
+                  <ReadOnlyLineItemRow
+                    key={item.id}
+                    name={item.name}
+                    description={item.description}
+                    price={item.quantity * item.unit_price}
+                  />
+                ))
               )}
-            </tbody>
-          </table>
-          <div className="flex flex-col gap-2 border-t border-slate-200 bg-slate-50 px-4 py-4 text-[12px] text-slate-600">
-            <div className="flex items-center justify-between">
-              <span>Subtotal</span>
-              <span>{formatCurrency(totals.subtotal)}</span>
             </div>
-            <div className="flex items-center justify-between font-semibold text-slate-900">
-              <span>Total</span>
-              <span>{formatCurrency(totals.total)}</span>
-            </div>
-            <div className="flex items-center justify-between text-[12px] text-slate-600">
-              <span>Balance Due</span>
-              <span>{formatCurrency(balanceDue)}</span>
-            </div>
-          </div>
-        </section>
 
-        {companyReviewUrl ? (
-          <section className="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-            <p className="font-semibold text-amber-900">Love our work?</p>
-            <p className="mt-1">
-              <a
-                href={companyReviewUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-amber-700 underline underline-offset-2"
-              >
-                Leave us a review
-              </a>
-            </p>
+            <div className="mt-6 flex justify-end">
+              <div className="w-full max-w-xs space-y-1 text-right text-sm">
+                <div className="flex items-center justify-between text-slate-600">
+                  <span>Subtotal</span>
+                  <span>{formatCurrency(totals.subtotal)}</span>
+                </div>
+                <div className="flex items-center justify-between border-t border-slate-200 pt-1 text-base font-semibold text-slate-900">
+                  <span>Total</span>
+                  <span>{formatCurrency(totals.total)}</span>
+                </div>
+                {balanceDue !== totals.total && (
+                  <div className="flex items-center justify-between text-slate-600">
+                    <span>Balance Due</span>
+                    <span className="font-semibold text-slate-900">{formatCurrency(balanceDue)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </section>
-        ) : null}
 
-        {invoice.notes ? (
-          <section className="mt-6 rounded-lg border border-slate-200 bg-white px-5 py-4">
-            <h3 className="text-sm font-semibold text-slate-900">Notes</h3>
-            <p className="mt-2 whitespace-pre-wrap text-[12px] text-slate-600">{invoice.notes}</p>
-          </section>
-        ) : null}
+          {invoice.notes ? (
+            <section className="mt-6">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                <h2 className="text-sm font-semibold text-slate-900">Notes</h2>
+                <p className="mt-2 whitespace-pre-line text-sm text-slate-600">{invoice.notes}</p>
+              </div>
+            </section>
+          ) : null}
+
+          {companyReviewUrl ? (
+            <section className="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+              <p className="font-semibold text-amber-900">Love our work?</p>
+              <p className="mt-1">
+                <a
+                  href={companyReviewUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-amber-700 underline underline-offset-2"
+                >
+                  Leave us a review
+                </a>
+              </p>
+            </section>
+          ) : null}
+
+          <footer className="mt-8 border-t border-slate-200 pt-4 text-center text-xs text-slate-500">
+            <p>Sent via ServiceFlow • Invoice #{invoice.invoice_number}</p>
+          </footer>
+        </div>
       </div>
     </div>
   );
