@@ -18,14 +18,29 @@ export type ProposalTemplateContext = {
   proposalUrl?: string | null;
   invoiceUrl?: string | null;
   changeOrderNumber?: string | null;
+  currentUserName?: string | null;
+  salespersonSignature?: string | null;
 };
 
 export type WorkOrderTemplateContext = {
   companyName: string;
+  companyPhone?: string | null;
+  companyWebsite?: string | null;
   clientName: string;
   quoteNumber: string;
   workOrderUrl: string;
   workOrderAddress: string;
+  currentUserName?: string | null;
+  salespersonSignature?: string | null;
+  // Job-related fields
+  jobDate?: string | null;
+  jobTime?: string | null;
+  jobStartDate?: string | null;
+  jobEndDate?: string | null;
+  jobStartTime?: string | null;
+  jobEndTime?: string | null;
+  jobLocation?: string | null;
+  jobAddress?: string | null;
 };
 
 export type WorkOrderDialogContext = {

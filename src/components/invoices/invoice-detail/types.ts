@@ -14,6 +14,8 @@ export type TemplateContext = {
   invoiceNumber: string;
   invoiceUrl?: string | null;
   paymentAmount?: string | null;
+  currentUserName?: string | null;
+  salespersonSignature?: string | null;
 };
 
 export type InvoiceDetailProps = {

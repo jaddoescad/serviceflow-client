@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import type { DealRecord, ScheduleDealInput, UpdateDealAppointmentInput } from "@/features/deals";
 import { useDealInvalidation } from "@/features/deals";
-import type { ContactAddressRecord, ContactRecord } from "@/features/contacts";
+import type { ContactRecord } from "@/features/contacts";
 import { useSupabaseBrowserClient } from "@/hooks/useSupabaseBrowserClient";
 import { createDeal, scheduleDeal, updateDealAppointment, deleteAppointment } from "@/features/deals";
 import { createContact, addContactAddresses } from "@/features/contacts";
@@ -16,10 +16,8 @@ import { Modal, ModalHeader, ModalBody, ModalFooter, Button } from "@/components
 import type { ScheduleDealModalProps, FormState, AddressFormState, CommunicationMethod } from "./types";
 import { DEFAULT_MODAL_COPY, NEW_CONTACT_OPTION } from "./constants";
 import {
-  EMPTY_ADDRESS_FORM,
   buildDateTime,
   hasAddressFormContent,
-  mapContactAddressToForm,
   resolveMemberUserId,
   sortContacts,
   getTimeOffset,
@@ -84,10 +82,6 @@ export function ScheduleDealModal({
     setForm,
     addressForm,
     setAddressForm,
-    selectedAddressId,
-    setSelectedAddressId,
-    savedContactAddresses,
-    setSavedContactAddresses,
     contactOptions,
     selectedContactId,
     selectedContact,
@@ -140,10 +134,8 @@ export function ScheduleDealModal({
   } = useAddressSuggestions({
     open,
     addressLine1: addressForm.addressLine1,
-    selectedAddressId,
     onAddressUpdate: (updates) => {
       setAddressForm((prev) => ({ ...prev, ...updates }));
-      setSelectedAddressId("new");
     },
   });
 
@@ -190,11 +182,6 @@ export function ScheduleDealModal({
       setIsDeleting(false);
     }
   }, [open]);
-
-  const selectedContactAddress =
-    selectedAddressId === "new"
-      ? null
-      : savedContactAddresses.find((address) => address.id === selectedAddressId) ?? null;
 
   // Handle close with step reset
   const handleClose = () => {
@@ -290,42 +277,9 @@ export function ScheduleDealModal({
     <K extends keyof AddressFormState>(field: K) =>
     (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
       setAddressForm((prev) => ({ ...prev, [field]: event.target.value }));
-      setSelectedAddressId("new");
     },
-    [setAddressForm, setSelectedAddressId]
+    [setAddressForm]
   );
-
-  const handleSelectSavedAddress = useCallback(
-    (address: ContactAddressRecord) => {
-      setSelectedAddressId(address.id);
-      setAddressForm(mapContactAddressToForm(address));
-    },
-    [setSelectedAddressId, setAddressForm]
-  );
-
-  const handleUseNewAddress = useCallback(() => {
-    const currentSelection =
-      selectedAddressId === "new"
-        ? null
-        : savedContactAddresses.find((addr) => addr.id === selectedAddressId) ?? null;
-
-    if (currentSelection) {
-      setAddressForm(mapContactAddressToForm(currentSelection));
-    } else if (!isNewMode && deal?.service_address) {
-      setAddressForm(mapContactAddressToForm(deal.service_address));
-    } else if (isNewMode && selectedContact?.addresses?.length) {
-      setAddressForm(mapContactAddressToForm(selectedContact.addresses[0]));
-    } else {
-      setAddressForm(EMPTY_ADDRESS_FORM);
-    }
-
-    setSelectedAddressId("new");
-  }, [selectedAddressId, savedContactAddresses, isNewMode, deal, selectedContact, setAddressForm, setSelectedAddressId]);
-
-  const handleClearAddress = useCallback(() => {
-    setSelectedAddressId("new");
-    setAddressForm(EMPTY_ADDRESS_FORM);
-  }, [setSelectedAddressId, setAddressForm]);
 
   const handleCommunicationMethodChange = useCallback(
     (method: CommunicationMethod) => {
@@ -416,7 +370,6 @@ export function ScheduleDealModal({
         if (isExistingContactSelected && selectedContact) {
           contactRecord = selectedContact;
           contactId = selectedContact.id;
-          setSavedContactAddresses(selectedContact.addresses ?? []);
         } else {
           const createdContact = await createContact({
             company_id: companyId,
@@ -432,12 +385,8 @@ export function ScheduleDealModal({
         }
       }
 
-      let addressRecord = selectedContactAddress;
-      if (!addressRecord && selectedAddressId !== "new") {
-        addressRecord = savedContactAddresses.find((addr) => addr.id === selectedAddressId) ?? null;
-      }
-
-      if (selectedAddressId === "new" && contactId && addressHasContent) {
+      let addressRecord = null;
+      if (contactId && addressHasContent) {
         const [insertedAddress] = await addContactAddresses(contactId, [
           {
             address_line1: trimmedAddressForm.addressLine1 || null,
@@ -451,9 +400,6 @@ export function ScheduleDealModal({
 
         if (insertedAddress) {
           addressRecord = insertedAddress;
-          setSavedContactAddresses((prev) => [...prev, insertedAddress]);
-          setSelectedAddressId(insertedAddress.id);
-          setAddressForm(mapContactAddressToForm(insertedAddress));
         }
       }
 
@@ -679,18 +625,12 @@ export function ScheduleDealModal({
 
             <ServiceAddressSection
               addressForm={addressForm}
-              selectedAddressId={selectedAddressId}
-              contactAddresses={savedContactAddresses}
-              selectedContactAddress={selectedContactAddress}
               suggestions={addressSuggestions}
               showSuggestions={showAddressSuggestions}
               isFetchingAddress={isFetchingAddress}
               onAddressFieldChange={handleAddressFieldChange}
               onAddressBlur={handleAddressBlur}
               onAddressFocus={handleAddressFocus}
-              onSelectSavedAddress={handleSelectSavedAddress}
-              onUseNewAddress={handleUseNewAddress}
-              onClearAddress={handleClearAddress}
               onSuggestionSelect={handleSuggestionSelect}
             />
 

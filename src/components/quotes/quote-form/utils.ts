@@ -38,18 +38,25 @@ export const buildProposalTemplateDefaults = (
   const lastName = restName.join(" ");
 
   const templateVars = {
+    // Company keywords
     "company-name": context.companyName,
     "company-phone": context.companyPhone ?? "",
     "company-website": context.companyWebsite ?? "",
+    // Client keywords
     "customer-name": context.clientName,
     "client-name": context.clientName,
     "first-name": firstName || context.clientName || "Client",
     "last-name": lastName,
+    // User keywords
+    "current-user-name": context.currentUserName ?? "",
+    "salesperson-signature": context.salespersonSignature ?? "",
+    // Proposal keywords
     "quote-number": context.quoteNumber,
     "proposal-button": formatButtonMarker(context.proposalUrl, "View Proposal"),
     "proposal-url": context.proposalUrl ?? "",
     "invoice-button": formatButtonMarker(context.invoiceUrl, "View Invoice"),
     "invoice-url": context.invoiceUrl ?? "",
+    // Change order keywords
     "change-order-number": context.changeOrderNumber ?? "",
     "change-order-button": formatButtonMarker(context.proposalUrl, "View Change Order"),
   };
@@ -69,14 +76,31 @@ export const buildWorkOrderTemplateDefaults = (
   const lastName = restName.join(" ");
 
   const templateVars = {
+    // Company keywords
     "company-name": context.companyName,
+    "company-phone": context.companyPhone ?? "",
+    "company-website": context.companyWebsite ?? "",
+    // Client keywords
     "customer-name": context.clientName,
     "client-name": context.clientName,
     "first-name": firstName || context.clientName || "Client",
     "last-name": lastName,
+    // User keywords
+    "current-user-name": context.currentUserName ?? "",
+    "salesperson-signature": context.salespersonSignature ?? "",
+    // Work order keywords
     "quote-number": context.quoteNumber,
     "work-order-button": formatButtonMarker(context.workOrderUrl, "View Work Order"),
     "work-order-address": context.workOrderAddress,
+    // Job keywords
+    "job-date": context.jobDate ?? "",
+    "job-time": context.jobTime ?? "",
+    "job-start-date": context.jobStartDate ?? "",
+    "job-end-date": context.jobEndDate ?? "",
+    "job-start-time": context.jobStartTime ?? "",
+    "job-end-time": context.jobEndTime ?? "",
+    "job-location": context.jobLocation ?? "",
+    "job-address": context.jobAddress ?? "",
   };
 
   return {

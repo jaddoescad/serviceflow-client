@@ -121,13 +121,22 @@ export const formatJobTime = (time: string) => {
 export const buildJobTemplateVars = (
   form: FormState,
   deal: DealRecord,
-  companyName?: string | null
+  companyName?: string | null,
+  options?: {
+    companyPhone?: string | null;
+    companyWebsite?: string | null;
+    currentUserName?: string | null;
+    salespersonSignature?: string | null;
+    workOrderButton?: string | null;
+  }
 ) => {
   const firstName = (deal.contact?.first_name || deal.first_name || "Client").trim();
   const lastName = (deal.contact?.last_name || deal.last_name || "").trim();
   const clientName = [firstName, lastName].filter(Boolean).join(" ") || "Client";
   const jobDate = formatJobDate(form.startDate) || "Date TBD";
   const jobTime = formatJobTime(form.startTime) || "Time TBD";
+  const jobEndDate = formatJobDate(form.endDate) || "";
+  const jobEndTime = formatJobTime(form.endTime) || "";
   const address = (() => {
     const addr = deal.service_address || deal.contact?.addresses?.[0] || null;
     if (!addr) return "";
@@ -147,20 +156,45 @@ export const buildJobTemplateVars = (
   const schedule = [jobDate, jobTime].filter(Boolean).join(" at ");
 
   return {
+    // Client keywords
+    "first-name": firstName || "Client",
+    "last-name": lastName || "",
+    "client-name": clientName,
+    "customer-name": clientName,
+    // Company keywords
+    "company-name": companyName?.trim() || "Your Company",
+    "company-phone": options?.companyPhone ?? "",
+    "company-website": options?.companyWebsite ?? "",
+    // User keywords
+    "current-user-name": options?.currentUserName ?? "",
+    "salesperson-signature": options?.salespersonSignature ?? "",
+    // Job keywords
+    "job-date": jobDate,
+    "job-time": jobTime,
+    "job-start-date": jobDate,
+    "job-end-date": jobEndDate,
+    "job-start-time": jobTime,
+    "job-end-time": jobEndTime,
+    "job-location": address || "Address TBD",
+    "job-address": address || "Address TBD",
+    // Work order keywords
+    "work-order-address": address || "Address TBD",
+    "work-order-button": options?.workOrderButton ?? "",
+    // Legacy snake_case keys for backwards compatibility
     first_name: firstName || "Client",
     last_name: lastName || "",
     client_name: clientName,
     customer_name: clientName,
     company_name: companyName?.trim() || "Your Company",
-    company_phone: "",
-    company_website: "",
+    company_phone: options?.companyPhone ?? "",
+    company_website: options?.companyWebsite ?? "",
     job_date: jobDate,
     job_time: jobTime,
     appointment_date: jobDate,
     appointment_time: jobTime,
     job_address: address || "Address TBD",
     job_schedule: schedule || "Schedule TBD",
-    work_order_button: "",
+    work_order_button: options?.workOrderButton ?? "",
   };
 };
 

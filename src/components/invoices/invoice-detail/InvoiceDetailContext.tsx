@@ -37,6 +37,7 @@ import { queryKeys } from "@/hooks/query-keys";
 import { invoiceDetailKeys } from "@/hooks/useInvoiceDetail";
 
 import { formatButtonMarker } from "@/lib/template-variables";
+import { useCompanyContext } from "@/contexts/AuthContext";
 import type { InvoiceDetailProps } from "./types";
 import { buildInvoiceTemplateDefaults, buildPaymentRequestTemplateDefaults } from "./utils";
 
@@ -250,8 +251,12 @@ export function InvoiceDetailProvider({
 }: InvoiceDetailProviderProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { member } = useCompanyContext();
   const invoiceDeliveryRepository = useMemo(() => createInvoiceDeliveryRepository(), []);
   const supabaseBrowserClient = useMemo(() => createSupabaseBrowserClient(), []);
+
+  // Current user info for template variables
+  const currentUserName = member?.display_name ?? "";
 
   // ============================================================================
   // Template State
@@ -331,8 +336,9 @@ export function InvoiceDetailProvider({
         clientName,
         invoiceNumber: invoiceState.invoice_number,
         invoiceUrl: invoiceShareUrl,
+        currentUserName,
       }),
-    [clientName, companyName, companyPhone, companyWebsite, invoiceTemplateSnapshot, invoiceShareUrl, invoiceState.invoice_number]
+    [clientName, companyName, companyPhone, companyWebsite, invoiceTemplateSnapshot, invoiceShareUrl, invoiceState.invoice_number, currentUserName]
   );
 
   const buildPaymentRequestDefaults = useCallback(
@@ -345,6 +351,7 @@ export function InvoiceDetailProvider({
         invoiceNumber: invoiceState.invoice_number,
         invoiceUrl: invoiceShareUrl,
         paymentAmount: formatCurrency(request.amount),
+        currentUserName,
       }),
     [
       clientName,
@@ -354,6 +361,7 @@ export function InvoiceDetailProvider({
       invoiceShareUrl,
       invoiceState.invoice_number,
       paymentRequestTemplateSnapshot,
+      currentUserName,
     ]
   );
 

@@ -14,6 +14,7 @@ import type { CommunicationTemplateSnapshot } from "@/types/communication-templa
 import { renderCommunicationTemplate, toCommunicationTemplateSnapshot } from "@/lib/communication-templates";
 import { getCommunicationTemplateByKey } from "@/features/communications";
 
+import { useCompanyContext } from "@/contexts/AuthContext";
 import type { JobScheduleModalProps, FormState } from "./types";
 import {
   JOB_DEFAULT_EMAIL_SUBJECT,
@@ -45,6 +46,7 @@ export function useJobScheduleForm({
   companyMembers: externalCompanyMembers,
 }: JobScheduleModalProps) {
   const { invalidateDashboard, invalidateCompanyDeals, invalidateDeal } = useDealInvalidation();
+  const { company, member } = useCompanyContext();
   const [form, setForm] = useState<FormState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -277,7 +279,11 @@ export function useJobScheduleForm({
         .map((item) => item.trim())
         .filter(Boolean)[0];
 
-      const templateVars = buildJobTemplateVars(form, deal, companyName);
+      const templateVars = buildJobTemplateVars(form, deal, companyName, {
+        companyPhone: company?.settings?.contact_phone ?? null,
+        companyWebsite: company?.settings?.company_website ?? null,
+        currentUserName: member?.display_name ?? null,
+      });
       const renderedEmailSubject = renderCommunicationTemplate(
         form.emailSubject.trim() || jobTemplate.emailSubject || JOB_DEFAULT_EMAIL_SUBJECT,
         templateVars

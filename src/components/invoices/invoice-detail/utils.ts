@@ -32,13 +32,19 @@ export function buildInvoiceTemplateDefaults(
   const lastName = restName.join(" ");
 
   const templateVars = {
+    // Company keywords
     "company-name": context.companyName,
     "company-phone": context.companyPhone ?? "",
     "company-website": context.companyWebsite ?? "",
+    // Client keywords
     "client-name": context.clientName,
     "customer-name": context.clientName,
     "first-name": firstName || context.clientName || "Client",
     "last-name": lastName,
+    // User keywords
+    "current-user-name": context.currentUserName ?? "",
+    "salesperson-signature": context.salespersonSignature ?? "",
+    // Invoice keywords
     "invoice-number": context.invoiceNumber,
     "invoice-button": formatButtonMarker(context.invoiceUrl, "View Invoice"),
     "invoice-url": context.invoiceUrl ?? "",
@@ -71,13 +77,19 @@ export const buildPaymentRequestTemplateDefaults = (
   const lastName = restName.join(" ");
 
   const templateVars = {
+    // Company keywords
     "company-name": context.companyName,
     "company-phone": context.companyPhone ?? "",
     "company-website": context.companyWebsite ?? "",
+    // Client keywords
     "client-name": context.clientName,
     "customer-name": context.clientName,
     "first-name": firstName || context.clientName || "Client",
     "last-name": lastName,
+    // User keywords
+    "current-user-name": context.currentUserName ?? "",
+    "salesperson-signature": context.salespersonSignature ?? "",
+    // Invoice keywords
     "invoice-number": context.invoiceNumber,
     "invoice-button": formatButtonMarker(context.invoiceUrl, "View Invoice"),
     "invoice-url": context.invoiceUrl ?? "",
@@ -103,13 +115,19 @@ export const buildPaymentReceiptTemplateDefaults = (
   const lastName = restName.join(" ");
 
   const templateVars = {
+    // Company keywords
     "company-name": context.companyName,
     "company-phone": context.companyPhone ?? "",
     "company-website": context.companyWebsite ?? "",
+    // Client keywords
     "client-name": context.clientName,
     "customer-name": context.clientName,
     "first-name": firstName || context.clientName || "Client",
     "last-name": lastName,
+    // User keywords
+    "current-user-name": context.currentUserName ?? "",
+    "salesperson-signature": context.salespersonSignature ?? "",
+    // Invoice keywords
     "invoice-number": context.invoiceNumber,
     "invoice-button": formatButtonMarker(context.invoiceUrl, "View Invoice"),
     "invoice-url": context.invoiceUrl ?? "",

@@ -9,14 +9,12 @@ import type { AddressFormState } from "../types";
 type UseAddressSuggestionsProps = {
   open: boolean;
   addressLine1: string;
-  selectedAddressId: string | "new";
   onAddressUpdate: (updates: Partial<AddressFormState>) => void;
 };
 
 export function useAddressSuggestions({
   open,
   addressLine1,
-  selectedAddressId,
   onAddressUpdate,
 }: UseAddressSuggestionsProps) {
   const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
@@ -25,7 +23,7 @@ export function useAddressSuggestions({
 
   // Fetch suggestions when address line 1 changes
   useEffect(() => {
-    if (!open || selectedAddressId !== "new") {
+    if (!open) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
@@ -61,7 +59,7 @@ export function useAddressSuggestions({
       window.clearTimeout(timeout);
       controller.abort();
     };
-  }, [addressLine1, open, selectedAddressId]);
+  }, [addressLine1, open]);
 
   const handleSuggestionSelect = async (suggestion: PlaceSuggestion) => {
     setShowSuggestions(false);

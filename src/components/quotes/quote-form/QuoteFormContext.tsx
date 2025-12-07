@@ -41,6 +41,7 @@ import { createProposalAttachmentsRepository } from "@/services/proposal-attachm
 import { createWorkOrderDeliveryRepository } from "@/services/work-order-delivery";
 import { createImageThumbnail, isImageContentType } from "@/lib/attachments";
 import { useDealDetailHeaderAction } from "@/layouts/DealDetailLayout";
+import { useCompanyContext } from "@/contexts/AuthContext";
 
 import type { QuoteFormProps, WorkOrderDialogContext } from "./types";
 import { mapRecordToEditable, createEmptyLineItem, buildProposalTemplateDefaults, buildWorkOrderTemplateDefaults, formatDateTime, getStatusLabel } from "./utils";
@@ -236,6 +237,10 @@ export function QuoteFormProvider({
   const queryClient = useQueryClient();
   const { invalidateQuoteCaches } = useInvalidateQuotes();
   const { setHeaderAction, setBackAction } = useDealDetailHeaderAction();
+  const { member } = useCompanyContext();
+
+  // Current user info for template variables
+  const currentUserName = member?.display_name ?? "";
 
   // Repositories
   const attachmentsRepository = useMemo(() => createProposalAttachmentsRepository(), []);
@@ -422,22 +427,28 @@ export function QuoteFormProvider({
   const workOrderStandardDefaults = useMemo(() => {
     return buildWorkOrderTemplateDefaults(workOrderTemplate, {
       companyName,
+      companyPhone: companyBranding?.phone,
+      companyWebsite: companyBranding?.website,
       clientName,
       quoteNumber: displayQuoteNumber,
       workOrderUrl: workOrderShareUrl ?? "",
       workOrderAddress: propertyAddress,
+      currentUserName,
     });
-  }, [workOrderTemplate, companyName, clientName, displayQuoteNumber, workOrderShareUrl, propertyAddress]);
+  }, [workOrderTemplate, companyName, companyBranding?.phone, companyBranding?.website, clientName, displayQuoteNumber, workOrderShareUrl, propertyAddress, currentUserName]);
 
   const workOrderSecretDefaults = useMemo(() => {
     return buildWorkOrderTemplateDefaults(workOrderTemplate, {
       companyName,
+      companyPhone: companyBranding?.phone,
+      companyWebsite: companyBranding?.website,
       clientName,
       quoteNumber: displayQuoteNumber,
       workOrderUrl: secretWorkOrderShareUrl ?? "",
       workOrderAddress: propertyAddress,
+      currentUserName,
     });
-  }, [workOrderTemplate, companyName, clientName, displayQuoteNumber, secretWorkOrderShareUrl, propertyAddress]);
+  }, [workOrderTemplate, companyName, companyBranding?.phone, companyBranding?.website, clientName, displayQuoteNumber, secretWorkOrderShareUrl, propertyAddress, currentUserName]);
 
   const currentWorkOrderDefaults = workOrderDialogState?.variant === "secret"
     ? workOrderSecretDefaults
@@ -994,6 +1005,7 @@ export function QuoteFormProvider({
         proposalUrl: shareUrl,
         invoiceUrl: invoiceShareUrl,
         changeOrderNumber: options?.changeOrderNumber ?? null,
+        currentUserName,
       });
 
       setSendContext(variant);
