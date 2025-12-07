@@ -2,6 +2,7 @@ import type { DealRecord } from "@/features/deals";
 import type { ContactRecord, ContactAddressRecord } from "@/features/contacts";
 import type { CompanyMemberRecord } from "@/features/companies";
 import type { AppointmentRecord } from "@/features/appointments";
+import { EMPTY_ADDRESS_FORM } from "@/components/shared";
 import type { FormState, AddressFormState, CommunicationMethod, MemberOption } from "./types";
 import {
   DEFAULT_COLOR,
@@ -11,18 +12,12 @@ import {
   TIME_STEP_MINUTES,
 } from "./constants";
 
+// Re-export for backwards compatibility
+export { EMPTY_ADDRESS_FORM };
+
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export const isValidUuid = (value: string): boolean => UUID_REGEX.test(value);
-
-export const EMPTY_ADDRESS_FORM: AddressFormState = {
-  addressLine1: "",
-  addressLine2: "",
-  city: "",
-  state: "",
-  postalCode: "",
-  country: "",
-};
 
 // Template population
 export const populateAppointmentTemplate = (

@@ -3,6 +3,9 @@ import type { ContactRecord } from "@/features/contacts";
 import type { CompanyMemberRecord } from "@/features/companies";
 import type { AppointmentRecord } from "@/features/appointments";
 
+// Re-export AddressFormState from shared
+export type { AddressFormState } from "@/components/shared";
+
 export type ScheduleDealModalCopy = {
   createHeader: string;
   editHeader: string;
@@ -33,15 +36,6 @@ export type FormState = {
   // Step 2: Communication options
   sendConfirmation: boolean;
   sendReminder: boolean;
-};
-
-export type AddressFormState = {
-  addressLine1: string;
-  addressLine2: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
 };
 
 export type MemberOption = {

@@ -1,3 +1,4 @@
+import type { RefObject } from "react";
 import type {
   DealRecord,
   DealStageId,
@@ -6,6 +7,7 @@ import type {
 import type { ContactAddressRecord, ContactRecord } from "@/features/contacts";
 import type { CompanyMemberRecord } from "@/features/companies";
 import type { PlaceSuggestion } from "@/types/google-places";
+import type { AddressFormState } from "@/components/shared";
 
 export type FormState = {
   firstName: string;
@@ -17,24 +19,6 @@ export type FormState = {
   salesperson: string;
   projectManager: string;
   disableDrips: boolean;
-};
-
-export type AddressFormState = {
-  addressLine1: string;
-  addressLine2: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
-};
-
-export const EMPTY_ADDRESS_FORM: AddressFormState = {
-  addressLine1: "",
-  addressLine2: "",
-  city: "",
-  state: "",
-  postalCode: "",
-  country: "",
 };
 
 export const NEW_CONTACT_OPTION = "new" as const;
@@ -68,6 +52,7 @@ export type UseNewDealFormReturn = {
   addressSuggestions: PlaceSuggestion[];
   isFetchingAddress: boolean;
   showAddressSuggestions: boolean;
+  addressContainerRef: RefObject<HTMLDivElement | null>;
 
   // Member options
   memberOptions: {
@@ -92,6 +77,9 @@ export type UseNewDealFormReturn = {
   submitDeal: (disableDrips: boolean) => Promise<void>;
   resetStep: () => void;
 };
+
+// Re-export AddressFormState for convenience
+export type { AddressFormState } from "@/components/shared";
 
 export function createInitialFormState(defaultStage: DealStageId): FormState {
   return {

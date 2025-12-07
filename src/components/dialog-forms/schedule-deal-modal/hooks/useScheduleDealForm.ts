@@ -5,10 +5,10 @@ import type { CompanyMemberRecord } from "@/features/companies";
 import { useCompanyMembers } from "@/features/companies";
 import type { AppointmentRecord } from "@/features/appointments";
 import type { CommunicationTemplateSnapshot } from "@/features/communications";
-import type { FormState, AddressFormState } from "../types";
+import { EMPTY_ADDRESS_FORM, type AddressFormState } from "@/components/shared";
+import type { FormState } from "../types";
 import { NEW_CONTACT_OPTION } from "../constants";
 import {
-  EMPTY_ADDRESS_FORM,
   createInitialFormState,
   applyContactToForm,
   mapContactAddressToForm,

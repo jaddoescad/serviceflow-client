@@ -13,7 +13,8 @@ import { syncAppointmentToGoogle } from "@/lib/google-calendar-sync";
 import { formatFullName } from "@/lib/name";
 import { Modal, ModalHeader, ModalBody, ModalFooter, Button } from "@/components/ui/library";
 
-import type { ScheduleDealModalProps, FormState, AddressFormState, CommunicationMethod } from "./types";
+import { useAddressAutocomplete, type AddressFormState } from "@/components/shared";
+import type { ScheduleDealModalProps, FormState, CommunicationMethod } from "./types";
 import { DEFAULT_MODAL_COPY, NEW_CONTACT_OPTION } from "./constants";
 import {
   buildDateTime,
@@ -24,7 +25,7 @@ import {
   buildAppointmentTemplateVars,
   populateAppointmentTemplate,
 } from "./utils";
-import { useScheduleDealForm, useAddressSuggestions, useDealSources } from "./hooks";
+import { useScheduleDealForm, useDealSources } from "./hooks";
 import {
   AppointmentSchedulingSection,
   ContactInformationSection,
@@ -123,20 +124,24 @@ export function ScheduleDealModal({
     currentLeadSource: deal?.lead_source,
   });
 
-  // Address suggestions
+  // Address autocomplete using shared hook
+  const handleAddressUpdate = useCallback((updates: Partial<AddressFormState>) => {
+    setAddressForm((prev) => ({ ...prev, ...updates }));
+  }, [setAddressForm]);
+
   const {
     suggestions: addressSuggestions,
     isFetching: isFetchingAddress,
     showSuggestions: showAddressSuggestions,
+    containerRef: addressContainerRef,
     handleSuggestionSelect,
     handleAddressBlur,
-    handleAddressFocus,
-  } = useAddressSuggestions({
+    handleAddressFocus: handleAddressFocusBase,
+    handleAddressChange,
+  } = useAddressAutocomplete({
     open,
     addressLine1: addressForm.addressLine1,
-    onAddressUpdate: (updates) => {
-      setAddressForm((prev) => ({ ...prev, ...updates }));
-    },
+    onAddressUpdate: handleAddressUpdate,
   });
 
   // Load communication template
@@ -277,8 +282,12 @@ export function ScheduleDealModal({
     <K extends keyof AddressFormState>(field: K) =>
     (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
       setAddressForm((prev) => ({ ...prev, [field]: event.target.value }));
+      // Notify that user is typing (enables autocomplete)
+      if (field === "addressLine1") {
+        handleAddressChange();
+      }
     },
-    [setAddressForm]
+    [setAddressForm, handleAddressChange]
   );
 
   const handleCommunicationMethodChange = useCallback(
@@ -628,9 +637,10 @@ export function ScheduleDealModal({
               suggestions={addressSuggestions}
               showSuggestions={showAddressSuggestions}
               isFetchingAddress={isFetchingAddress}
+              containerRef={addressContainerRef}
               onAddressFieldChange={handleAddressFieldChange}
               onAddressBlur={handleAddressBlur}
-              onAddressFocus={handleAddressFocus}
+              onAddressFocus={handleAddressFocusBase}
               onSuggestionSelect={handleSuggestionSelect}
             />
 

@@ -1,33 +1,31 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type ChangeEvent,
   type FormEvent,
 } from "react";
 import type { DealStageId } from "@/features/deals";
 import { DEFAULT_DEAL_SOURCES } from "@/features/deals";
-import {
-  fetchPlaceAddressDetails,
-  fetchPlaceSuggestions,
-} from "@/lib/google-places";
-import type { PlaceSuggestion } from "@/types/google-places";
 import type { ContactAddressRecord, ContactRecord } from "@/features/contacts";
 import type { CompanyMemberRecord } from "@/features/companies";
 import { useCompanyMembers } from "@/features/companies";
 import { createDeal, updateDealDetails, updateDealStage, useDealInvalidation } from "@/features/deals";
 import { createContact, addContactAddresses, updateContact } from "@/features/contacts";
 import { listDealSources } from "@/services/deal-sources";
+import {
+  useAddressAutocomplete,
+  EMPTY_ADDRESS_FORM,
+  type AddressFormState,
+} from "@/components/shared";
 
 import type {
   FormState,
-  AddressFormState,
   NewDealModalProps,
   UseNewDealFormReturn,
 } from "./types";
 import {
-  EMPTY_ADDRESS_FORM,
   NEW_CONTACT_OPTION,
   createInitialFormState,
   mapContactAddressToForm,
@@ -64,12 +62,30 @@ export function useNewDealForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [addressSuggestions, setAddressSuggestions] = useState<PlaceSuggestion[]>([]);
-  const [isFetchingAddress, setIsFetchingAddress] = useState(false);
-  const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
   const [dealSources, setDealSources] = useState<string[]>(() => [...DEFAULT_DEAL_SOURCES]);
   const [isLoadingDealSources, setIsLoadingDealSources] = useState(false);
-  const skipNextAddressFetchRef = useRef(false);
+
+  // Use the shared address autocomplete hook
+  const handleAddressUpdate = useCallback((updates: Partial<AddressFormState>) => {
+    setAddressForm((previous) => ({ ...previous, ...updates }));
+    setSelectedAddressId(NEW_CONTACT_OPTION);
+  }, []);
+
+  const {
+    suggestions: addressSuggestions,
+    isFetching: isFetchingAddress,
+    showSuggestions: showAddressSuggestions,
+    containerRef: addressContainerRef,
+    handleSuggestionSelect: handleAddressSuggestionSelect,
+    handleAddressBlur,
+    handleAddressFocus: handleAddressLine1Focus,
+    handleAddressChange,
+    setAddressProgrammatically,
+  } = useAddressAutocomplete({
+    open,
+    addressLine1: addressForm.addressLine1,
+    onAddressUpdate: handleAddressUpdate,
+  });
 
   const memberOptions = useMemo(() => {
     if (!companyMembers) {
@@ -105,10 +121,6 @@ export function useNewDealForm({
     const defaultStageForCreate = (defaultStageId ?? stages[0]?.id ?? "cold_leads") as DealStageId;
 
     setError(null);
-    setAddressSuggestions([]);
-    setIsFetchingAddress(false);
-    setShowAddressSuggestions(false);
-    skipNextAddressFetchRef.current = false;
 
     if (isEditMode && deal) {
       const sourceContact = deal.contact ?? null;
@@ -127,9 +139,8 @@ export function useNewDealForm({
       if (deal.service_address) {
         setAddressForm(mapContactAddressToForm(deal.service_address));
         setSelectedAddressId(deal.service_address.id);
-        skipNextAddressFetchRef.current = true;
-        setShowAddressSuggestions(false);
-        setAddressSuggestions([]);
+        // Mark as programmatic to prevent autocomplete from opening
+        setAddressProgrammatically();
       } else {
         setAddressForm(EMPTY_ADDRESS_FORM);
         setSelectedAddressId(NEW_CONTACT_OPTION);
@@ -139,7 +150,7 @@ export function useNewDealForm({
       setAddressForm(EMPTY_ADDRESS_FORM);
       setSelectedAddressId(NEW_CONTACT_OPTION);
     }
-  }, [open, isEditMode, deal, stages, defaultStageId]);
+  }, [open, isEditMode, deal, stages, defaultStageId, setAddressProgrammatically]);
 
   // Load deal sources
   useEffect(() => {
@@ -187,57 +198,6 @@ export function useNewDealForm({
     };
   }, [companyId, deal?.lead_source, open]);
 
-  // Address suggestions effect
-  const activeAddressLine1 = addressForm.addressLine1;
-
-  useEffect(() => {
-    if (!open) {
-      setAddressSuggestions([]);
-      setShowAddressSuggestions(false);
-      return;
-    }
-
-    if (skipNextAddressFetchRef.current) {
-      skipNextAddressFetchRef.current = false;
-      setAddressSuggestions([]);
-      setShowAddressSuggestions(false);
-      return;
-    }
-
-    const query = activeAddressLine1.trim();
-
-    if (query.length < 3) {
-      setAddressSuggestions([]);
-      setShowAddressSuggestions(false);
-      return;
-    }
-
-    const controller = new AbortController();
-    const timeout = window.setTimeout(async () => {
-      setIsFetchingAddress(true);
-      try {
-        const suggestions = await fetchPlaceSuggestions(query, controller.signal);
-        if (!controller.signal.aborted) {
-          setAddressSuggestions(suggestions);
-          setShowAddressSuggestions(suggestions.length > 0);
-        }
-      } catch (fetchError) {
-        if ((fetchError as Error).name !== "AbortError") {
-          console.error("Failed to fetch address suggestions", fetchError);
-          setAddressSuggestions([]);
-          setShowAddressSuggestions(false);
-        }
-      } finally {
-        setIsFetchingAddress(false);
-      }
-    }, 250);
-
-    return () => {
-      window.clearTimeout(timeout);
-      controller.abort();
-    };
-  }, [activeAddressLine1, open]);
-
   const handleInputChange = (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const target = event.target;
     const { name, value, type } = target;
@@ -263,14 +223,10 @@ export function useNewDealForm({
 
     if (selected) {
       setSelectedAddressId(selected.id);
-      skipNextAddressFetchRef.current = true;
-      setAddressSuggestions([]);
-      setShowAddressSuggestions(false);
+      setAddressProgrammatically();
       setAddressForm(mapContactAddressToForm(selected));
     } else {
       setSelectedAddressId(NEW_CONTACT_OPTION);
-      setAddressSuggestions([]);
-      setShowAddressSuggestions(false);
       setAddressForm(EMPTY_ADDRESS_FORM);
     }
   };
@@ -280,48 +236,15 @@ export function useNewDealForm({
       const { value } = event.target;
       setAddressForm((previous) => ({ ...previous, [field]: value }));
 
+      // Notify that user is typing (enables autocomplete)
+      if (field === "addressLine1") {
+        handleAddressChange();
+      }
+
       if (selectedAddressId !== NEW_CONTACT_OPTION) {
         setSelectedAddressId(NEW_CONTACT_OPTION);
       }
     };
-  };
-
-  const handleAddressLine1Focus = () => {
-    setShowAddressSuggestions(addressSuggestions.length > 0);
-  };
-
-  const handleAddressBlur = () => {
-    window.setTimeout(() => setShowAddressSuggestions(false), 150);
-  };
-
-  const handleAddressSuggestionSelect = async (suggestion: PlaceSuggestion) => {
-    setShowAddressSuggestions(false);
-    setAddressSuggestions([]);
-
-    try {
-      setIsFetchingAddress(true);
-      const details = await fetchPlaceAddressDetails(suggestion.placeId);
-
-      skipNextAddressFetchRef.current = true;
-      setAddressForm((previous) => ({
-        ...previous,
-        addressLine1: details?.street ?? suggestion.description,
-        city: details?.city ?? previous.city,
-        state: details?.state ?? previous.state,
-        postalCode: details?.postalCode ?? previous.postalCode,
-      }));
-      setSelectedAddressId(NEW_CONTACT_OPTION);
-    } catch (detailsError) {
-      console.error("Failed to fetch address details", detailsError);
-      skipNextAddressFetchRef.current = true;
-      setAddressForm((previous) => ({
-        ...previous,
-        addressLine1: suggestion.description,
-      }));
-      setSelectedAddressId(NEW_CONTACT_OPTION);
-    } finally {
-      setIsFetchingAddress(false);
-    }
   };
 
   const validateForm = (): boolean => {
@@ -578,6 +501,7 @@ export function useNewDealForm({
     addressSuggestions,
     isFetchingAddress,
     showAddressSuggestions,
+    addressContainerRef,
     memberOptions,
     modalTitle,
     submitLabel,

@@ -26,6 +26,7 @@ export function NewDealModal(props: NewDealModalProps) {
     addressSuggestions,
     isFetchingAddress,
     showAddressSuggestions,
+    addressContainerRef,
     memberOptions,
     modalTitle,
     isEditMode,
@@ -121,6 +122,7 @@ export function NewDealModal(props: NewDealModalProps) {
               addressSuggestions={addressSuggestions}
               isFetchingAddress={isFetchingAddress}
               showAddressSuggestions={showAddressSuggestions}
+              addressContainerRef={addressContainerRef}
               onAddressSelectChange={handleAddressSelectChange}
               onAddressFieldChange={handleAddressFieldChange}
               onAddressLine1Focus={handleAddressLine1Focus}
