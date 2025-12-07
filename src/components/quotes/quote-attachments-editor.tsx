@@ -1,5 +1,4 @@
 import type { ChangeEvent } from "react";
-import { formatByteSize } from "@/lib/attachments";
 import type { ProposalAttachmentAsset } from "@/types/proposal-attachments";
 
 type QuoteAttachmentsEditorProps = {
@@ -148,18 +147,12 @@ export function QuoteAttachmentsEditor({
                                     className="h-full w-full object-cover transition-transform group-hover:scale-[1.02]"
                                 />
                             </button>
-                            <div className="flex items-start justify-between gap-2 px-3 py-2">
-                                <div className="min-w-0">
-                                    <p className="truncate text-[12px] font-medium text-slate-900" title={attachment.original_filename}>
-                                        {attachment.original_filename}
-                                    </p>
-                                    <p className="text-[11px] text-slate-500">{formatByteSize(attachment.byte_size)}</p>
-                                </div>
+                            <div className="flex items-center justify-end px-2 py-1.5">
                                 <button
                                     type="button"
                                     onClick={() => onAttachmentDelete(attachment)}
                                     disabled={deletingAttachmentId === attachment.id}
-                                    className="rounded-md p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
                                     aria-label="Delete attachment"
                                 >
                                     <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
