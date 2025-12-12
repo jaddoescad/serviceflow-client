@@ -127,10 +127,10 @@ export type CompanyRecord = {
   tax_rate: number | null;
   proposal_terms_template_key: string | null;
   proposal_terms_template_content: string | null;
-  openphone_api_key: string | null;
-  openphone_phone_number_id: string | null;
-  openphone_phone_number: string | null;
-  openphone_enabled: boolean | null;
+  twilio_account_sid: string | null;
+  twilio_auth_token: string | null;
+  twilio_phone_number: string | null;
+  twilio_enabled: boolean | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -167,10 +167,10 @@ export type CompanySettingsRecord = Pick<
   | "logo_storage_key"
   | "proposal_terms_template_key"
   | "proposal_terms_template_content"
-  | "openphone_api_key"
-  | "openphone_phone_number_id"
-  | "openphone_phone_number"
-  | "openphone_enabled"
+  | "twilio_account_sid"
+  | "twilio_auth_token"
+  | "twilio_phone_number"
+  | "twilio_enabled"
 >;
 
 export type CreateCompanyInput = {

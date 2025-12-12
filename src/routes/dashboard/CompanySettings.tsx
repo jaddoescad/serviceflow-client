@@ -6,7 +6,7 @@ import { useSessionContext, useCompanyContext } from "@/contexts/AuthContext";
 import { CompanyEmailSettingsSection } from "@/components/company/company-email-settings-section";
 import { CompanySettingsForm } from "@/components/company/company-settings-form";
 import { CompanyBrandingSection } from "@/components/company/company-branding-section";
-import { CompanyOpenPhoneSettingsSection } from "@/components/company/company-openphone-settings-section";
+import { CompanyTwilioSettingsSection } from "@/components/company/company-twilio-settings-section";
 import { CompanyTemplatesSection } from "@/components/company/company-templates-section";
 import { CompanyPipelinesSection } from "@/components/company/company-pipelines-section";
 import { useCompanySettingsDetail, useCompanyEmailSettings } from "@/hooks";
@@ -98,7 +98,7 @@ export default function CompanySettingsPage() {
     content = <CompanyPipelinesSection companyId={authCompany.id} />;
   } else if (activeSection === "phone") {
     content = (
-      <CompanyOpenPhoneSettingsSection
+      <CompanyTwilioSettingsSection
         companyId={authCompany.id}
         initialSettings={company}
       />

@@ -48,10 +48,10 @@ export const COMPANY_SETTINGS_FIELDS = [
   "logo_storage_key",
   "proposal_terms_template_key",
   "proposal_terms_template_content",
-  "openphone_api_key",
-  "openphone_phone_number_id",
-  "openphone_phone_number",
-  "openphone_enabled",
+  "twilio_account_sid",
+  "twilio_auth_token",
+  "twilio_phone_number",
+  "twilio_enabled",
 ].join(", ");
 
 export const LEGACY_COMPANY_SETTINGS_FIELDS = [
@@ -82,10 +82,10 @@ export const COMPANY_SETTINGS_DEFAULTS: CompanySettingsDefaults = {
   logo_storage_key: null,
   proposal_terms_template_key: null,
   proposal_terms_template_content: null,
-  openphone_api_key: null,
-  openphone_phone_number_id: null,
-  openphone_phone_number: null,
-  openphone_enabled: false,
+  twilio_account_sid: null,
+  twilio_auth_token: null,
+  twilio_phone_number: null,
+  twilio_enabled: false,
 };
 
 // Company Member Fields
